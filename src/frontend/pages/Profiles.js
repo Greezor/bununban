@@ -240,7 +240,10 @@ export default {
 					.push({ ...form.value });
 			}else{
 				profiles.value
-					.splice(index, 1, { ...form.value });
+					.splice(index, 1, {
+						...form.value,
+						active: profiles.value[index].active,
+					});
 			}
 
 			selectedProfileName.value = form.value.name;

@@ -184,10 +184,16 @@ export default {
 			});
 		}
 
-		const updateItem = async (name, json) => {
+		const updateItem = async (name, form) => {
+			const file = files.value
+				.find(item => item.name === name);
+
 			await ketchup(`/api/blobs/${ name }`, {
 				method: 'PUT',
-				json,
+				json: {
+					...form,
+					active: file.active,
+				},
 			});
 
 			await restartAntidpi();
