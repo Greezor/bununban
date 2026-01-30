@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
@@ -101,8 +101,6 @@ export default {
 			loading.value = false;
 		}
 
-		loadParams();
-
 		const antidpiModal = ref(false);
 		const antidpiVersion = ref(null);
 		const antidpiVersions = ref([]);
@@ -156,6 +154,10 @@ export default {
 
 			location.href = `${ newOrigin }/settings`;
 		}
+
+		onActivated(() => {
+			loadParams();
+		});
 
 		return {
 			loading,

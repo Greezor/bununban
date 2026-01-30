@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
@@ -79,8 +79,6 @@ export default {
 			loading.value = false;
 		}
 
-		loadFirewall();
-
 		const editorOptions = computed(() => ({
 			language: 'shell',
 		}));
@@ -104,6 +102,10 @@ export default {
 
 			loading.value = false;
 		}
+
+		onActivated(() => {
+			loadFirewall();
+		});
 
 		return {
 			loading,

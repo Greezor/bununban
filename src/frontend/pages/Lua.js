@@ -1,4 +1,4 @@
-import { ref, shallowRef, computed, watch, onMounted } from 'vue'
+import { ref, shallowRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
@@ -296,7 +296,7 @@ export default {
 			},
 		);
 
-		onMounted(async () => {
+		onActivated(async () => {
 			await loadFiles();
 		});
 
