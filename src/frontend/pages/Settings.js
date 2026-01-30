@@ -61,7 +61,7 @@ const style = {
 		left: 50%;
 		transform: translateX(-50%);
 		transition: all 0.3s ease;
-		color: #ffcd19;
+		color: #222;
 		box-shadow: var(--liquid-shadow), var(--liquid-inner-shadow), 0 0 0 0px #ffcd19;
 		z-index: 10;
 
