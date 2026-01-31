@@ -282,6 +282,7 @@ export default {
 		);
 
 		onActivated(async () => {
+			selectedProfileName.value = null;
 			await loadProfiles();
 		});
 

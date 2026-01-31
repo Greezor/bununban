@@ -256,6 +256,7 @@ export default {
 		);
 
 		onActivated(async () => {
+			selectedFileName.value = null;
 			await loadFiles();
 		});
 

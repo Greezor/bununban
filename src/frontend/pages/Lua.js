@@ -299,6 +299,7 @@ export default {
 		);
 
 		onActivated(async () => {
+			selectedFileName.value = null;
 			await loadFiles();
 		});
 
@@ -325,7 +326,7 @@ export default {
 	},
 	template: `
 		<Default
-			header="Lua-код"
+			header="Lua-скрипты"
 			v-model:mobile-view="mobileView"
 			:loading="pageLoading"
 			@back="selectedFileName = null">
