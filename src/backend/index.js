@@ -1,4 +1,3 @@
-import { platform } from 'node:os'
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
@@ -15,10 +14,12 @@ import settings from './stores/settings'
 
 import { APPDATA_DIR } from './utils/appdata'
 
+import packageJSON from '../../package.json'
+
 class BackendApp
 {
 	#server = null;
-	#autoSyncInterval = null;
+	#autoUpdateInterval = null;
 
 	async start()
 	{
@@ -31,9 +32,11 @@ class BackendApp
 		if( !( await settingsFile.exists() ) )
 			await this.createDefaultAppdata();
 
+		await settings.set('version', packageJSON.version);
+
 		try{
-			const port = await settings.get('port');
-			const hostname = await settings.get('hostname');
+			const port = await settings.get('port') ?? '8008';
+			const hostname = await settings.get('hostname') ?? '0.0.0.0';
 
 			this.#server = Bun.serve({
 				idleTimeout: 255,
@@ -54,13 +57,8 @@ class BackendApp
 			if( await settings.get('antidpi.active') )
 				await zapret.start();
 
-			this.#autoSyncInterval = setInterval(async () => {
-				if( !( await settings.get('updater.sync') ) )
-					return;
-
-				await this.syncAllResources();
-			}, (
-				await settings.get('updater.syncPeriod')
+			this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
+				await settings.get('updater.interval') ?? (1000 * 60 * 60 * 24)
 			));
 		}
 		catch(e){
@@ -73,7 +71,7 @@ class BackendApp
 	{
 		if( this.#server === null ) return;
 
-		clearInterval(this.#autoSyncInterval);
+		clearInterval(this.#autoUpdateInterval);
 
 		await zapret.stop();
 
@@ -83,6 +81,8 @@ class BackendApp
 
 	async restart()
 	{
+		setTimeout(() => {}, 15000); // keep process
+
 		await this.stop();
 		await new Promise(resolve => setTimeout(resolve, 3000));
 		await this.start();
@@ -90,8 +90,6 @@ class BackendApp
 
 	async createDefaultAppdata()
 	{
-		const system = platform();
-
 		// profiles
 		await settings.set('profiles', [
 			{ 'name': 'http', 'active': true,'syncUrl': '', 'content': '--filter-l7=http\r\n--payload=http_req\r\n--lua-desync=fake:blob=fake_default_http:ip_autottl=-2,3-20:ip6_autottl=-2,3-20:tcp_md5\r\n--lua-desync=fakedsplit:ip_autottl=-2,3-20:ip6_autottl=-2,3-20:tcp_md5' },
@@ -111,9 +109,6 @@ class BackendApp
 		await lua.set('zapret-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-lib.lua' });
 		await lua.set('zapret-antidpi', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-antidpi.lua' });
 		await lua.set('zapret-auto', { active: false, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-auto.lua' });
-		await lua.set('zapret-pcap', { active: false, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-pcap.lua' });
-		await lua.set('zapret-tests', { active: false, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-tests.lua' });
-		await lua.set('zapret-wgobfs', { active: false, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-wgobfs.lua' });
 
 		// fakes
 		await blobs.set('quic_initial_www_google_com', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/quic_initial_www_google_com.bin' });
@@ -122,11 +117,16 @@ class BackendApp
 		// settings
 		await settings.set('hostname', '0.0.0.0');
 		await settings.set('port', '8008');
-		await settings.set('updater.sync', false);
-		await settings.set('updater.syncPeriod', 1000 * 60 * 60 * 24);
+		await settings.set('updater.self', false);
+		await settings.set('updater.zapret2', false);
+		await settings.set('updater.profiles', false);
+		await settings.set('updater.lists', false);
+		await settings.set('updater.lua', false);
+		await settings.set('updater.blobs', false);
+		await settings.set('updater.interval', 1000 * 60 * 60 * 24);
 		await settings.set('antidpi.debug', false);
 
-		if( system === 'win32' ){
+		if( process.platform === 'win32' ){
 			// windivert filters
 			await lists.set('windivert-discord', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/windivert.filter/windivert_part.discord_media.txt' });
 			await lists.set('windivert-quic', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/windivert.filter/windivert_part.quic_initial_ietf.txt' });
@@ -137,22 +137,35 @@ class BackendApp
 			await settings.set('startup.args', '--wf-tcp-out=80,443 --wf-raw-part=@{windivert-discord} --wf-raw-part=@{windivert-stun} --wf-raw-part=@{windivert-wireguard} --wf-raw-part=@{windivert-quic}');
 		}
 
-		await this.syncAllResources();
+		await this.syncProfiles(true);
+		await this.syncLists(true);
+		await this.syncLua(true);
+		await this.syncBlobs(true);
 	}
 
-	async syncAllResources()
+	async autoUpdate(force = false)
 	{
-		await this.syncProfiles();
-		await this.syncLists();
-		await this.syncLua();
-		await this.syncBlobs();
+		const wasStarted = zapret.isStarted;
 
-		if( zapret.isStarted )
-			await zapret.restart();
+		await this.syncProfiles(force);
+		await this.syncLists(force);
+		await this.syncLua(force);
+		await this.syncBlobs(force);
+
+		await zapret.stop();
+
+		await this.updateZapret2(force);
+		await this.updateSelf(force);
+
+		if( wasStarted && !zapret.isStarted )
+			await zapret.start();
 	}
 
-	async syncProfiles()
+	async syncProfiles(force = false)
 	{
+		if( !( await settings.get('updater.profiles') || force ) )
+			return;
+
 		const profiles = await settings.get('profiles');
 		
 		for(const profile of profiles){
@@ -191,19 +204,76 @@ class BackendApp
 		}
 	}
 
-	async syncLists()
+	async syncLists(force = false)
 	{
+		if( !( await settings.get('updater.lists') || force ) )
+			return;
+
 		await this.syncFiles(lists, 'lists');
 	}
 
-	async syncLua()
+	async syncLua(force = false)
 	{
+		if( !( await settings.get('updater.lua') || force ) )
+			return;
+
 		await this.syncFiles(lua, 'lua');
 	}
 
-	async syncBlobs()
+	async syncBlobs(force = false)
 	{
+		if( !( await settings.get('updater.blobs') || force ) )
+			return;
+
 		await this.syncFiles(blobs, 'blobs');
+	}
+
+	async updateZapret2(force = false)
+	{
+		if( !( await settings.get('updater.zapret2') || force ) )
+			return;
+
+		await zapret.install();
+	}
+
+	async updateSelf(force = false)
+	{
+		if( process.env.NODE_ENV === 'development' )
+			return;
+
+		if( !( await settings.get('updater.self') || force ) )
+			return;
+
+		const html = await ketchup.text('https://github.com/Greezor/bununban/releases/latest');
+		const [ _, latest ] = html.match(/href="\/Greezor\/bununban\/releases\/tag\/(.*?)"/ms);
+
+		if( await settings.get('version') === latest )
+			return;
+
+		const path = process.execPath.split(/\\|\//);
+		const bin = path.pop();
+		const updatePath = join( ...path, 'update.bin' );
+		const binPath = join( ...path, bin );
+
+		await Bun.write(
+			updatePath,
+			await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/latest/download/${ bin }`),
+		);
+
+		const proc = Bun.spawn((
+			process.platform === 'win32'
+				? [ 'cmd', '/c', `timeout /t 1 /nobreak & move /y ${ updatePath } ${ binPath } & powershell Start-Process -FilePath ${ binPath }` ]
+				: [ 'bash', '-c', `sleep 1; mv -f ${ updatePath } ${ binPath }; ${ binPath }` ]
+		), {
+			detached: true,
+			stdio: ['ignore', 'ignore', 'ignore'],
+		});
+
+		proc.unref();
+
+		await this.stop();
+
+		process.exit();
 	}
 }
 

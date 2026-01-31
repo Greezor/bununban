@@ -1,4 +1,4 @@
-import { ref, onActivated } from 'vue'
+import { ref, computed, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
@@ -10,9 +10,12 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
+import ConfirmDialog from 'primevue/confirmdialog'
 
 import Loader from '../components/Loader'
 import Butn from '../components/Butn'
+
+import packageJSON from '../../../package.json'
 
 const style = {
 	page: css`
@@ -86,8 +89,13 @@ export default {
 			'antidpi.debug': false,
 			'startup.args': '',
 
-			'updater.sync': false,
-			'updater.syncPeriod': 1000 * 60 * 60 * 24,
+			'updater.self': false,
+			'updater.zapret2': false,
+			'updater.profiles': false,
+			'updater.lists': false,
+			'updater.lua': false,
+			'updater.blobs': false,
+			'updater.interval': 1000 * 60 * 60 * 24,
 
 			'hostname': '0.0.0.0',
 			'port': '8008',
@@ -104,6 +112,10 @@ export default {
 		const antidpiModal = ref(false);
 		const antidpiVersion = ref(null);
 		const antidpiVersions = ref([]);
+
+		const bununbanVersion = computed(() => {
+			return packageJSON.version;
+		});
 
 		const loadAntidpiVersions = async () => {
 			antidpiVersions.value = [];
@@ -125,6 +137,22 @@ export default {
 			loading.value = false;
 		}
 
+		const waitServerReload = async () => {
+			await new Promise(resolve => setTimeout(resolve, 1000));
+
+			const newOrigin = `http://${
+				params.value.hostname === '0.0.0.0'
+					? location.hostname
+					: params.value.hostname
+			}:${
+				params.value.port
+			}`;
+
+			await ketchup(`${ newOrigin }/api/ping`, { retry: Infinity });
+
+			location.href = `${ newOrigin }/settings`;
+		}
+
 		const save = async () => {
 			loading.value = true;
 			
@@ -138,21 +166,44 @@ export default {
 					method: 'POST',
 				});
 			}
-			catch(e){}
+			catch(e){
+				console.error(e)
+			}
 
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			await waitServerReload();
+		}
 
-			const newOrigin = `http://${
-				params.value.hostname === '0.0.0.0'
-					? location.hostname
-					: params.value.hostname
-			}:${
-				params.value.port
-			}`;
+		const settingsReset = async () => {
+			loading.value = true;
 
-			await ketchup(`${ newOrigin }/api/ping`);
+			params.value.hostname = '0.0.0.0';
+			params.value.port = '8008';
 
-			location.href = `${ newOrigin }/settings`;
+			try{
+				fetch('/api/settings/reset', {
+					method: 'POST',
+				});
+			}
+			catch(e){
+				console.error(e)
+			}
+
+			await waitServerReload();
+		}
+
+		const updateNow = async () => {
+			loading.value = true;
+
+			try{
+				await fetch('/api/updater/update-now', {
+					method: 'POST',
+				});
+			}
+			catch(e){
+				console.error(e)
+			}
+
+			await waitServerReload();
 		}
 
 		onActivated(() => {
@@ -165,10 +216,14 @@ export default {
 			antidpiModal,
 			antidpiVersion,
 			antidpiVersions,
+			bununbanVersion,
 			loadParams,
 			loadAntidpiVersions,
 			installAntidpi,
+			waitServerReload,
 			save,
+			settingsReset,
+			updateNow,
 		};
 	},
 	template: `
@@ -184,14 +239,17 @@ export default {
 
 				<div class="${ style.settingsRow }">
 					<span>Zapret2</span>
-					<InputText
-						:value="params['antidpi.version'] || '—'"
-						readonly />
+					<Button
+						severity="secondary"
+						rounded>
+						{{ params['antidpi.version'] || '—' }}
+					</Button>
 				</div>
 
 				<div class="${ style.settingsRow }">
 					<span></span>
 					<Button
+						raised
 						@click="() => {
 							antidpiModal = true;
 							antidpiVersion = null;
@@ -208,7 +266,7 @@ export default {
 				</div>
 
 				<div class="${ style.settingsRow }">
-					<span>Дебаг-логи (может снизить производительность)</span>
+					<span>Дебаг-логи</span>
 					<ToggleSwitch
 						v-model="params['antidpi.debug']" />
 				</div>
@@ -230,15 +288,45 @@ export default {
 				</div>
 
 				<div class="${ style.settingsRow }">
-					<span>Синхронизация ресурсов</span>
+					<span>Обновлять Bununban</span>
 					<ToggleSwitch
-						v-model="params['updater.sync']" />
+						v-model="params['updater.self']" />
 				</div>
 
 				<div class="${ style.settingsRow }">
-					<span>Период синхронизации</span>
+					<span>Обновлять Zapret2</span>
+					<ToggleSwitch
+						v-model="params['updater.zapret2']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Синхронизировать профили</span>
+					<ToggleSwitch
+						v-model="params['updater.profiles']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Синхронизировать файлы и списки</span>
+					<ToggleSwitch
+						v-model="params['updater.lists']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Синхронизировать lua-скрипты</span>
+					<ToggleSwitch
+						v-model="params['updater.lua']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Синхронизировать blob'ы</span>
+					<ToggleSwitch
+						v-model="params['updater.blobs']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Интервал</span>
 					<Select
-						v-model="params['updater.syncPeriod']"
+						v-model="params['updater.interval']"
 						option-label="label"
 						option-value="value"
 						:options="[
@@ -249,6 +337,15 @@ export default {
 							{ label: '3 дня', value: 1000 * 60 * 60 * 24 * 3 },
 							{ label: '7 дней', value: 1000 * 60 * 60 * 24 * 7 },
 						]" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Поиск и установка обновлений</span>
+					<Button
+						raised
+						@click="updateNow()">
+						<span>Обновить</span>
+					</Button>
 				</div>
 
 
@@ -270,6 +367,46 @@ export default {
 						:format="false"
 						:min="8000"
 						:max="65535" />
+				</div>
+
+
+
+				<div class="${ style.settingsTitle }">
+					<span>Другое</span>
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Версия Bununban</span>
+					<Button
+						severity="secondary"
+						rounded>
+						{{ bununbanVersion }}
+					</Button>
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Сбросить настройки</span>
+					<Button
+						raised
+						@click="() => {
+							$confirm.require({
+								group: 'settings-reset',
+								header: 'Вы уверены?',
+								message: '',
+								acceptLabel: 'Сброс',
+								rejectLabel: 'Отмена',
+								acceptProps: {
+									severity: 'danger',
+								},
+								rejectProps: {
+									severity: 'secondary',
+									variant: 'outlined',
+								},
+								accept: () => settingsReset(),
+							})
+						}">
+						<span>Сброс</span>
+					</Button>
 				</div>
 			</div>
 
@@ -295,6 +432,7 @@ export default {
 					<Button
 						type="button"
 						severity="secondary"
+						variant="outlined"
 						@click="() => {
 							antidpiModal = false;	
 						}">
@@ -303,6 +441,7 @@ export default {
 
 					<Button
 						type="button"
+						:disabled="!antidpiVersion"
 						@click="() => {
 							installAntidpi();
 							antidpiModal = false;	
@@ -311,6 +450,12 @@ export default {
 					</Button>
 				</template>
 			</Dialog>
+
+			<ConfirmDialog group="settings-reset">
+				<template #message="{ message }">
+					<span>Вы уверены что хотите выполнить сброс всех настроек?</span>
+				</template>
+			</ConfirmDialog>
 
 			<Loader v-if="loading" />
 		</div>
@@ -324,6 +469,7 @@ export default {
 		Select,
 		Button,
 		Dialog,
+		ConfirmDialog,
 
 		Loader,
 		Butn,

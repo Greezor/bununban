@@ -1,3 +1,4 @@
+import { $ } from 'bun'
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
@@ -138,9 +139,7 @@ export default {
 
 	'/api/server/restart': {
 		POST: () => {
-			setTimeout(() => {}, 10000);
 			server.restart();
-
 			return OK;
 		},
 	},
@@ -260,6 +259,21 @@ export default {
 	'/api/settings/antidpi/zapret2/install/:version': {
 		POST: async req => {
 			await zapret.install(req.params.version);
+			return OK;
+		},
+	},
+	'/api/settings/reset': {
+		POST: async () => {
+			await $`rm -rf ${ APPDATA_DIR }`;
+			server.restart();
+			return OK;
+		},
+	},
+
+
+	'/api/updater/update-now': {
+		POST: async () => {
+			await server.autoUpdate();
 			return OK;
 		},
 	},
