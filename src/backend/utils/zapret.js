@@ -6,6 +6,8 @@ import { Readable } from 'node:stream'
 import { parseTarGzip } from 'nanotar'
 import stringArgv from 'string-argv'
 
+import ketchup from '../../common/utils/ketchup'
+
 import { APPDATA_DIR } from './appdata'
 import modifyBinarySubsystem from './modifyBinarySubsystem'
 
@@ -13,6 +15,8 @@ import lists from '../stores/lists'
 import lua from '../stores/lua'
 import blobs from '../stores/blobs'
 import settings from '../stores/settings'
+
+import app from '../index'
 
 class Zapret
 {
@@ -36,26 +40,30 @@ class Zapret
 		}
 	}
 
-	async getVersions()
+	async getReleases()
 	{
-		const versions = [];
-		let pageVersions = [];
+		const releases = [];
+		let lastPage = [];
 
-		const regex = new RegExp(`href="/bol-van/zapret2/releases/tag/(.*?)"`, 'g');
+		const regex = new RegExp(`<h2.*?href="/bol-van/zapret2/releases/tag/(.*?)".*?href="/bol-van/zapret2/commit/(.*?)"`, 'gms');
 
 		do{
-			const response = await fetch(`https://github.com/bol-van/zapret2/tags${ pageVersions.length ? `?after=${ pageVersions.at(-1) }` : '' }`);
-			const html = await response.text();
+			const html = await ketchup.text(`https://github.com/bol-van/zapret2/tags${ lastPage.length ? `?after=${ lastPage.at(-1).tag }` : '' }`);
 
-			pageVersions = [ ...html.matchAll(regex) ]
-				.map(([ substr, tag ]) => tag)
-				.filter((tag, i, arr) => arr.indexOf(tag) === i);
+			lastPage = [ ...html.matchAll(regex) ]
+				.map(([ substr, tag, commit ]) => ({ tag, commit }));
 
-			versions.push(...pageVersions);
+			releases.push(...lastPage);
 		}
-		while(pageVersions.length)
+		while(lastPage.length)
 
-		return versions;
+		return releases;
+	}
+
+	async getVersions()
+	{
+		const releases = await this.getReleases();
+		return releases.map(({ tag }) => tag);
 	}
 
 	async deleteWindivert()
@@ -82,65 +90,84 @@ class Zapret
 	{
 		await this.stop();
 
-		if( !version ){
-			const [ latest ] = await this.getVersions();
-			version = latest;
+		const releases = await this.getReleases();
+
+		let release = null;
+
+		if( !!version ){
+			release = releases.find(({ tag }) => tag === version);
+
+			if( !release )
+				throw new Error(`Version ${ version } not found`, {
+					cause: {
+						code: 'VER_NOT_FOUND',
+					},
+				});
+		}else{
+			release = releases.at(0);
 		}
 
-		let data;
+		if( await settings.get('antidpi.version') !== release.tag ){
+			let data;
 
-		try{
-			const response = await fetch(`https://github.com/bol-van/zapret2/releases/download/${ version }/zapret2-${ version }.tar.gz`);
-			const buffer = await response.arrayBuffer();
-			data = new Uint8Array(buffer);
-		}
-		catch(e){
-			throw new Error(`Tarball ${ version } not found`, {
-				cause: {
-					code: 'TAR_NOT_FOUND',
-				},
-			});
-		}
-
-		try{
-			const files = await parseTarGzip(data, {
-				filter: file => file.name.startsWith(`zapret2-${ version }/binaries/${ this.platform }-${ this.arch }/`),
-			});
-
-			if( !files.length )
-				throw 0;
-
-			await this.deleteWindivert();
-
-			await $`rm -rf ${ join(APPDATA_DIR, 'bin') }`;
-			await $`mkdir -p ${ join(APPDATA_DIR, 'bin') }`;
-
-			for(const file of files){
-				const filename = file.name.split('/').pop();
-
-				if( !filename ) continue;
-
-				await Bun.write(
-					join(APPDATA_DIR, 'bin', filename),
-					new Blob([file.data]),
-				);
+			try{
+				const buffer = await ketchup.arrayBuffer(`https://github.com/bol-van/zapret2/releases/download/${ release.tag }/zapret2-${ release.tag }.tar.gz`);
+				data = new Uint8Array(buffer);
+			}
+			catch(e){
+				throw new Error(`Tarball ${ release.tag } not found`, {
+					cause: {
+						code: 'TAR_NOT_FOUND',
+					},
+				});
 			}
 
-			if( this.platform === 'windows' )
-				modifyBinarySubsystem(this.nfqws);
-			else
-				await $`chmod +x ${ this.nfqws }`;
-		}
-		catch(e){
-			throw new Error(`Tarball unpack error`, {
-				cause: {
-					code: 'UNTAR_FAILED',
-				},
-			});
-		}
+			try{
+				const files = await parseTarGzip(data, {
+					filter: file => file.name.startsWith(`zapret2-${ release.tag }/binaries/${ this.platform }-${ this.arch }/`),
+				});
 
-		await settings.set('antidpi', 'zapret2');
-		await settings.set('antidpi.version', version);
+				if( !files.length )
+					throw 0;
+
+				await this.deleteWindivert();
+
+				await $`rm -rf ${ join(APPDATA_DIR, 'bin') }`;
+				await $`mkdir -p ${ join(APPDATA_DIR, 'bin') }`;
+
+				for(const file of files){
+					const filename = file.name.split('/').pop();
+
+					if( !filename ) continue;
+
+					await Bun.write(
+						join(APPDATA_DIR, 'bin', filename),
+						new Blob([file.data]),
+					);
+				}
+
+				if( this.platform === 'windows' )
+					modifyBinarySubsystem(this.nfqws);
+				else
+					await $`chmod +x ${ this.nfqws }`;
+			}
+			catch(e){
+				throw new Error(`Tarball unpack error`, {
+					cause: {
+						code: 'UNTAR_FAILED',
+					},
+				});
+			}
+
+			await lua.set('zapret-lib', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-lib.lua` });
+			await lua.set('zapret-antidpi', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-antidpi.lua` });
+			await lua.set('zapret-auto', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-auto.lua` });
+
+			await app.syncLua(true);
+
+			await settings.set('antidpi', 'zapret2');
+			await settings.set('antidpi.version', release.tag);
+		}
 
 		if( await settings.get('antidpi.active') )
 			await this.start();
