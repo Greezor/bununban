@@ -1,5 +1,7 @@
 const ketchup = async (url, params = {}, responseType = 'json') => {
-	const { json, signal, retry, ...subparams } = params;
+	let { json, signal, retry, ...subparams } = params;
+
+	retry ??= 5;
 
 	if( signal?.aborted )
 		return;
@@ -18,13 +20,13 @@ const ketchup = async (url, params = {}, responseType = 'json') => {
 		});
 	}
 	catch(e){
-		if( retry === false )
+		if( !--retry )
 			throw e;
 
 		return new Promise(resolve => {
 			setTimeout(async () => {
 				resolve(
-					await ketchup(url, params)
+					await ketchup(url, { ...params, retry })
 				);
 			}, 1000);
 		});

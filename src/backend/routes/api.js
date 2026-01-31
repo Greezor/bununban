@@ -1,6 +1,8 @@
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
+import ketchup from '../../common/utils/ketchup'
+
 import { APPDATA_DIR } from '../utils/appdata'
 
 import lists from '../stores/lists'
@@ -58,10 +60,11 @@ const putToStoreEndpoint = storeName => async req => {
 
 	if( syncUrl ){
 		try{
-			const response = await fetch(syncUrl);
-			content = await response.text();
+			content = await ketchup.text(syncUrl);
 		}
-		catch(e){}
+		catch(e){
+			console.error(e)
+		}
 	}
 
 	if( (content ?? null) !== null ){
@@ -153,10 +156,11 @@ export default {
 			for(const profile of profiles){
 				if( profile.syncUrl ){
 					try{
-						const response = await fetch(profile.syncUrl);
-						profile.content = await response.text();
+						profile.content = await ketchup.text(profile.syncUrl);
 					}
-					catch(e){}
+					catch(e){
+						console.error(e)
+					}
 				}
 			}
 
@@ -264,10 +268,9 @@ export default {
 	'/api/cors-hole': {
 		POST: async req => {
 			const { url } = await req.json();
-			const response = await fetch(url);
 			
 			return new Response(
-				await response.text()
+				await ketchup.text(url)
 			);
 		},
 	},

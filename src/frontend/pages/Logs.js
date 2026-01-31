@@ -1,7 +1,7 @@
 import { ref, shallowRef, onActivated, onDeactivated } from 'vue'
 import { css } from '@emotion/css'
 
-import ketchup from '../utils/ketchup'
+import ketchup from '../../common/utils/ketchup'
 
 import Loader from '../components/Loader'
 

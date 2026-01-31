@@ -2,7 +2,7 @@ import { ref, shallowRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
-import ketchup from '../utils/ketchup'
+import ketchup from '../../common/utils/ketchup'
 
 import Default from '../layouts/Default'
 
@@ -219,7 +219,9 @@ export default {
 					},
 				});
 			}
-			catch(e){}
+			catch(e){
+				console.error(e)
+			}
 
 			editorLoading.value = false;
 		}

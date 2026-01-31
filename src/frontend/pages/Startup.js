@@ -2,7 +2,7 @@ import { ref, computed, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
-import ketchup from '../utils/ketchup'
+import ketchup from '../../common/utils/ketchup'
 
 import Monaco from '../components/Monaco'
 import Loader from '../components/Loader'

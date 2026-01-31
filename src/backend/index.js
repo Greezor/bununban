@@ -2,6 +2,8 @@ import { platform } from 'node:os'
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
+import ketchup from '../common/utils/ketchup'
+
 import api from './routes/api'
 import frontend from '../frontend/index.html'
 import zapret from './utils/zapret'
@@ -156,10 +158,11 @@ class BackendApp
 		for(const profile of profiles){
 			if( profile.syncUrl ){
 				try{
-					const response = await fetch(profile.syncUrl);
-					profile.content = await response.text();
+					profile.content = await ketchup.text(profile.syncUrl);
 				}
-				catch(e){}
+				catch(e){
+					console.error(e)
+				}
 			}
 		}
 
@@ -173,8 +176,7 @@ class BackendApp
 		for(const [ filename, { syncUrl } ] of Object.entries(files)){
 			if( syncUrl ){
 				try{
-					const response = await fetch(syncUrl);
-					const content = await response.text();
+					const content = await ketchup.text(syncUrl);
 
 					const dirPath = join(APPDATA_DIR, 'files', dir);
 					const filePath = join(dirPath, filename);
@@ -182,7 +184,9 @@ class BackendApp
 					mkdirSync(dirPath, { recursive: true });
 					await Bun.write(filePath, content);
 				}
-				catch(e){}
+				catch(e){
+					console.error(e)
+				}
 			}
 		}
 	}

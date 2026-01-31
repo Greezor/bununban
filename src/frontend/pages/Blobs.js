@@ -2,7 +2,7 @@ import { ref, useTemplateRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import { Icon } from '@iconify/vue'
 
-import ketchup from '../utils/ketchup'
+import ketchup from '../../common/utils/ketchup'
 
 import Default from '../layouts/Default'
 
