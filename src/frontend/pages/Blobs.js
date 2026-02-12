@@ -184,7 +184,7 @@ export default {
 			});
 		}
 
-		const updateItem = async (name, form) => {
+		const saveItem = async (name, form) => {
 			const file = files.value
 				.find(item => item.name === name);
 
@@ -192,7 +192,7 @@ export default {
 				method: 'PUT',
 				json: {
 					...form,
-					active: file.active,
+					active: file?.active ?? form.active,
 				},
 			});
 
@@ -207,7 +207,7 @@ export default {
 			
 			const name = selectedFileName.value ?? form.value.name;
 
-			await updateItem(name, form.value);
+			await saveItem(name, form.value);
 
 			if( fileInput.value.files.length ){
 				const formData = new FormData();
@@ -272,7 +272,7 @@ export default {
 			canSave,
 			clearForm,
 			loadFiles,
-			updateItem,
+			saveItem,
 			save,
 			removeFile,
 		};
@@ -314,7 +314,7 @@ export default {
 								@update:model-value="async () => {
 									pageLoading = true;
 
-									await updateItem(option.name, option);
+									await saveItem(option.name, option);
 									
 									pageLoading = false;
 								}" />
