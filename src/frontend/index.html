@@ -12,7 +12,7 @@
 	<script type="module" src="./main.js"></script>
 
 	<!-- cache busting -->
-	<script>const now=Date.now();setTimeout(()=>{document.querySelectorAll('link[href],script[src]').forEach(el=>el[el.href?'href':'src']+=`?t=${now}`)},1000)</script>
+	<script>const now=Date.now();setTimeout(()=>{document.querySelectorAll('link[href],script[src]').forEach(el=>el[el.href?'href':'src']+=`?t=${now}`)})</script>
 	
 	<svg style="display:none">
 		<defs>
