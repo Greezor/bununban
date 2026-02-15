@@ -1,13 +1,13 @@
 {
   "name": "bununban",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "module": "src/index.js",
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun run ./src/index.js",
     "build": "bun run build:windows-x64 && bun run win-fix && bun run build:linux-x64 && bun run build:linux-x64-musl && bun run build:linux-arm64 && bun run build:linux-arm64-musl",
-    "build:windows-x64": "bun build ./src/index.js --compile --target=bun-windows-x64 --minify --outfile dist/bununban-windows-x64 --windows-icon=\"./src/frontend/assets/favicon.ico\" --windows-hide-console --windows-title=bununban --windows-publisher=Greezor --windows-version=0.1.0 --windows-description=BunUnBan",
+    "build:windows-x64": "bun build ./src/index.js --compile --target=bun-windows-x64 --minify --outfile dist/bununban-windows-x64 --windows-icon=\"./src/frontend/assets/favicon.ico\" --windows-hide-console --windows-title=bununban --windows-publisher=Greezor --windows-version=0.2.0 --windows-description=BunUnBan",
     "build:linux-x64": "bun build ./src/index.js --compile --target=bun-linux-x64 --minify --outfile dist/bununban-linux-x64",
     "build:linux-x64-musl": "bun build ./src/index.js --compile --target=bun-linux-x64-musl --minify --outfile dist/bununban-linux-x64-musl",
     "build:linux-arm64": "bun build ./src/index.js --compile --target=bun-linux-arm64 --minify --outfile dist/bununban-linux-arm64",

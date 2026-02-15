@@ -92,23 +92,41 @@ class BackendApp
 	{
 		// profiles
 		await settings.set('profiles', [
-			{ 'name': 'http', 'active': true,'syncUrl': '', 'content': '--filter-l7=http\r\n--payload=http_req\r\n--lua-desync=fake:blob=fake_default_http:ip_autottl=-2,3-20:ip6_autottl=-2,3-20:tcp_md5\r\n--lua-desync=fakedsplit:ip_autottl=-2,3-20:ip6_autottl=-2,3-20:tcp_md5' },
-			{ 'name': 'tls-youtube', 'active': true,'syncUrl': '', 'content': '--filter-l7=tls\r\n--hostlist={youtube}\r\n--payload=tls_client_hello\r\n--lua-desync=fake:blob=fake_default_tls:tcp_md5:repeats=11:tls_mod=rnd,dupsid,sni=www.google.com\r\n--lua-desync=multidisorder:pos=1,midsld' },
-			{ 'name': 'tls', 'active': true,'syncUrl': '', 'content': '--filter-l7=tls\r\n--payload=tls_client_hello\r\n--lua-desync=fake:blob=fake_default_tls:tcp_md5:tcp_seq=-10000:repeats=6:tls_mod=rnd,rndsni\r\n--lua-desync=multidisorder:pos=midsld' },
-			{ 'name': 'quic-youtube', 'active': true,'syncUrl': '', 'content': '--filter-l7=quic\r\n--hostlist={youtube}\r\n--payload=quic_initial\r\n--lua-desync=fake:blob=quic_initial_www_google_com:repeats=11' },
-			{ 'name': 'quic', 'active': true,'syncUrl': '', 'content': '--filter-l7=quic\r\n--payload=quic_initial\r\n--lua-desync=fake:blob=fake_default_quic:repeats=11' },
-			{ 'name': 'discord', 'active': true,'syncUrl': '', 'content': '--filter-l7=stun,discord\r\n--payload=stun,discord_ip_discovery\r\n--lua-desync=fake:blob=0x00000000000000000000000000000000:repeats=2' },
-			{ 'name': 'wireguard', 'active': true,'syncUrl': '', 'content': '--filter-l7=wireguard\r\n--payload=wireguard_initiation,wireguard_cookie\r\n--lua-desync=fake:blob=0x00000000000000000000000000000000:repeats=2' },
+			{ 'name': 'quic', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/quic.sh', 'content': '' },
+			{ 'name': 'discord', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/discord.sh', 'content': '' },
+			{ 'name': 'stun', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/stun.sh', 'content': '' },
+			{ 'name': 'wireguard', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/wireguard.sh', 'content': '' },
+			{ 'name': 'unknown-udp', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/unknown-udp.sh', 'content': '' },
+			{ 'name': 'google', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/google.sh', 'content': '' },
+			{ 'name': 'tls', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/tls.sh', 'content': '' },
 		]);
 
-		// hosts
+		// lists
 		await lists.set('rulist', { syncUrl: 'https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt' });
-		await lists.set('youtube', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/files/list-youtube.txt' });
+		await lists.set('apple', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-apple.txt' });
+		await lists.set('cloudflare', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-cloudflare.txt' });
+		await lists.set('discord', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-discord.txt' });
+		await lists.set('instagram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-instagram.txt' });
+		await lists.set('meta', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-meta.txt' });
+		await lists.set('rutor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutor.txt' });
+		await lists.set('rutracker', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutracker.txt' });
+		await lists.set('speedtest', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-speedtest.txt' });
+		await lists.set('telegram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-telegram.txt' });
+		await lists.set('tor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-tor.txt' });
+		await lists.set('twitter', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-twitter.txt' });
+		await lists.set('viber', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-viber.txt' });
+		await lists.set('riotgames', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/riotgames.txt' });
+		await lists.set('roblox', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/roblox.txt' });
+		await lists.set('vrchat', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/vrchat.txt' });
+		await lists.set('whatsapp', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/whatsapp.txt' });
+		await lists.set('google', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/google.txt' });
+		await lists.set('custom', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/custom.txt' });
 
 		// lua
 		await lua.set('zapret-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-lib.lua' });
 		await lua.set('zapret-antidpi', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-antidpi.lua' });
-		await lua.set('zapret-auto', { active: false, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-auto.lua' });
+		await lua.set('zapret-auto', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-auto.lua' });
+		await lua.set('bununban-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lua/bununban-lib.lua' });
 
 		// fakes
 		await blobs.set('quic_initial_www_google_com', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/quic_initial_www_google_com.bin' });
@@ -127,14 +145,7 @@ class BackendApp
 		await settings.set('antidpi.debug', false);
 
 		if( process.platform === 'win32' ){
-			// windivert filters
-			await lists.set('windivert-discord', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/windivert.filter/windivert_part.discord_media.txt' });
-			await lists.set('windivert-quic', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/windivert.filter/windivert_part.quic_initial_ietf.txt' });
-			await lists.set('windivert-stun', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/windivert.filter/windivert_part.stun.txt' });
-			await lists.set('windivert-wireguard', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret-win-bundle/refs/heads/master/zapret-winws/windivert.filter/windivert_part.wireguard.txt' });
-
-			// startup args
-			await settings.set('startup.args', '--wf-tcp-out=80,443 --wf-raw-part=@{windivert-discord} --wf-raw-part=@{windivert-stun} --wf-raw-part=@{windivert-wireguard} --wf-raw-part=@{windivert-quic}');
+			await settings.set('startup.args', '--wf-tcp-out=80,443-65535 --wf-udp-out=80,443-65535');
 		}
 
 		await this.syncProfiles(true);
