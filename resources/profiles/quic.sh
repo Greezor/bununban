@@ -1,0 +1,25 @@
+--filter-l7=quic
+    --hostlist={rulist}
+    --hostlist={apple}
+    --hostlist={cloudflare}
+    --hostlist={discord}
+    --hostlist={instagram}
+    --hostlist={meta}
+    --hostlist={rutor}
+    --hostlist={rutracker}
+    --hostlist={speedtest}
+    --hostlist={telegram}
+    --hostlist={tor}
+    --hostlist={twitter}
+    --hostlist={viber}
+    --hostlist={riotgames}
+    --hostlist={roblox}
+    --hostlist={vrchat}
+    --hostlist={whatsapp}
+    --hostlist={google}
+    --hostlist={custom}
+        --payload=quic_initial
+            --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=11-20:starts_with=0x17fefd
+            --lua-desync=send
+            --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=1-12
+            --lua-desync=drop

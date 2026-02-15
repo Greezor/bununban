@@ -1,0 +1,22 @@
+--filter-l7=tls
+    --hostlist={rulist}
+    --hostlist={apple}
+    --hostlist={cloudflare}
+    --hostlist={discord}
+    --hostlist={instagram}
+    --hostlist={meta}
+    --hostlist={rutor}
+    --hostlist={rutracker}
+    --hostlist={speedtest}
+    --hostlist={telegram}
+    --hostlist={tor}
+    --hostlist={twitter}
+    --hostlist={viber}
+    --hostlist={riotgames}
+    --hostlist={roblox}
+    --hostlist={vrchat}
+    --hostlist={whatsapp}
+    --hostlist={custom}
+        --payload=tls_client_hello
+            --lua-desync=mangled:blob=fake_default_tls:tls_mod=rnd,dupsid,sni=www.google.com:qty=11-16:tcp_ts_up:tcp_ts=-100500
+            --lua-desync=tangled:scope=tls:qty=5-13:dup=1-2:pre=2:origsplit=midsld+1:fakesplit=sld+6:seqovl=0-80:seqovl_step=2:fake_tls_mod=rnd,dupsid,sni=www.google.com:tcp_ts_up:tcp_ts=-100500

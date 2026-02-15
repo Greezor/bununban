@@ -1,0 +1,10 @@
+github.com
+github.io
+github.blog
+github.community
+raw.githubusercontent.com
+objects.githubusercontent.com
+avatars.githubusercontent.com
+media.githubusercontent.com
+githubusercontent.com
+githubcopilot.com

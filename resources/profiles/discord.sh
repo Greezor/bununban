@@ -1,0 +1,6 @@
+--filter-l7=discord
+    --payload=discord_ip_discovery
+        --lua-desync=mangled:rnd=1--1:qty=3-5
+        --lua-desync=send
+        --lua-desync=mangled:rnd=1--1:qty=1-3
+        --lua-desync=drop
