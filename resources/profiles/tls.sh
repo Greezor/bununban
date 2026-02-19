@@ -18,5 +18,5 @@
     --hostlist={whatsapp}
     --hostlist={custom}
         --payload=tls_client_hello
-            --lua-desync=mangled:blob=fake_default_tls:tls_mod=rnd,dupsid,sni=www.google.com:qty=11-16:tcp_ts_up:tcp_ts=-100500
-            --lua-desync=tangled:scope=tls:qty=5-13:dup=1-2:pre=2:origsplit=midsld+1:fakesplit=sld+6:seqovl=0-80:seqovl_step=2:fake_tls_mod=rnd,dupsid,sni=www.google.com:tcp_ts_up:tcp_ts=-100500
+            --lua-desync=mangled:blob=fake_default_tls:tls_mod=rnd,dupsid,sni=www.google.com:qty=8-11:tcp_ts_up:tcp_ts=-100500
+            --lua-desync=tangled:scope=tls:qty=8-13:dup=1-2:pre=2:origsplit=midsld+1:fakesplit=endsld:seqovl=0-80:seqovl_step=2:fake_tls_mod=rnd,dupsid,sni=www.google.com:tcp_ts_up:tcp_ts=-100500
