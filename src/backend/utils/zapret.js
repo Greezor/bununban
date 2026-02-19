@@ -88,8 +88,6 @@ class Zapret
 
 	async install(version)
 	{
-		await this.stop();
-
 		const releases = await this.getReleases();
 
 		let release = null;
@@ -107,70 +105,75 @@ class Zapret
 			release = releases.at(0);
 		}
 
-		if( await settings.get('antidpi.version') !== release.tag ){
-			let data;
+		if( await settings.get('antidpi.version') === release.tag )
+			return false;
 
-			try{
-				const buffer = await ketchup.arrayBuffer(`https://github.com/bol-van/zapret2/releases/download/${ release.tag }/zapret2-${ release.tag }.tar.gz`);
-				data = new Uint8Array(buffer);
-			}
-			catch(e){
-				throw new Error(`Tarball ${ release.tag } not found`, {
-					cause: {
-						code: 'TAR_NOT_FOUND',
-					},
-				});
-			}
+		await this.stop();
 
-			try{
-				const files = await parseTarGzip(data, {
-					filter: file => file.name.startsWith(`zapret2-${ release.tag }/binaries/${ this.platform }-${ this.arch }/`),
-				});
+		let data;
 
-				if( !files.length )
-					throw 0;
-
-				await this.deleteWindivert();
-
-				await $`rm -rf ${ join(APPDATA_DIR, 'bin') }`;
-				await $`mkdir -p ${ join(APPDATA_DIR, 'bin') }`;
-
-				for(const file of files){
-					const filename = file.name.split('/').pop();
-
-					if( !filename ) continue;
-
-					await Bun.write(
-						join(APPDATA_DIR, 'bin', filename),
-						new Blob([file.data]),
-					);
-				}
-
-				if( this.platform === 'windows' )
-					modifyBinarySubsystem(this.nfqws);
-				else
-					await $`chmod +x ${ this.nfqws }`;
-			}
-			catch(e){
-				throw new Error(`Tarball unpack error`, {
-					cause: {
-						code: 'UNTAR_FAILED',
-					},
-				});
-			}
-
-			await lua.set('zapret-lib', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-lib.lua` });
-			await lua.set('zapret-antidpi', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-antidpi.lua` });
-			await lua.set('zapret-auto', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-auto.lua` });
-
-			await app.syncLua(true);
-
-			await settings.set('antidpi', 'zapret2');
-			await settings.set('antidpi.version', release.tag);
+		try{
+			const buffer = await ketchup.arrayBuffer(`https://github.com/bol-van/zapret2/releases/download/${ release.tag }/zapret2-${ release.tag }.tar.gz`);
+			data = new Uint8Array(buffer);
 		}
+		catch(e){
+			throw new Error(`Tarball ${ release.tag } not found`, {
+				cause: {
+					code: 'TAR_NOT_FOUND',
+				},
+			});
+		}
+
+		try{
+			const files = await parseTarGzip(data, {
+				filter: file => file.name.startsWith(`zapret2-${ release.tag }/binaries/${ this.platform }-${ this.arch }/`),
+			});
+
+			if( !files.length )
+				throw 0;
+
+			await this.deleteWindivert();
+
+			await $`rm -rf ${ join(APPDATA_DIR, 'bin') }`;
+			await $`mkdir -p ${ join(APPDATA_DIR, 'bin') }`;
+
+			for(const file of files){
+				const filename = file.name.split('/').pop();
+
+				if( !filename ) continue;
+
+				await Bun.write(
+					join(APPDATA_DIR, 'bin', filename),
+					new Blob([file.data]),
+				);
+			}
+
+			if( this.platform === 'windows' )
+				modifyBinarySubsystem(this.nfqws);
+			else
+				await $`chmod +x ${ this.nfqws }`;
+		}
+		catch(e){
+			throw new Error(`Tarball unpack error`, {
+				cause: {
+					code: 'UNTAR_FAILED',
+				},
+			});
+		}
+
+		await lua.set('zapret-lib', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-lib.lua` });
+		await lua.set('zapret-antidpi', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-antidpi.lua` });
+		await lua.set('zapret-auto', { active: true, syncUrl: `https://raw.githubusercontent.com/bol-van/zapret2/${ release.commit }/lua/zapret-auto.lua` });
+
+		await app.syncLua(['zapret-lib', 'zapret-antidpi', 'zapret-auto']);
+
+		await settings.set('antidpi', 'zapret2');
+		await settings.set('antidpi.version', release.tag);
 
 		if( await settings.get('antidpi.active') )
 			await this.start();
+
+		return true;
 	}
 
 	async isInstalled()

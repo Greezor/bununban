@@ -57,6 +57,8 @@ class BackendApp
 			if( await settings.get('antidpi.active') )
 				await zapret.start();
 
+			await this.autoUpdate();
+
 			this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
 				await settings.get('updater.interval') ?? (1000 * 60 * 60 * 24)
 			));
@@ -157,33 +159,40 @@ class BackendApp
 
 	async autoUpdate(force = false)
 	{
-		const wasStarted = zapret.isStarted;
+		let restartNeeded = false;
 
-		await this.syncProfiles(force);
-		await this.syncLists(force);
-		await this.syncLua(force);
-		await this.syncBlobs(force);
+		restartNeeded = await this.syncProfiles(force) || restartNeeded;
+		restartNeeded = await this.syncLists(force) || restartNeeded;
+		restartNeeded = await this.syncLua(force) || restartNeeded;
+		restartNeeded = await this.syncBlobs(force) || restartNeeded;
 
-		await zapret.stop();
+		if( await this.updateZapret2(force) )
+			restartNeeded = false;
 
-		await this.updateZapret2(force);
 		await this.updateSelf(force);
 
-		if( wasStarted && !zapret.isStarted )
-			await zapret.start();
+		if( restartNeeded )
+			await zapret.restart();
 	}
 
 	async syncProfiles(force = false)
 	{
 		if( !( await settings.get('updater.profiles') || force ) )
-			return;
+			return false;
 
 		const profiles = await settings.get('profiles');
-		
+		let isUpdated = false;
+
 		for(const profile of profiles){
-			if( profile.syncUrl ){
+			if( profile.syncUrl && ( !Array.isArray(force) || force.includes(profile.name) ) ){
 				try{
-					profile.content = await ketchup.text(profile.syncUrl);
+					const content = await ketchup.text(profile.syncUrl);
+
+					if( profile.content === content )
+						continue;
+
+					profile.content = content;
+					isUpdated = true;
 				}
 				catch(e){
 					console.error(e)
@@ -191,61 +200,75 @@ class BackendApp
 			}
 		}
 
-		await settings.set('profiles', profiles);
+		if( isUpdated )
+			await settings.set('profiles', profiles);
+
+		return isUpdated;
 	}
 
-	async syncFiles(store, dir)
+	async syncFiles(store, dir, whitelist = null)
 	{
 		const files = await store.getAll();
+		let isUpdated = false;
 
 		for(const [ filename, { syncUrl } ] of Object.entries(files)){
-			if( syncUrl ){
+			if( syncUrl && ( !Array.isArray(whitelist) || whitelist.includes(filename) ) ){
 				try{
-					const content = await ketchup.text(syncUrl);
+					const content = await ketchup.arrayBuffer(syncUrl);
 
 					const dirPath = join(APPDATA_DIR, 'files', dir);
 					const filePath = join(dirPath, filename);
 
 					mkdirSync(dirPath, { recursive: true });
+
+					const file = Bun.file(filePath);
+
+					if( await file.exists() )
+						if( Bun.hash(await file.arrayBuffer()) === Bun.hash(content) )
+							continue;
+
 					await Bun.write(filePath, content);
+					isUpdated = true;
 				}
 				catch(e){
 					console.error(e)
 				}
 			}
 		}
+
+		return isUpdated;
 	}
 
 	async syncLists(force = false)
 	{
 		if( !( await settings.get('updater.lists') || force ) )
-			return;
+			return false;
 
-		await this.syncFiles(lists, 'lists');
+		return await this.syncFiles(lists, 'lists', force);
 	}
 
 	async syncLua(force = false)
 	{
 		if( !( await settings.get('updater.lua') || force ) )
-			return;
+			return false;
 
-		await this.syncFiles(lua, 'lua');
+		return await this.syncFiles(lua, 'lua', force);
 	}
 
 	async syncBlobs(force = false)
 	{
 		if( !( await settings.get('updater.blobs') || force ) )
-			return;
+			return false;
 
-		await this.syncFiles(blobs, 'blobs');
+		return await this.syncFiles(blobs, 'blobs', force);
 	}
 
 	async updateZapret2(force = false)
 	{
 		if( !( await settings.get('updater.zapret2') || force ) )
-			return;
+			return false;
 
-		await zapret.install();
+		return await zapret.install();
 	}
 
 	async updateSelf(force = false)
@@ -275,7 +298,7 @@ class BackendApp
 		const proc = Bun.spawn((
 			process.platform === 'win32'
 				? [ 'cmd', '/c', `timeout /t 1 /nobreak & move /y ${ updatePath } ${ binPath } & powershell Start-Process -FilePath ${ binPath }` ]
-				: [ 'bash', '-c', `sleep 1; mv -f ${ updatePath } ${ binPath }; ${ binPath }` ]
+				: [ 'bash', '-c', `sleep 1; mv -f ${ updatePath } ${ binPath }; chmod +x ${ binPath }; ${ binPath }` ]
 		), {
 			detached: true,
 			stdio: ['ignore', 'ignore', 'ignore'],

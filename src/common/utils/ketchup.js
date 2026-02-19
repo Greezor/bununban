@@ -26,7 +26,7 @@ const ketchup = async (url, params = {}, responseType = 'json') => {
 		return new Promise(resolve => {
 			setTimeout(async () => {
 				resolve(
-					await ketchup(url, { ...params, retry })
+					await ketchup(url, { ...params, retry }, responseType)
 				);
 			}, 1000);
 		});
