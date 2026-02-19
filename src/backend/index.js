@@ -135,16 +135,17 @@ class BackendApp
 		// settings
 		await settings.set('hostname', '0.0.0.0');
 		await settings.set('port', '8008');
-		await settings.set('updater.self', false);
-		await settings.set('updater.zapret2', false);
-		await settings.set('updater.profiles', false);
-		await settings.set('updater.lists', false);
-		await settings.set('updater.lua', false);
-		await settings.set('updater.blobs', false);
+		await settings.set('updater.self', true);
+		await settings.set('updater.zapret2', true);
+		await settings.set('updater.profiles', true);
+		await settings.set('updater.lists', true);
+		await settings.set('updater.lua', true);
+		await settings.set('updater.blobs', true);
 		await settings.set('updater.interval', 1000 * 60 * 60 * 24);
 		await settings.set('antidpi.debug', false);
 
 		if( process.platform === 'win32' ){
+			await settings.set('hostname', 'localhost');
 			await settings.set('startup.args', '--wf-tcp-out=80,443-65535 --wf-udp-out=80,443-65535');
 		}
 
