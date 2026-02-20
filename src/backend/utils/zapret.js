@@ -148,9 +148,7 @@ class Zapret
 				);
 			}
 
-			if( this.platform === 'windows' )
-				modifyBinarySubsystem(this.nfqws);
-			else
+			if( this.platform !== 'windows' )
 				await $`chmod +x ${ this.nfqws }`;
 		}
 		catch(e){
@@ -277,6 +275,7 @@ class Zapret
 				)
 			),
 		], {
+			windowsHide: true,
 			cwd: APPDATA_DIR,
 			stdout: 'pipe',
 			stderr: 'pipe',
