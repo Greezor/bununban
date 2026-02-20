@@ -28,7 +28,7 @@ const hostname = await settings.get('hostname') ?? '0.0.0.0';
 
 const sh = cmd => {
 	try{
-		execSync(cmd, { stdio: ['ignore', 'ignore', 'ignore'] })
+		execSync(cmd, { stdio: ['ignore', 'ignore', 'ignore'], windowsHide: true })
 	}
 	catch(e){}
 };
