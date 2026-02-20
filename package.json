@@ -6,14 +6,15 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development bun run ./src/index.js",
-    "build": "bun run build:windows-x64 && bun run win-fix && bun run build:linux-x64 && bun run build:linux-x64-musl && bun run build:linux-arm64 && bun run build:linux-arm64-musl",
-    "build:windows-x64": "bun build ./src/index.js --compile --target=bun-windows-x64 --minify --outfile dist/bununban-windows-x64 --windows-icon=\"./src/frontend/assets/favicon.ico\" --windows-hide-console --windows-title=bununban --windows-publisher=Greezor --windows-version=0.2.0 --windows-description=BunUnBan",
+    "dev:setup": "bun run build:windows-x64 && NODE_ENV=development bun --watch run ./setup/index.js",
+    "build": "bun run build:windows-x64 && bun run build:linux-x64 && bun run build:linux-x64-musl && bun run build:linux-arm64 && bun run build:linux-arm64-musl && bun run build:setup",
+    "build:windows-x64": "bun build ./src/index.js --compile --target=bun-windows-x64 --minify --outfile dist/bununban-windows-x64 --windows-icon=\"./src/frontend/assets/favicon.ico\" --windows-hide-console --windows-title=bununban --windows-publisher=Greezor --windows-version=0.2.0 --windows-description=BunUnBan && bun win-fix/modify-binary.js ./dist/bununban-windows-x64.exe",
     "build:linux-x64": "bun build ./src/index.js --compile --target=bun-linux-x64 --minify --outfile dist/bununban-linux-x64",
     "build:linux-x64-musl": "bun build ./src/index.js --compile --target=bun-linux-x64-musl --minify --outfile dist/bununban-linux-x64-musl",
     "build:linux-arm64": "bun build ./src/index.js --compile --target=bun-linux-arm64 --minify --outfile dist/bununban-linux-arm64",
     "build:linux-arm64-musl": "bun build ./src/index.js --compile --target=bun-linux-arm64-musl --minify --outfile dist/bununban-linux-arm64-musl",
-    "dockerize:arm64": "bun run build:linux-arm64 && docker run --name bununban --restart always --net=host --cap-add=NET_ADMIN -d -v ./dist:/bununban -w /bununban arm64v8/ubuntu:latest ./bununban-linux-arm64 --homedir=/bununban",
-    "win-fix": "bun win-fix/modify-binary.js ./dist/bununban-windows-x64.exe"
+    "build:setup": "bun build ./setup/index.js --compile --target=bun-windows-x64 --minify --outfile dist/bununban-windows-setup --windows-icon=\"./src/frontend/assets/favicon.ico\" --windows-hide-console --windows-title=bununban-setup --windows-publisher=Greezor --windows-version=0.2.0 --windows-description=BunUnBan && bun win-fix/modify-binary.js ./dist/bununban-windows-setup.exe",
+    "dockerize:arm64": "bun run build:linux-arm64 && docker run --name bununban --restart always --net=host --cap-add=NET_ADMIN -d -v ./dist:/bununban -w /bununban arm64v8/ubuntu:latest ./bununban-linux-arm64 --homedir=/bununban"
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",
@@ -24,7 +25,8 @@
     "primevue": "^4.5.4",
     "string-argv": "^0.3.2",
     "vue": "^3.5.26",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "webview-bun": "^2.4.0"
   },
   "devDependencies": {
     "@iconify-json/fa7-solid": "^1.2.3",

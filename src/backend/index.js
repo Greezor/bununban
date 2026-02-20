@@ -29,10 +29,10 @@ class BackendApp
 			join(APPDATA_DIR, 'settings')
 		);
 
-		if( !( await settingsFile.exists() ) )
-			await this.createDefaultAppdata();
+		const isFirstLaunch = !( await settingsFile.exists() );
 
-		await settings.set('version', packageJSON.version);
+		if( isFirstLaunch )
+			await this.createDefaultAppdata();
 
 		try{
 			const port = await settings.get('port') ?? '8008';
@@ -57,7 +57,8 @@ class BackendApp
 			if( await settings.get('antidpi.active') )
 				await zapret.start();
 
-			await this.autoUpdate();
+			if( !isFirstLaunch )
+				await this.autoUpdate();
 
 			this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
 				await settings.get('updater.interval') ?? (1000 * 60 * 60 * 24)
@@ -282,7 +283,7 @@ class BackendApp
 		const html = await ketchup.text('https://github.com/Greezor/bununban/releases/latest');
 		const [ _, latest ] = html.match(/href="\/Greezor\/bununban\/releases\/tag\/(.*?)"/ms);
 
-		if( await settings.get('version') === latest )
+		if( packageJSON.version === latest )
 			return;
 
 		const path = process.execPath.split(/\\|\//);

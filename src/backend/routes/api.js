@@ -121,7 +121,6 @@ export default {
 			else
 				await zapret.stop();
 
-			await new Promise(resolve => setTimeout(resolve, 1000));
 			await settings.set('antidpi.active', zapret.isStarted);
 
 			return OK;
