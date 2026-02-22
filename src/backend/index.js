@@ -277,6 +277,16 @@ class BackendApp
 		if( process.env.NODE_ENV === 'development' )
 			return;
 
+		const path = process.execPath.split(/\\|\//);
+		const bin = path.pop();
+
+		if( path[0] == '' )
+			path[0] = '/';
+
+		const updateScript = join( ...path, process.platform === 'win32' ? 'bununban-update.cmd' : 'bununban-update.sh' );
+
+		await Bun.$`rm -rf ${ updateScript }`;
+
 		if( !( await settings.get('updater.self') || force ) )
 			return;
 
@@ -286,28 +296,31 @@ class BackendApp
 		if( packageJSON.version === latest )
 			return;
 
-		const path = process.execPath.split(/\\|\//);
-		const bin = path.pop();
 		const updatePath = join( ...path, 'update.bin' );
-		const binPath = join( ...path, bin );
 
-		await Bun.write(
-			updatePath,
-			await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/latest/download/${ bin }`),
-		);
+		await Bun.write(updatePath, await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/latest/download/${ bin }`));
 
-		const proc = Bun.spawn((
-			process.platform === 'win32'
-				? [ 'cmd', '/c', `timeout /t 1 /nobreak & move /y ${ updatePath } ${ binPath } & powershell Start-Process -FilePath ${ binPath }` ]
-				: [ 'bash', '-c', `sleep 1; mv -f ${ updatePath } ${ binPath }; chmod +x ${ binPath }; ${ binPath }` ]
-		), {
-			detached: true,
-			stdio: ['ignore', 'ignore', 'ignore'],
-		});
+		if( process.platform === 'win32' ){
+			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }'"`);
 
-		proc.unref();
+			Bun.spawn([ 'cmd', '/c', updateScript ], {
+				windowsHide: true,
+				detached: true,
+				stdio: ['ignore', 'ignore', 'ignore'],
+			}).unref();
+		}
+		else
+		{
+			await Bun.write(updateScript, `sleep 2; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }"`);
 
-		await this.stop();
+			Bun.spawn([ 'sh', updateScript ], {
+				windowsHide: true,
+				detached: true,
+				stdio: ['ignore', 'ignore', 'ignore'],
+			}).unref();
+		}
+
+		await this.stop(true);
 
 		process.exit();
 	}
