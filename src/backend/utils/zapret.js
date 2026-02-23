@@ -9,7 +9,6 @@ import stringArgv from 'string-argv'
 import ketchup from '../../common/utils/ketchup'
 
 import { APPDATA_DIR } from './appdata'
-import modifyBinarySubsystem from './modifyBinarySubsystem'
 
 import lists from '../stores/lists'
 import lua from '../stores/lua'
