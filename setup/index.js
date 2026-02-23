@@ -1,6 +1,3 @@
-import { Webview, SizeHint } from 'webview-bun'
-import bin from '../dist/bununban-windows-x64.exe' with { type: 'file' }
-
 import { join } from 'node:path'
 import { execSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
@@ -8,16 +5,24 @@ import { writeFileSync } from 'node:fs'
 import { APPDATA_DIR } from '../src/backend/utils/appdata'
 import settings from '../src/backend/stores/settings'
 
+import bin from '../dist/bununban-windows-x64.exe' with { type: 'file' }
+import dll from '../node_modules/@webui-dev/bun-webui/src/webui-windows-msvc-x64/webui-2.dll' with { type: 'file' }
+
+if( process.env.NODE_ENV === 'production' )
+	await Bun.write('./webui-windows-msvc-x64/webui-2.dll', await Bun.file(dll).arrayBuffer());
+
+const { WebUI } = await import('@webui-dev/bun-webui');
+
 const BIN_PATH = 'C:\\bununban\\bununban-windows-x64.exe';
 const BIN = await Bun.file(bin).arrayBuffer();
 
-const webview = new Webview(process.env.NODE_ENV === 'development', {
-	width: 500,
-	height: 250,
-	hint: SizeHint.FIXED,
-});
+const window = new WebUI();
 
-webview.title = 'Setup';
+window.setSize(500, 250);
+window.setFrameless(true);
+window.setTransparent(true);
+window.setResizable(false);
+window.setCenter();
 
 const isInstalled = await Bun.file(BIN_PATH).exists();
 const settingsFile = Bun.file( join(APPDATA_DIR, 'settings') );
@@ -33,7 +38,9 @@ const sh = cmd => {
 	catch(e){}
 };
 
-webview.bind('install', clr => {
+window.bind('installApp', async e => {
+	const clr = e.arg.boolean(0);
+
 	if( clr )
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
 
@@ -48,7 +55,9 @@ webview.bind('install', clr => {
 		: `http://localhost:8008`;
 });
 
-webview.bind('uninstall', clr => {
+window.bind('uninstallApp', async e => {
+	const clr = e.arg.boolean(0);
+
 	sh(`schtasks /delete /tn "bununban" /f`);
 	sh(`taskkill /f /im bununban-windows-x64.exe`);
 
@@ -63,19 +72,23 @@ webview.bind('uninstall', clr => {
 	return true;
 });
 
-webview.bind('openUrl', url => {
+window.bind('openUrl', async e => {
+	const url = e.arg.string(0);
 	sh(`start ${ url }`);
 	return true;
 });
 
-webview.bind('exit', () => {
-	webview.destroy();
-	process.exit();
+window.bind('closeSetup', async () => {
+	window.close();
+	WebUI.exit();
 });
 
-webview.setHTML(`
+window.show(`
 	<html>
 		<head>
+			<script src="webui.js"></script>
+			<title>Setup</title>
+			<meta charset="UTF-8">
 			<style>
 				*{
 					margin: 0;
@@ -92,12 +105,34 @@ webview.setHTML(`
 					gap: 10px;
 					width: 100vw;
 					height: 100vh;
-					background-color: #fff;
 					font-family: system-ui;
 					font-size: 16px;
 					color: #333;
 					user-select: none;
 					overflow: hidden;
+				}
+
+				body:before{
+					content: '';
+					position: fixed;
+					top: 3px;
+					left: 4px;
+					right: 4px;
+					bottom: 5px;
+					background-color: #fff;
+					border-radius: 5px;
+					box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+					z-index: -1;
+				}
+
+				body:after{
+					content: '';
+					position: fixed;
+					top: 3px;
+					left: 4px;
+					right: 4px;
+					height: 50px;
+					app-region: drag;
 				}
 
 				h1{
@@ -233,7 +268,7 @@ webview.setHTML(`
 							if( url )
 								await openUrl(url);
 
-							await exit();
+							await closeSetup();
 						});
 				}
 
@@ -247,7 +282,7 @@ webview.setHTML(`
 						</div>
 					\`;
 
-					const url = await install(clr);
+					const url = await installApp(clr);
 
 					setStatus('Загрузка ресурсов...');
 
@@ -266,7 +301,7 @@ webview.setHTML(`
 						</div>
 					\`;
 
-					await uninstall(clr);
+					await uninstallApp(clr);
 
 					finish('Закрыть');
 				});
@@ -275,6 +310,6 @@ webview.setHTML(`
 	</html>
 `);
 
-webview.run();
+await WebUI.wait();
 
 process.exit();
