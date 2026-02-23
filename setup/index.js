@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { homedir } from 'node:os'
 import { execSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 
@@ -6,6 +7,8 @@ import { APPDATA_DIR } from '../src/backend/utils/appdata'
 import settings from '../src/backend/stores/settings'
 
 import bin from '../dist/bununban-windows-x64.exe' with { type: 'file' }
+import ico from '../src/frontend/assets/favicon.ico' with { type: 'file' }
+import lnk from './Bununban.lnk' with { type: 'file' }
 import dll from '../node_modules/@webui-dev/bun-webui/src/webui-windows-msvc-x64/webui-2.dll' with { type: 'file' }
 
 if( process.env.NODE_ENV === 'production' )
@@ -15,6 +18,12 @@ const { WebUI } = await import('@webui-dev/bun-webui');
 
 const BIN_PATH = 'C:\\bununban\\bununban-windows-x64.exe';
 const BIN = await Bun.file(bin).arrayBuffer();
+
+const ICO_PATH = 'C:\\bununban\\icon.ico';
+const ICO = await Bun.file(ico).arrayBuffer();
+
+const LNK_PATH = join(homedir(), 'Desktop', 'Bununban.lnk');
+const LNK = await Bun.file(lnk).arrayBuffer();
 
 const window = new WebUI();
 
@@ -46,6 +55,8 @@ window.bind('installApp', async e => {
 
 	sh(`mkdir C:\\bununban`);
 	writeFileSync(BIN_PATH, BIN);
+	writeFileSync(ICO_PATH, ICO);
+	writeFileSync(LNK_PATH, LNK);
 	sh(`netsh interface tcp set global timestamps=enabled`);
 	sh(`schtasks /create /tn "bununban" /tr "${ BIN_PATH }" /sc onlogon /rl highest`);
 	sh(`schtasks /run /tn "bununban"`);
@@ -65,6 +76,7 @@ window.bind('uninstallApp', async e => {
 	sh(`sc stop windivert`);
 
 	sh(`rmdir /s /q C:\\bununban`);
+	sh(`del /f /q "${ LNK_PATH }"`);
 
 	if( clr )
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
