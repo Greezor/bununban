@@ -6,7 +6,6 @@ import { writeFileSync } from 'node:fs'
 import { APPDATA_DIR } from '../src/backend/utils/appdata'
 import settings from '../src/backend/stores/settings'
 
-import bin from '../dist/bununban-windows-x64.exe' with { type: 'file' }
 import ico from '../src/frontend/assets/favicon.ico' with { type: 'file' }
 import lnk from './Bununban.lnk' with { type: 'file' }
 import dll from '../node_modules/@webui-dev/bun-webui/src/webui-windows-msvc-x64/webui-2.dll' with { type: 'file' }
@@ -16,7 +15,13 @@ if( process.env.NODE_ENV === 'production' )
 
 const { WebUI } = await import('@webui-dev/bun-webui');
 
-const BIN_PATH = 'C:\\bununban\\bununban-windows-x64.exe';
+const BIN_SUFFIX = process.env.NO_SIMD === '1' ? '-no-simd.exe' : '.exe';
+
+const { default: bin } = await import(`../dist/bununban-windows-x64${ BIN_SUFFIX }`, {
+	with: { type: 'file' },
+});
+
+const BIN_PATH = `C:\\bununban\\bununban-windows-x64${ BIN_SUFFIX }`;
 const BIN = await Bun.file(bin).arrayBuffer();
 
 const ICO_PATH = 'C:\\bununban\\icon.ico';
@@ -33,7 +38,12 @@ window.setTransparent(true);
 window.setResizable(false);
 window.setCenter();
 
-const isInstalled = await Bun.file(BIN_PATH).exists();
+const isInstalled = (
+	await Bun.file('C:\\bununban\\bununban-windows-x64.exe').exists()
+	||
+	await Bun.file('C:\\bununban\\bununban-windows-x64-no-simd.exe').exists()
+);
+
 const settingsFile = Bun.file( join(APPDATA_DIR, 'settings') );
 const hasSettings = await settingsFile.exists();
 
@@ -71,6 +81,7 @@ window.bind('uninstallApp', async e => {
 
 	sh(`schtasks /delete /tn "bununban" /f`);
 	sh(`taskkill /f /im bununban-windows-x64.exe`);
+	sh(`taskkill /f /im bununban-windows-x64-no-simd.exe`);
 
 	sh(`sc delete windivert`);
 	sh(`sc stop windivert`);
