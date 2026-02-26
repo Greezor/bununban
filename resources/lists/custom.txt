@@ -3,3 +3,5 @@ tampermonkey.net
 fandom.com
 codecademy.com
 adguard.com
+anydesk.com
+artstation.com
