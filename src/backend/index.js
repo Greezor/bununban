@@ -4,7 +4,8 @@ import { mkdirSync } from 'node:fs'
 import ketchup from '../common/utils/ketchup'
 
 import api from './routes/api'
-import frontend from '../frontend/index.html'
+import frontend from './routes/frontend'
+
 import zapret from './utils/zapret'
 
 import lists from './stores/lists'
@@ -46,7 +47,7 @@ class BackendApp
 
 				routes: {
 					...api,
-					'/*': frontend,
+					...frontend,
 				},
 
 				// temporary fix bun bug with cache (etag not updating)
