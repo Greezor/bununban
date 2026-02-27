@@ -78,7 +78,7 @@ export default {
 		<div class="${ style.page }">
 			<div class="${ style.header }">
 				<img src="${ logo }" width="30" />
-				<span>BunUnBan</span>
+				<span>Bununban</span>
 			</div>
 
 			<div class="${ style.body }">
