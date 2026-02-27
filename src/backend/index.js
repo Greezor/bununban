@@ -49,7 +49,8 @@ class BackendApp
 					'/*': frontend,
 				},
 
-				development: process.env.NODE_ENV === 'development',
+				// temporary fix bun bug with cache (etag not updating)
+				development: true // process.env.NODE_ENV === 'development',
 			});
 
 			console.info(`Server started at http://${ hostname == '0.0.0.0' ? 'localhost' : hostname }:${ port }`);
