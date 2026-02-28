@@ -264,6 +264,7 @@ class Zapret
 				await this.replaceVarsWithLists(
 					( await settings.get('profiles') ?? [] )
 						.filter(({ active }) => active)
+						.sort((a, b) => (b?.priority ?? 0) - (a?.priority ?? 0))
 						.map(({ content }) => (
 							content
 								.replace(/\r?\n/g, ' ')

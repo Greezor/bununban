@@ -8,6 +8,7 @@ import Default from '../layouts/Default'
 
 import ToggleSwitch from 'primevue/toggleswitch'
 import InputText from 'primevue/inputtext'
+import InputNumber from 'primevue/inputnumber'
 import InputGroup from 'primevue/inputgroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import FloatLabel from 'primevue/floatlabel'
@@ -76,11 +77,13 @@ const style = {
 	`,
 
 	input: css`
-		background: transparent!important;
-		border-radius: 0!important;
-		border-color: #333!important;
-		border-width: 0 0 1px 0!important;
-		color: currentColor!important;
+		&, input{
+			background: transparent!important;
+			border-radius: 0!important;
+			border-color: #333!important;
+			border-width: 0 0 1px 0!important;
+			color: currentColor!important;
+		}
 	`,
 
 	inputInvalid: css`
@@ -130,7 +133,10 @@ export default {
 		const mobileView = ref(false);
 
 		const profiles = ref([]);
-		const reordering = ref(false);
+		const sortedProfiles = computed(() => (
+			profiles.value.slice()
+				.sort((a, b) => (b?.priority ?? 0) - (a?.priority ?? 0))
+		));
 
 		const selectedProfileName = ref(null);
 
@@ -141,7 +147,8 @@ export default {
 
 		const createForm = () => ({
 			name: '',
-			active: true,
+			active: false,
+			priority: null,
 			syncUrl: '',
 			content: '',
 		})
@@ -291,7 +298,7 @@ export default {
 			editorLoading,
 			mobileView,
 			profiles,
-			reordering,
+			sortedProfiles,
 			selectedProfileName,
 			selectedProfile,
 			form,
@@ -315,137 +322,113 @@ export default {
 			@back="selectedProfileName = null">
 
 			<template #sidebar>
-				<template v-if="reordering">
-					<Button
-						@click="() => {
-							reordering = false;
-							sync();	
-						}"
-						raised>
-						<Icon icon="material-symbols:check-rounded" width="20" />
-						<span>Готово</span>
-					</Button>
+				<Button
+					@click="
+						selectedProfileName = null;
+						mobileView = true;
+						clearForm();
+					"
+					raised>
+					<Icon icon="material-symbols:add-circle-outline-rounded" width="20" />
+					<span>Новый профиль</span>
+				</Button>
 
-					<OrderList
-						class="${ style.list }"
-						v-model="profiles"
-						data-key="name">
-						<template #option="{ option }">
-							<div class="${ style.listItem }">
-								<span class="${ style.listItemName }">{{ option.name }}</span>
-							</div>
-						</template>
-					</OrderList>
-				</template>
+				<Listbox
+					class="${ style.list }"
+					v-model="selectedProfileName"
+					:options="sortedProfiles"
+					optionValue="name">
+					<template #option="{ option }">
+						<div class="${ style.listItem }">
+							<span class="${ style.listItemName }">{{ option.name }}</span>
 
-				<template v-else>
-					<Button
-						@click="
-							selectedProfileName = null;
-							mobileView = true;
-							clearForm();
-						"
-						raised>
-						<Icon icon="material-symbols:add-circle-outline-rounded" width="20" />
-						<span>Новый профиль</span>
-					</Button>
+							<div class="${ style.listItemSpace }"></div>
 
-					<Button
-						v-if="profiles.length > 1"
-						@click="reordering = true"
-						variant="text"
-						raised>
-						<Icon icon="material-symbols:compare-arrows-rounded" width="20" rotate="90deg" />
-						<span>Изменить порядок</span>
-					</Button>
+							<ToggleSwitch
+								class="${ style.listItemSwitch }"
+								v-model="option.active"
+								@click.stop
+								@update:model-value="sync()" />
 
-					<Listbox
-						class="${ style.list }"
-						v-model="selectedProfileName"
-						:options="profiles"
-						optionValue="name">
-						<template #option="{ option }">
-							<div class="${ style.listItem }">
-								<span class="${ style.listItemName }">{{ option.name }}</span>
+							<Button
+								class="${ style.listItemRemoveBtn }"
+								variant="text"
+								@click.stop="
+									$confirm.require({
+										group: 'remove-profile',
+										header: 'Вы уверены?',
+										message: option.name,
+										acceptLabel: 'Да',
+										rejectLabel: 'Нет',
+										acceptProps: {
+											severity: 'danger',
+										},
+										rejectProps: {
+											severity: 'secondary',
+											variant: 'outlined',
+										},
+										accept: () => removeProfile(option.name),
+									})
+								">
+								<Icon icon="material-symbols:close-rounded" width="20" />
+							</Button>
+						</div>
+					</template>
 
-								<div class="${ style.listItemSpace }"></div>
-
-								<ToggleSwitch
-									class="${ style.listItemSwitch }"
-									v-model="option.active"
-									@click.stop
-									@update:model-value="sync()" />
-
-								<Button
-									class="${ style.listItemRemoveBtn }"
-									variant="text"
-									@click.stop="
-										$confirm.require({
-											group: 'remove-profile',
-											header: 'Вы уверены?',
-											message: option.name,
-											acceptLabel: 'Да',
-											rejectLabel: 'Нет',
-											acceptProps: {
-												severity: 'danger',
-											},
-											rejectProps: {
-												severity: 'secondary',
-												variant: 'outlined',
-											},
-											accept: () => removeProfile(option.name),
-										})
-									">
-									<Icon icon="material-symbols:close-rounded" width="20" />
-								</Button>
-							</div>
-						</template>
-
-						<template #empty>
-							<div>Пусто</div>
-						</template>
-					</Listbox>
-				</template>
+					<template #empty>
+						<div>Пусто</div>
+					</template>
+				</Listbox>
 			</template>
 
 			<div class="${ style.form }">
-				<template v-if="!reordering">
-					<FloatLabel variant="in">
-						<label class="${ style.label }">Название</label>
+				<FloatLabel variant="in">
+					<label class="${ style.label }">Название</label>
+					<InputText
+						class="${ style.input }"
+						:class="{ '${ style.inputInvalid }': !!form.name && !profileNameIsValid }"
+						v-model="form.name"
+						fluid />
+				</FloatLabel>
+
+				<FloatLabel variant="in">
+					<label class="${ style.label }">URL для синхронизации</label>
+					<InputGroup>
 						<InputText
 							class="${ style.input }"
-							:class="{ '${ style.inputInvalid }': !!form.name && !profileNameIsValid }"
-							v-model="form.name"
+							:class="{ '${ style.inputInvalid }': !!form.syncUrl && !syncUrlIsValid }"
+							v-model="form.syncUrl"
 							fluid />
-					</FloatLabel>
 
-					<FloatLabel variant="in">
-						<label class="${ style.label }">URL для синхронизации</label>
-						<InputGroup>
-							<InputText
-								class="${ style.input }"
-								:class="{ '${ style.inputInvalid }': !!form.syncUrl && !syncUrlIsValid }"
-								v-model="form.syncUrl"
-								fluid />
+						<InputGroupAddon class="${ style.input }">
+							<Button
+								v-if="syncUrlIsValid"
+								variant="link"
+								@click="syncContent()">
+								<Icon icon="material-symbols:refresh-rounded" width="20" />
+							</Button>
+						</InputGroupAddon>
+					</InputGroup>
+				</FloatLabel>
 
-							<InputGroupAddon class="${ style.input }">
-								<Button
-									v-if="syncUrlIsValid"
-									variant="link"
-									@click="syncContent()">
-									<Icon icon="material-symbols:refresh-rounded" width="20" />
-								</Button>
-							</InputGroupAddon>
-						</InputGroup>
-					</FloatLabel>
+				<FloatLabel variant="in">
+					<label class="${ style.label }">Приоритет</label>
+					<InputNumber
+						class="${ style.input }"
+						show-buttons
+						:min="0"
+						:max="99999"
+						:format="false"
+						v-model="form.priority"
+						fluid />
+				</FloatLabel>
 
-					<Monaco
-						class="${ style.editor }"
-						:class="{ '${ style.editorDisabled }': !!form.syncUrl }"
-						v-model="form.content"
-						:options="editorOptions"
-						:loading="editorLoading" />
-				</template>
+				<Monaco
+					class="${ style.editor }"
+					:class="{ '${ style.editorDisabled }': !!form.syncUrl }"
+					v-model="form.content"
+					:options="editorOptions"
+					:loading="editorLoading" />
 			</div>
 
 			<Butn
@@ -470,6 +453,7 @@ export default {
 		Icon,
 		ToggleSwitch,
 		InputText,
+		InputNumber,
 		InputGroup,
 		InputGroupAddon,
 		FloatLabel,
