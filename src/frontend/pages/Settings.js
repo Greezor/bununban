@@ -89,13 +89,16 @@ export default {
 			'antidpi.debug': false,
 			'startup.args': '',
 
-			'updater.self': false,
-			'updater.zapret2': false,
-			'updater.profiles': false,
-			'updater.lists': false,
-			'updater.lua': false,
-			'updater.blobs': false,
+			'updater.self': true,
+			'updater.zapret2': true,
+			'updater.profiles': true,
+			'updater.lists': true,
+			'updater.lua': true,
+			'updater.blobs': true,
+			'updater.auto-add': true,
+			'updater.auto-delete': true,
 			'updater.interval': 1000 * 60 * 60 * 24,
+			'updater.on-startup': true,
 
 			'hostname': '0.0.0.0',
 			'port': '8008',
@@ -321,6 +324,24 @@ export default {
 					<span>Синхронизировать blob'ы</span>
 					<ToggleSwitch
 						v-model="params['updater.blobs']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Добавлять новые и отсутствующие ресурсы из репозитория</span>
+					<ToggleSwitch
+						v-model="params['updater.auto-add']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Удалять ресурсы которые были удалены из источника</span>
+					<ToggleSwitch
+						v-model="params['updater.auto-delete']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Выполнять поиск и установку обновлений при запуске</span>
+					<ToggleSwitch
+						v-model="params['updater.on-startup']" />
 				</div>
 
 				<div class="${ style.settingsRow }">

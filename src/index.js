@@ -1,6 +1,6 @@
 import app from './backend/index'
 
-app.start()
+app.start(true)
 
 process.on('SIGINT', async () => {
 	await app.stop(true);

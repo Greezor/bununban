@@ -22,7 +22,7 @@ class BackendApp
 	#server = null;
 	#autoUpdateInterval = null;
 
-	async start()
+	async start(startup = false)
 	{
 		if( this.#server ) return;
 
@@ -59,7 +59,9 @@ class BackendApp
 			if( await settings.get('antidpi.active') )
 				await zapret.start();
 
-			if( !isFirstLaunch )
+			const updateOnStartup = await settings.get('updater.on-startup') ?? true;
+
+			if( startup && !isFirstLaunch && updateOnStartup )
 				await this.autoUpdate();
 
 			this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
@@ -93,49 +95,70 @@ class BackendApp
 		await this.start();
 	}
 
+	get defaultResources()
+	{
+		return {
+			profiles: [
+				{ name: 'google', active: true, priority: 3, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/google.sh', content: '' },
+				{ name: 'quic', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/quic.sh', content: '' },
+				{ name: 'discord', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/discord.sh', content: '' },
+				{ name: 'stun', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/stun.sh', content: '' },
+				{ name: 'wireguard', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/wireguard.sh', content: '' },
+				{ name: 'tls', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/tls.sh', content: '' },
+				{ name: 'unknown-udp', active: true, priority: 1, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/unknown-udp.sh', content: '' },
+			],
+			lists: [
+				[ 'rulist', { syncUrl: 'https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt' } ],
+				[ 'apple', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-apple.txt' } ],
+				[ 'cloudflare', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-cloudflare.txt' } ],
+				[ 'discord', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-discord.txt' } ],
+				[ 'instagram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-instagram.txt' } ],
+				[ 'meta', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-meta.txt' } ],
+				[ 'rutor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutor.txt' } ],
+				[ 'rutracker', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutracker.txt' } ],
+				[ 'speedtest', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-speedtest.txt' } ],
+				[ 'telegram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-telegram.txt' } ],
+				[ 'tor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-tor.txt' } ],
+				[ 'twitter', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-twitter.txt' } ],
+				[ 'viber', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-viber.txt' } ],
+				[ 'riotgames', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/riotgames.txt' } ],
+				[ 'roblox', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/roblox.txt' } ],
+				[ 'vrchat', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/vrchat.txt' } ],
+				[ 'whatsapp', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/whatsapp.txt' } ],
+				[ 'google', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/google.txt' } ],
+				[ 'custom', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/custom.txt' } ],
+			],
+			lua: [
+				[ 'zapret-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-lib.lua' } ],
+				[ 'zapret-antidpi', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-antidpi.lua' } ],
+				[ 'zapret-auto', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-auto.lua' } ],
+				[ 'bununban-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lua/bununban-lib.lua' } ],
+			],
+			blobs: [
+				[ 'quic_initial_www_google_com', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/quic_initial_www_google_com.bin' } ],
+				[ 'tls_clienthello_www_google_com', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/tls_clienthello_www_google_com.bin' } ],
+			],
+		};
+	}
+
 	async createDefaultAppdata()
 	{
+		const defs = this.defaultResources;
+
 		// profiles
-		await settings.set('profiles', [
-			{ 'name': 'quic', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/quic.sh', 'content': '' },
-			{ 'name': 'discord', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/discord.sh', 'content': '' },
-			{ 'name': 'stun', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/stun.sh', 'content': '' },
-			{ 'name': 'wireguard', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/wireguard.sh', 'content': '' },
-			{ 'name': 'unknown-udp', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/unknown-udp.sh', 'content': '' },
-			{ 'name': 'google', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/google.sh', 'content': '' },
-			{ 'name': 'tls', 'active': true,'syncUrl': 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/tls.sh', 'content': '' },
-		]);
+		await settings.set('profiles', defs.profiles);
 
 		// lists
-		await lists.set('rulist', { syncUrl: 'https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt' });
-		await lists.set('apple', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-apple.txt' });
-		await lists.set('cloudflare', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-cloudflare.txt' });
-		await lists.set('discord', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-discord.txt' });
-		await lists.set('instagram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-instagram.txt' });
-		await lists.set('meta', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-meta.txt' });
-		await lists.set('rutor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutor.txt' });
-		await lists.set('rutracker', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutracker.txt' });
-		await lists.set('speedtest', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-speedtest.txt' });
-		await lists.set('telegram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-telegram.txt' });
-		await lists.set('tor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-tor.txt' });
-		await lists.set('twitter', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-twitter.txt' });
-		await lists.set('viber', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-viber.txt' });
-		await lists.set('riotgames', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/riotgames.txt' });
-		await lists.set('roblox', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/roblox.txt' });
-		await lists.set('vrchat', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/vrchat.txt' });
-		await lists.set('whatsapp', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/whatsapp.txt' });
-		await lists.set('google', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/google.txt' });
-		await lists.set('custom', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/custom.txt' });
+		for(let [ key, def ] of defs.lists)
+			await lists.set(key, def);
 
 		// lua
-		await lua.set('zapret-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-lib.lua' });
-		await lua.set('zapret-antidpi', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-antidpi.lua' });
-		await lua.set('zapret-auto', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/lua/zapret-auto.lua' });
-		await lua.set('bununban-lib', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lua/bununban-lib.lua' });
+		for(let [ key, def ] of defs.lua)
+			await lua.set(key, def);
 
 		// fakes
-		await blobs.set('quic_initial_www_google_com', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/quic_initial_www_google_com.bin' });
-		await blobs.set('tls_clienthello_www_google_com', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/tls_clienthello_www_google_com.bin' });
+		for(let [ key, def ] of defs.blobs)
+			await blobs.set(key, def);
 
 		// settings
 		await settings.set('hostname', '0.0.0.0');
@@ -146,7 +169,10 @@ class BackendApp
 		await settings.set('updater.lists', true);
 		await settings.set('updater.lua', true);
 		await settings.set('updater.blobs', true);
+		await settings.set('updater.auto-add', true);
+		await settings.set('updater.auto-delete', true);
 		await settings.set('updater.interval', 1000 * 60 * 60 * 24);
+		await settings.set('updater.on-startup', true);
 		await settings.set('antidpi.debug', false);
 
 		if( process.platform === 'win32' ){
@@ -174,67 +200,135 @@ class BackendApp
 
 		await this.updateSelf(force);
 
-		if( restartNeeded )
+		if( restartNeeded && await settings.get('antidpi.active') )
 			await zapret.restart();
 	}
 
 	async syncProfiles(force = false)
 	{
-		if( !( await settings.get('updater.profiles') || force ) )
-			return false;
+		const doSync = await settings.get('updater.profiles') ?? true;
+		const autoAdd = await settings.get('updater.auto-add') ?? true;
+		const autoDelete = await settings.get('updater.auto-delete') ?? true;
 
 		const profiles = await settings.get('profiles');
 		let isUpdated = false;
 
-		for(const profile of profiles){
-			if( profile.syncUrl && ( !Array.isArray(force) || force.includes(profile.name) ) ){
-				try{
-					const content = await ketchup.text(profile.syncUrl);
+		if( autoAdd ){
+			for(const def of this.defaultResources.profiles){
+				const index = profiles.findIndex(({ name }) => name === def.name);
+				const profile = profiles?.[index];
 
-					if( profile.content === content )
-						continue;
-
-					profile.content = content;
+				if( !profile ){
+					profiles.push(def);
 					isUpdated = true;
 				}
-				catch(e){
-					console.error(e)
+				else
+				{
+					const { content: contentA, ...profileA } = def;
+					const { content: contentB, ...profileB } = profile;
+
+					if( !Bun.deepEquals(profileA, profileB) ){
+						profiles[index] = def;
+						isUpdated = true;
+					}
+				}
+			}
+		}
+
+		const profilesSet = new Set(profiles);
+
+		if( doSync || force ){
+			for(const profile of profiles.slice()){
+				if( profile.syncUrl && ( !Array.isArray(force) || force.includes(profile.name) ) ){
+					try{
+						const response = await ketchup.raw(profile.syncUrl);
+						
+						if( autoDelete && [404, 410, 451].includes(response.status) ){
+							profilesSet.delete(profile);
+							isUpdated = true;
+							continue;
+						}
+
+						const content = await response.text();
+
+						if( profile.content === content )
+							continue;
+
+						profile.content = content;
+						isUpdated = true;
+					}
+					catch(e){
+						console.error(e)
+					}
 				}
 			}
 		}
 
 		if( isUpdated )
-			await settings.set('profiles', profiles);
+			await settings.set('profiles', [ ...profilesSet ]);
 
 		return isUpdated;
 	}
 
-	async syncFiles(store, dir, whitelist = null)
+	async syncFiles(store, groupName, whitelist = null)
 	{
-		const files = await store.getAll();
+		const doSync = await settings.get(`updater.${ groupName }`) ?? true;
+		const autoAdd = await settings.get('updater.auto-add') ?? true;
+		const autoDelete = await settings.get('updater.auto-delete') ?? true;
+
+		let files = await store.getAll();
 		let isUpdated = false;
 
-		for(const [ filename, { syncUrl } ] of Object.entries(files)){
-			if( syncUrl && ( !Array.isArray(whitelist) || whitelist.includes(filename) ) ){
-				try{
-					const content = await ketchup.arrayBuffer(syncUrl);
+		if( autoAdd ){
+			for(const [ key, def ] of this.defaultResources?.[groupName] ?? []){
+				const file = files?.[key];
 
-					const dirPath = join(APPDATA_DIR, 'files', dir);
-					const filePath = join(dirPath, filename);
-
-					mkdirSync(dirPath, { recursive: true });
-
-					const file = Bun.file(filePath);
-
-					if( await file.exists() )
-						if( Bun.hash(await file.arrayBuffer()) === Bun.hash(content) )
-							continue;
-
-					await Bun.write(filePath, content);
+				if( !file || !Bun.deepEquals(file, def) ){
+					await store.set(key, def);
 					isUpdated = true;
 				}
-				catch(e){
-					console.error(e)
+			}
+		}
+
+		if( isUpdated )
+			files = await store.getAll();
+
+		if( doSync || whitelist ){
+			for(const [ filename, { syncUrl } ] of Object.entries(files)){
+				if( syncUrl && ( !Array.isArray(whitelist) || whitelist.includes(filename) ) ){
+					try{
+						const response = await ketchup.raw(syncUrl);
+
+						const dirPath = join(APPDATA_DIR, 'files', groupName);
+						const filePath = join(dirPath, filename);
+
+						mkdirSync(dirPath, { recursive: true });
+
+						const file = Bun.file(filePath);
+						const fileExists = await file.exists();
+
+						if( autoDelete && [404, 410, 451].includes(response.status) ){
+							await store.delete(filename);
+							
+							if( fileExists )
+								await file.delete();
+
+							isUpdated = true;
+							continue;
+						}
+
+						const content = await response.arrayBuffer();
+
+						if( fileExists )
+							if( Bun.hash(await file.arrayBuffer()) === Bun.hash(content) )
+								continue;
+
+						await Bun.write(filePath, content);
+						isUpdated = true;
+					}
+					catch(e){
+						console.error(e)
+					}
 				}
 			}
 		}
@@ -244,31 +338,24 @@ class BackendApp
 
 	async syncLists(force = false)
 	{
-		if( !( await settings.get('updater.lists') || force ) )
-			return false;
-
 		return await this.syncFiles(lists, 'lists', force);
 	}
 
 	async syncLua(force = false)
 	{
-		if( !( await settings.get('updater.lua') || force ) )
-			return false;
-
 		return await this.syncFiles(lua, 'lua', force);
 	}
 
 	async syncBlobs(force = false)
 	{
-		if( !( await settings.get('updater.blobs') || force ) )
-			return false;
-
 		return await this.syncFiles(blobs, 'blobs', force);
 	}
 
 	async updateZapret2(force = false)
 	{
-		if( !( await settings.get('updater.zapret2') || force ) )
+		const doUpdate = await settings.get('updater.zapret2') ?? true;
+
+		if( !doUpdate && !force )
 			return false;
 
 		return await zapret.install();
@@ -289,7 +376,9 @@ class BackendApp
 
 		await Bun.$`rm -rf ${ updateScript }`;
 
-		if( !( await settings.get('updater.self') || force ) )
+		const doUpdate = await settings.get('updater.self') ?? true;
+
+		if( !doUpdate && !force )
 			return;
 
 		const html = await ketchup.text('https://github.com/Greezor/bununban/releases/latest');

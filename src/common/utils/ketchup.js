@@ -18,6 +18,9 @@ const ketchup = async (url, params = {}, responseType = 'json') => {
 			signal,
 			...subparams,
 		});
+
+		if( [408, 409, 425, 429, 500, 502, 503, 504].includes(response.status) )
+			throw new Error(response.status);
 	}
 	catch(e){
 		if( !--retry )
@@ -28,7 +31,7 @@ const ketchup = async (url, params = {}, responseType = 'json') => {
 				resolve(
 					await ketchup(url, { ...params, retry }, responseType)
 				);
-			}, 1000);
+			}, 500);
 		});
 	}
 	
