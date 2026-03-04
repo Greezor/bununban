@@ -1,6 +1,6 @@
 --filter-l7=stun
     --payload=stun
-        --lua-desync=mangled:rnd=1--1:qty=1-2:starts_with=0x17fefd
+        --lua-desync=mangled:rnd=1--1:qty=3-5
         --lua-desync=send
-        --lua-desync=mangled:rnd=1--1:qty=0-1:starts_with=0x17fefd
+        --lua-desync=mangled:rnd=1--1:qty=1-3
         --lua-desync=drop

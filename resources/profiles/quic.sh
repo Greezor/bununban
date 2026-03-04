@@ -21,5 +21,5 @@
         --payload=quic_initial
             --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=11-20:starts_with=0x17fefd
             --lua-desync=send
-            --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=1-12:starts_with=0x17fefd
+            --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=1-12
             --lua-desync=drop
