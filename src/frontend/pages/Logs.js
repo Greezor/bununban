@@ -131,7 +131,7 @@ export default {
 			return logs.value
 				.map((log, i) => ({ i, log }))
 				.filter(({ log }) => (
-					new RegExp(search.value, 'gi').test(log)
+					new RegExp(RegExp.escape(search.value), 'gi').test(log)
 				));
 		});
 
@@ -143,7 +143,7 @@ export default {
 					styledLog: (
 						search.value
 							? log.replace(
-								new RegExp(`(${ search.value })`, 'gi'),
+								new RegExp(`(${ RegExp.escape(search.value) })`, 'gi'),
 								`<span class="${ style.highlighted }">$1</span>`
 							)
 							: log
