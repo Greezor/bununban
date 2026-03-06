@@ -4,6 +4,11 @@ import { Icon } from '@iconify/vue'
 
 import ketchup from '../../common/utils/ketchup'
 
+import Accordion from 'primevue/accordion'
+import AccordionPanel from 'primevue/accordionpanel'
+import AccordionHeader from 'primevue/accordionheader'
+import AccordionContent from 'primevue/accordioncontent'
+import Fieldset from 'primevue/fieldset'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import ToggleSwitch from 'primevue/toggleswitch'
@@ -37,19 +42,15 @@ const style = {
 
 	body: css`
 		margin-bottom: 150px;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
 		width: 100%;
 		max-width: 600px;
 		flex: 1 1 auto;
 	`,
 
-	settingsTitle: css`
-		margin-top: 50px;
-		padding: 5px 0;
-		font-size: 18px;
-		border-bottom: 1px solid rgb(from currentColor r g b / 0.3);
+	settingsList: css`
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
 	`,
 
 	settingsRow: css`
@@ -83,6 +84,7 @@ const style = {
 export default {
 	setup()
 	{
+		const accordion = ref([]);
 		const loading = ref(false);
 
 		const params = ref({
@@ -213,6 +215,7 @@ export default {
 		});
 
 		return {
+			accordion,
 			loading,
 			params,
 			antidpiModal,
@@ -234,194 +237,221 @@ export default {
 				<span>Настройки</span>
 			</div>
 
-			<div class="${ style.body }">
-				<div class="${ style.settingsTitle }">
-					<span>Anti-DPI</span>
-				</div>
+			<div class="${ style.body } ${ style.settingsList }">
+				<Accordion :value="accordion" multiple>
 
-				<div class="${ style.settingsRow }">
-					<span>Zapret2</span>
-					<Button
-						severity="secondary"
-						rounded>
-						{{ params['antidpi.version'] || '—' }}
-					</Button>
-				</div>
+					<AccordionPanel value="1">
+						<AccordionHeader>Anti-DPI</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Zapret2</span>
+									<Button
+										severity="secondary"
+										rounded>
+										{{ params['antidpi.version'] || '—' }}
+									</Button>
+								</div>
 
-				<div class="${ style.settingsRow }">
-					<span></span>
-					<Button
-						raised
-						@click="() => {
-							antidpiModal = true;
-							antidpiVersion = null;
-							loadAntidpiVersions();	
-						}">
-						<span>Установить</span>
-					</Button>
-				</div>
-
-
-
-				<div class="${ style.settingsTitle }">
-					<span>Запуск</span>
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Дебаг-логи</span>
-					<ToggleSwitch
-						v-model="params['antidpi.debug']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Параметры запуска</span>
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<InputText
-						v-model="params['startup.args']"
-						fluid />
-				</div>
+								<div class="${ style.settingsRow }">
+									<span></span>
+									<Button
+										raised
+										@click="() => {
+											antidpiModal = true;
+											antidpiVersion = null;
+											loadAntidpiVersions();	
+										}">
+										<span>Установить</span>
+									</Button>
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
 
 
 
-				<div class="${ style.settingsTitle }">
-					<span>Авто-обновление</span>
-				</div>
+					<AccordionPanel value="2">
+						<AccordionHeader>Запуск</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Дебаг-логи</span>
+									<ToggleSwitch
+										v-model="params['antidpi.debug']" />
+								</div>
 
-				<div class="${ style.settingsRow }">
-					<span>Обновлять Bununban</span>
-					<ToggleSwitch
-						v-model="params['updater.self']" />
-				</div>
+								<div class="${ style.settingsRow }">
+									<span>Параметры запуска</span>
+								</div>
 
-				<div class="${ style.settingsRow }">
-					<span>Обновлять Zapret2</span>
-					<ToggleSwitch
-						v-model="params['updater.zapret2']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Синхронизировать профили</span>
-					<ToggleSwitch
-						v-model="params['updater.profiles']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Синхронизировать файлы и списки</span>
-					<ToggleSwitch
-						v-model="params['updater.lists']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Синхронизировать lua-скрипты</span>
-					<ToggleSwitch
-						v-model="params['updater.lua']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Синхронизировать blob'ы</span>
-					<ToggleSwitch
-						v-model="params['updater.blobs']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Добавлять новые ресурсы</span>
-					<ToggleSwitch
-						v-model="params['updater.new-resources']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Интервал</span>
-					<Select
-						v-model="params['updater.interval']"
-						option-label="label"
-						option-value="value"
-						:options="[
-							{ label: '1 час', value: 1000 * 60 * 60 * 1 },
-							{ label: '3 часа', value: 1000 * 60 * 60 * 3 },
-							{ label: '12 часов', value: 1000 * 60 * 60 * 12 },
-							{ label: '1 день', value: 1000 * 60 * 60 * 24 },
-							{ label: '3 дня', value: 1000 * 60 * 60 * 24 * 3 },
-							{ label: '7 дней', value: 1000 * 60 * 60 * 24 * 7 },
-						]" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Выполнять поиск и установку обновлений при запуске</span>
-					<ToggleSwitch
-						v-model="params['updater.on-startup']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Поиск и установка обновлений</span>
-					<Button
-						raised
-						@click="updateNow()">
-						<span>Выполнить</span>
-					</Button>
-				</div>
+								<div class="${ style.settingsRow }">
+									<InputText
+										v-model="params['startup.args']"
+										fluid />
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
 
 
 
-				<div class="${ style.settingsTitle }">
-					<span>Доступ</span>
-				</div>
+					<AccordionPanel value="3">
+						<AccordionHeader>Автообновление</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Обновлять Bununban</span>
+									<ToggleSwitch
+										v-model="params['updater.self']" />
+								</div>
 
-				<div class="${ style.settingsRow }">
-					<span>Хост</span>
-					<InputText
-						v-model="params['hostname']" />
-				</div>
+								<div class="${ style.settingsRow }">
+									<span>Обновлять Zapret2</span>
+									<ToggleSwitch
+										v-model="params['updater.zapret2']" />
+								</div>
 
-				<div class="${ style.settingsRow }">
-					<span>Порт</span>
-					<InputNumber
-						v-model="params['port']"
-						:format="false"
-						:min="8000"
-						:max="65535" />
-				</div>
+								<div class="${ style.settingsRow }">
+									<span>Добавлять новые ресурсы</span>
+									<ToggleSwitch
+										v-model="params['updater.new-resources']" />
+								</div>
+
+								<Fieldset legend="Синхронизация ресурсов по ссылке">
+									<div class="${ style.settingsList }">
+										<div class="${ style.settingsRow }">
+											<span>Синхронизировать профили</span>
+											<ToggleSwitch
+												v-model="params['updater.profiles']" />
+										</div>
+
+										<div class="${ style.settingsRow }">
+											<span>Синхронизировать файлы и списки</span>
+											<ToggleSwitch
+												v-model="params['updater.lists']" />
+										</div>
+
+										<div class="${ style.settingsRow }">
+											<span>Синхронизировать lua-скрипты</span>
+											<ToggleSwitch
+												v-model="params['updater.lua']" />
+										</div>
+
+										<div class="${ style.settingsRow }">
+											<span>Синхронизировать blob'ы</span>
+											<ToggleSwitch
+												v-model="params['updater.blobs']" />
+										</div>
+									</div>
+								</Fieldset>
+
+								<Fieldset legend="Поиск и установка обновлений">
+									<div class="${ style.settingsList }">
+										<div class="${ style.settingsRow }">
+											<span>При запуске</span>
+											<ToggleSwitch
+												v-model="params['updater.on-startup']" />
+										</div>
+
+										<div class="${ style.settingsRow }">
+											<span>Интервал</span>
+											<Select
+												v-model="params['updater.interval']"
+												option-label="label"
+												option-value="value"
+												:options="[
+													{ label: '1 час', value: 1000 * 60 * 60 * 1 },
+													{ label: '3 часа', value: 1000 * 60 * 60 * 3 },
+													{ label: '12 часов', value: 1000 * 60 * 60 * 12 },
+													{ label: '1 день', value: 1000 * 60 * 60 * 24 },
+													{ label: '3 дня', value: 1000 * 60 * 60 * 24 * 3 },
+													{ label: '7 дней', value: 1000 * 60 * 60 * 24 * 7 },
+												]" />
+										</div>
+
+										<div class="${ style.settingsRow }">
+											<span>Выполнить сейчас</span>
+											<Button
+												raised
+												@click="updateNow()">
+												<span>Обновить</span>
+											</Button>
+										</div>
+									</div>
+								</Fieldset>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
 
 
 
-				<div class="${ style.settingsTitle }">
-					<span>Другое</span>
-				</div>
+					<AccordionPanel value="4">
+						<AccordionHeader>Доступ</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Хост</span>
+									<InputText
+										v-model="params['hostname']" />
+								</div>
 
-				<div class="${ style.settingsRow }">
-					<span>Версия Bununban</span>
-					<Button
-						severity="secondary"
-						rounded>
-						{{ bununbanVersion }}
-					</Button>
-				</div>
+								<div class="${ style.settingsRow }">
+									<span>Порт</span>
+									<InputNumber
+										v-model="params['port']"
+										:format="false"
+										:min="8000"
+										:max="65535" />
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
 
-				<div class="${ style.settingsRow }">
-					<span>Сбросить настройки</span>
-					<Button
-						raised
-						@click="() => {
-							$confirm.require({
-								group: 'settings-reset',
-								header: 'Вы уверены?',
-								message: '',
-								acceptLabel: 'Сброс',
-								rejectLabel: 'Отмена',
-								acceptProps: {
-									severity: 'danger',
-								},
-								rejectProps: {
-									severity: 'secondary',
-									variant: 'outlined',
-								},
-								accept: () => settingsReset(),
-							})
-						}">
-						<span>Сброс</span>
-					</Button>
-				</div>
+
+
+					<AccordionPanel value="5">
+						<AccordionHeader>Другое</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Версия Bununban</span>
+									<Button
+										severity="secondary"
+										rounded>
+										{{ bununbanVersion }}
+									</Button>
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Сбросить настройки</span>
+									<Button
+										raised
+										@click="() => {
+											$confirm.require({
+												group: 'settings-reset',
+												header: 'Вы уверены?',
+												message: '',
+												acceptLabel: 'Сброс',
+												rejectLabel: 'Отмена',
+												acceptProps: {
+													severity: 'danger',
+												},
+												rejectProps: {
+													severity: 'secondary',
+													variant: 'outlined',
+												},
+												accept: () => settingsReset(),
+											})
+										}">
+										<span>Сброс</span>
+									</Button>
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
+
+				</Accordion>
 			</div>
 
 			<Butn
@@ -477,6 +507,11 @@ export default {
 	components: {
 		Icon,
 
+		Accordion,
+		AccordionPanel,
+		AccordionHeader,
+		AccordionContent,
+		Fieldset,
 		InputText,
 		InputNumber,
 		ToggleSwitch,
