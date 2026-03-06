@@ -95,6 +95,7 @@ export default {
 			'updater.lists': true,
 			'updater.lua': true,
 			'updater.blobs': true,
+			'updater.new-resources': true,
 			'updater.interval': 1000 * 60 * 60 * 24,
 			'updater.on-startup': true,
 
@@ -322,6 +323,12 @@ export default {
 					<span>Синхронизировать blob'ы</span>
 					<ToggleSwitch
 						v-model="params['updater.blobs']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
+					<span>Добавлять новые ресурсы</span>
+					<ToggleSwitch
+						v-model="params['updater.new-resources']" />
 				</div>
 
 				<div class="${ style.settingsRow }">
