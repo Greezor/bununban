@@ -95,8 +95,6 @@ export default {
 			'updater.lists': true,
 			'updater.lua': true,
 			'updater.blobs': true,
-			'updater.auto-add': true,
-			'updater.auto-delete': true,
 			'updater.interval': 1000 * 60 * 60 * 24,
 			'updater.on-startup': true,
 
@@ -327,24 +325,6 @@ export default {
 				</div>
 
 				<div class="${ style.settingsRow }">
-					<span>Добавлять новые и отсутствующие ресурсы из репозитория</span>
-					<ToggleSwitch
-						v-model="params['updater.auto-add']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Удалять ресурсы которые были удалены из источника</span>
-					<ToggleSwitch
-						v-model="params['updater.auto-delete']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
-					<span>Выполнять поиск и установку обновлений при запуске</span>
-					<ToggleSwitch
-						v-model="params['updater.on-startup']" />
-				</div>
-
-				<div class="${ style.settingsRow }">
 					<span>Интервал</span>
 					<Select
 						v-model="params['updater.interval']"
@@ -361,11 +341,17 @@ export default {
 				</div>
 
 				<div class="${ style.settingsRow }">
+					<span>Выполнять поиск и установку обновлений при запуске</span>
+					<ToggleSwitch
+						v-model="params['updater.on-startup']" />
+				</div>
+
+				<div class="${ style.settingsRow }">
 					<span>Поиск и установка обновлений</span>
 					<Button
 						raised
 						@click="updateNow()">
-						<span>Обновить</span>
+						<span>Выполнить</span>
 					</Button>
 				</div>
 
