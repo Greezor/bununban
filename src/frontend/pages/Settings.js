@@ -53,6 +53,12 @@ const style = {
 		gap: 10px;
 	`,
 
+	settingsTitle: css`
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	`,
+
 	settingsRow: css`
 		display: flex;
 		justify-content: space-between;
@@ -258,7 +264,12 @@ export default {
 				<Accordion :value="accordion" multiple>
 
 					<AccordionPanel value="1">
-						<AccordionHeader>Anti-DPI</AccordionHeader>
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:shield-alt" />
+								<span>Anti-DPI</span>
+							</div>
+						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
@@ -289,7 +300,12 @@ export default {
 
 
 					<AccordionPanel value="2">
-						<AccordionHeader>Запуск</AccordionHeader>
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:rocket" />
+								<span>Запуск</span>
+							</div>
+						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
@@ -314,7 +330,12 @@ export default {
 
 
 					<AccordionPanel value="3">
-						<AccordionHeader>Автообновление</AccordionHeader>
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:sync" />
+								<span>Автообновление</span>
+							</div>
+						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
@@ -408,7 +429,12 @@ export default {
 
 
 					<AccordionPanel value="4">
-						<AccordionHeader>Доступ</AccordionHeader>
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:lock" />
+								<span>Доступ</span>
+							</div>
+						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
@@ -464,7 +490,12 @@ export default {
 
 
 					<AccordionPanel value="5">
-						<AccordionHeader>Другое</AccordionHeader>
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:bars" />
+								<span>Другое</span>
+							</div>
+						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">

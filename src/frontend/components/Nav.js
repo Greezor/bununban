@@ -109,7 +109,7 @@ export default {
 					active-class="${ style.navBtnActive }"
 					to="/profiles"
 					draggable="false">
-					<Icon class="${ style.navIcon }" icon="fa7-solid:pills" />
+					<Icon class="${ style.navIcon }" icon="fa7-solid:file-prescription" />
 				</RouterLink>
 
 				<RouterLink
