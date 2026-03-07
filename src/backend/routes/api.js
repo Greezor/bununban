@@ -19,25 +19,50 @@ const stores = {
 	lua,
 	blobs,
 	settings,
-};
+}
 
-const OK = new Response('OK');
+const OK = new Response('OK')
+const FORBIDDEN = new Response('Forbidden', { status: 403 })
 
-const storeToArrayEndpoint = store => async req => Response.json(
-	Object.entries(await store.getAll())
-		.map(([ name, props ]) => ({
-			name,
-			...props,
-		}))
-);
+const sessions = new Set()
+
+const checkAuth = async req => {
+	const hash = await settings.get('password');
+
+	if( !hash )
+		return true;
+
+	return sessions.has(
+		req?.cookies?.get?.('session')
+	);
+}
+
+const storeToArrayEndpoint = store => async req => {
+	if( !( await checkAuth(req) ) )
+		return Response.json([]);
+
+	return Response.json(
+		Object.entries(await store.getAll())
+			.map(([ name, props ]) => ({
+				name,
+				...props,
+			}))
+	);
+}
 
 const getFromStoreEndpoint = storeName => async req => {
+	if( !( await checkAuth(req) ) )
+		return Response.json(null);
+
 	const key = req.params.name;
 	const store = stores[storeName];
 	const filePath = join(APPDATA_DIR, 'files', storeName, key);
 	const file = Bun.file(filePath);
 
 	const value = await store.get(key);
+
+	if( !value )
+		return Response.json(null);
 
 	return Response.json({
 		...value,
@@ -47,9 +72,12 @@ const getFromStoreEndpoint = storeName => async req => {
 				: {}
 		),
 	});
-};
+}
 
 const putToStoreEndpoint = storeName => async req => {
+	if( !( await checkAuth(req) ) )
+		return FORBIDDEN;
+
 	const store = stores[storeName];
 
 	let { name, content, syncUrl, ...props } = await req.json();
@@ -89,9 +117,12 @@ const putToStoreEndpoint = storeName => async req => {
 	}
 
 	return OK;
-};
+}
 
 const deleteFromStoreEndpoint = storeName => async req => {
+	if( !( await checkAuth(req) ) )
+		return FORBIDDEN;
+
 	const key = req.params.name;
 	const store = stores[storeName];
 	const filePath = join(APPDATA_DIR, 'files', storeName, key);
@@ -103,17 +134,65 @@ const deleteFromStoreEndpoint = storeName => async req => {
 		await file.delete();
 
 	return OK;
-};
+}
 
 export default {
 	'/api/ping': new Response('pong', { headers: { 'Access-Control-Allow-Origin': '*' } }),
 
 
-	'/api/antidpi': {
-		GET: () => Response.json(
-			zapret.isStarted
+	'/api/auth/login': {
+		POST: async req => {
+			if( await checkAuth(req) )
+				return Response.json(true);
+
+			const password = await req.json();
+			const hash = await settings.get('password');
+
+			if( await Bun.password.verify(password, hash) ){
+				const id = Bun.randomUUIDv7();
+
+				sessions.add(id);
+
+				req.cookies.set('session', id, {
+					httpOnly: true,
+					sameSite: 'lax',
+					path: '/',
+				});
+
+				return Response.json(true);
+			}
+
+			return Response.json(false);
+		},
+	},
+	'/api/auth/logout': {
+		GET: async req => {
+			if( sessions.delete( req?.cookies?.get?.('session') ) )
+				req?.cookies?.delete?.('session');
+
+			return OK;
+		},
+	},
+	'/api/auth/check': {
+		GET: async req => Response.json(
+			await checkAuth(req)
 		),
+	},
+
+
+	'/api/antidpi': {
+		GET: async req => {
+			if( !( await checkAuth(req) ) )
+				return Response.json(false);
+
+			return Response.json(
+				zapret.isStarted
+			);
+		},
 		PUT: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+			
 			const activate = await req.json();
 
 			if( activate )
@@ -127,7 +206,10 @@ export default {
 		},
 	},
 	'/api/antidpi/restart': {
-		POST: async () => {
+		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			if( zapret.isStarted )
 				await zapret.restart();
 
@@ -137,7 +219,10 @@ export default {
 
 
 	'/api/server/restart': {
-		POST: () => {
+		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			server.restart();
 			return OK;
 		},
@@ -145,10 +230,18 @@ export default {
 
 
 	'/api/profiles': {
-		GET: async () => Response.json(
-			await settings.get('profiles') ?? []
-		),
+		GET: async req => {
+			if( !( await checkAuth(req) ) )
+				return Response.json([]);
+
+			return Response.json(
+				await settings.get('profiles') ?? []
+			);
+		},
 		PUT: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			const profiles = await req.json();
 
 			for(const profile of profiles){
@@ -197,6 +290,9 @@ export default {
 		PUT: putToStoreEndpoint('blobs'),
 		DELETE: deleteFromStoreEndpoint('blobs'),
 		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			const formData = await req.formData();
 			const src = formData.get('file');
 
@@ -211,13 +307,23 @@ export default {
 
 
 	'/api/startup': {
-		GET: async () => Response.json(
-			await settings.get('startup.scripts') ?? {
+		GET: async req => {
+			const empty = {
 				before: '',
 				after: '',
-			}
-		),
+			};
+
+			if( !( await checkAuth(req) ) )
+				return Response.json(empty);
+
+			return Response.json(
+				await settings.get('startup.scripts') ?? empty
+			);
+		},
 		PUT: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			const { before, after } = await req.json();
 			await settings.set('startup.scripts', { before, after });
 			return OK;
@@ -226,7 +332,10 @@ export default {
 
 
 	'/api/logs': {
-		GET: async () => {
+		GET: async req => {
+			if( !( await checkAuth(req) ) )
+				return new Response('');
+
 			const logs = Bun.file(join(APPDATA_DIR, 'logs'));
 
 			if( await logs.exists() )
@@ -238,31 +347,68 @@ export default {
 
 
 	'/api/settings': {
-		GET: async () => Response.json(
-			await settings.getAll()
-		),
+		GET: async req => {
+			if( !( await checkAuth(req) ) )
+				return Response.json({});
+
+			const params = await settings.getAll();
+			params.password = '';
+
+			return Response.json(params);
+		},
 		PUT: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			const data = await req.json();
 
-			for(const [ prop, value ] of Object.entries(data))
+			for(const [ prop, value ] of Object.entries(data)){
+				if( prop === 'password' && value ){
+					await settings.set('password', await Bun.password.hash(value));
+					sessions.clear();
+					continue;
+				}
+
 				await settings.set(prop, value);
+			}
 
 			return OK;
 		},
 	},
 	'/api/settings/antidpi/zapret2/versions': {
-		GET: async () => Response.json(
-			await zapret.getVersions()
-		),
+		GET: async req => {
+			if( !( await checkAuth(req) ) )
+				return Response.json([]);
+
+			return Response.json(
+				await zapret.getVersions()
+			);
+		},
 	},
 	'/api/settings/antidpi/zapret2/install/:version': {
 		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			await zapret.install(req.params.version);
 			return OK;
 		},
 	},
+	'/api/settings/reset-password': {
+		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
+			await settings.set('password', '');
+			sessions.clear();
+			return OK;
+		},
+	},
 	'/api/settings/reset': {
-		POST: async () => {
+		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			await $`rm -rf ${ APPDATA_DIR }`;
 			server.restart();
 			return OK;
@@ -271,7 +417,10 @@ export default {
 
 
 	'/api/updater/update-now': {
-		POST: async () => {
+		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+
 			await server.autoUpdate();
 			return OK;
 		},
@@ -280,6 +429,9 @@ export default {
 
 	'/api/cors-hole': {
 		POST: async req => {
+			if( !( await checkAuth(req) ) )
+				return FORBIDDEN;
+			
 			const { url } = await req.json();
 			
 			return new Response(

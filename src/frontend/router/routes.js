@@ -7,4 +7,5 @@ export default [
 	{ path: '/startup', component: () => import('../pages/Startup') },
 	{ path: '/logs', component: () => import('../pages/Logs') },
 	{ path: '/settings', component: () => import('../pages/Settings') },
+	{ path: '/login', component: () => import('../pages/Login') },
 ]

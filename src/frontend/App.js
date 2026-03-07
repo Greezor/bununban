@@ -8,7 +8,7 @@ export default {
 			</KeepAlive>
 		</RouterView>
 
-		<Nav />
+		<Nav v-if="$route.path !== '/login'" />
 	`,
 	components: {
 		Nav,

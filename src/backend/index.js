@@ -108,6 +108,7 @@ class BackendApp
 			// settings
 			await settings.set('hostname', '0.0.0.0');
 			await settings.set('port', '8008');
+			await settings.set('password', '');
 			await settings.set('updater.self', true);
 			await settings.set('updater.zapret2', true);
 			await settings.set('updater.profiles', true);

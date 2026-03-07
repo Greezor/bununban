@@ -41,10 +41,10 @@ const style = {
 	`,
 
 	body: css`
-		margin-bottom: 150px;
+		margin: auto;
+		padding-bottom: 150px;
 		width: 100%;
 		max-width: 600px;
-		flex: 1 1 auto;
 	`,
 
 	settingsList: css`
@@ -91,18 +91,19 @@ export default {
 			'antidpi.debug': false,
 			'startup.args': '',
 
-			'updater.self': true,
-			'updater.zapret2': true,
-			'updater.profiles': true,
-			'updater.lists': true,
-			'updater.lua': true,
-			'updater.blobs': true,
-			'updater.new-resources': true,
-			'updater.interval': 1000 * 60 * 60 * 24,
-			'updater.on-startup': true,
+			'updater.self': false,
+			'updater.zapret2': false,
+			'updater.profiles': false,
+			'updater.lists': false,
+			'updater.lua': false,
+			'updater.blobs': false,
+			'updater.new-resources': false,
+			'updater.interval': 0,
+			'updater.on-startup': false,
 
-			'hostname': '0.0.0.0',
-			'port': '8008',
+			'hostname': '',
+			'port': '',
+			'password': '',
 		});
 
 		const loadParams = async () => {
@@ -177,7 +178,22 @@ export default {
 			await waitServerReload();
 		}
 
-		const settingsReset = async () => {
+		const resetPassword = async () => {
+			loading.value = true;
+
+			try{
+				fetch('/api/settings/reset-password', {
+					method: 'POST',
+				});
+			}
+			catch(e){
+				console.error(e)
+			}
+
+			await waitServerReload();
+		}
+
+		const resetSettings = async () => {
 			loading.value = true;
 
 			params.value.hostname = '0.0.0.0';
@@ -227,7 +243,8 @@ export default {
 			installAntidpi,
 			waitServerReload,
 			save,
-			settingsReset,
+			resetPassword,
+			resetSettings,
 			updateNow,
 		};
 	},
@@ -318,7 +335,9 @@ export default {
 										v-model="params['updater.new-resources']" />
 								</div>
 
-								<Fieldset legend="Синхронизация ресурсов по ссылке">
+								<Fieldset
+									legend="Синхронизация ресурсов по ссылке"
+									style="margin: 0 -19px">
 									<div class="${ style.settingsList }">
 										<div class="${ style.settingsRow }">
 											<span>Синхронизировать профили</span>
@@ -346,7 +365,9 @@ export default {
 									</div>
 								</Fieldset>
 
-								<Fieldset legend="Поиск и установка обновлений">
+								<Fieldset
+									legend="Поиск и установка обновлений"
+									style="margin: 0 -19px">
 									<div class="${ style.settingsList }">
 										<div class="${ style.settingsRow }">
 											<span>При запуске</span>
@@ -371,11 +392,11 @@ export default {
 										</div>
 
 										<div class="${ style.settingsRow }">
-											<span>Выполнить сейчас</span>
+											<span></span>
 											<Button
 												raised
 												@click="updateNow()">
-												<span>Обновить</span>
+												<span>Выполнить сейчас</span>
 											</Button>
 										</div>
 									</div>
@@ -403,6 +424,38 @@ export default {
 										:format="false"
 										:min="8000"
 										:max="65535" />
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Пароль</span>
+									<InputText
+										v-model="params['password']"
+										placeholder="••••••" />
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Сбросить пароль</span>
+									<Button
+										raised
+										@click="() => {
+											$confirm.require({
+												group: 'password-reset',
+												header: 'Вы уверены?',
+												message: '',
+												acceptLabel: 'Сброс',
+												rejectLabel: 'Отмена',
+												acceptProps: {
+													severity: 'danger',
+												},
+												rejectProps: {
+													severity: 'secondary',
+													variant: 'outlined',
+												},
+												accept: () => resetPassword(),
+											})
+										}">
+										<span>Сброс</span>
+									</Button>
 								</div>
 							</div>
 						</AccordionContent>
@@ -441,7 +494,7 @@ export default {
 													severity: 'secondary',
 													variant: 'outlined',
 												},
-												accept: () => settingsReset(),
+												accept: () => resetSettings(),
 											})
 										}">
 										<span>Сброс</span>
@@ -498,6 +551,12 @@ export default {
 			<ConfirmDialog group="settings-reset">
 				<template #message="{ message }">
 					<span>Вы уверены что хотите выполнить сброс всех настроек?</span>
+				</template>
+			</ConfirmDialog>
+
+			<ConfirmDialog group="password-reset">
+				<template #message="{ message }">
+					<span>Вы уверены что хотите сбросить текущий пароль?</span>
 				</template>
 			</ConfirmDialog>
 
