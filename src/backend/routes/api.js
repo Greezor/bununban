@@ -338,9 +338,12 @@ export default {
 			const data = await req.json();
 
 			for(const [ prop, value ] of Object.entries(data)){
-				if( prop === 'password' && value ){
-					await settings.set('password', await Bun.password.hash(value));
-					sessions.clear();
+				if( prop === 'password' ){
+					if( value ){
+						await settings.set('password', await Bun.password.hash(value));
+						sessions.clear();
+					}
+					
 					continue;
 				}
 
