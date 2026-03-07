@@ -232,6 +232,11 @@ export default {
 			await waitServerReload();
 		}
 
+		const logout = async () => {
+			await fetch('/api/auth/logout');
+			location.href = '/login';
+		}
+
 		onActivated(() => {
 			loadParams();
 		});
@@ -252,6 +257,7 @@ export default {
 			resetPassword,
 			resetSettings,
 			updateNow,
+			logout,
 		};
 	},
 	template: `
@@ -481,6 +487,15 @@ export default {
 											})
 										}">
 										<span>Сброс</span>
+									</Button>
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Завершить текущую сессию</span>
+									<Button
+										raised
+										@click="logout()">
+										<span>Выход</span>
 									</Button>
 								</div>
 							</div>

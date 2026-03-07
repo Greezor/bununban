@@ -167,8 +167,8 @@ export default {
 	},
 	'/api/auth/logout': {
 		GET: async req => {
-			if( sessions.delete( req?.cookies?.get?.('session') ) )
-				req?.cookies?.delete?.('session');
+			sessions.delete( req?.cookies?.get?.('session') );
+			req?.cookies?.delete?.('session');
 
 			return OK;
 		},
