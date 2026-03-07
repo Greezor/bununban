@@ -6,22 +6,19 @@ import { writeFileSync } from 'node:fs'
 import { APPDATA_DIR } from '../src/backend/utils/appdata'
 import settings from '../src/backend/stores/settings'
 
+import bin from '../dist/bununban-windows-x64.exe' with { type: 'file' }
 import ico from '../src/frontend/assets/favicon.ico' with { type: 'file' }
 import lnk from './Bununban.lnk' with { type: 'file' }
 import dll from '../node_modules/@webui-dev/bun-webui/src/webui-windows-msvc-x64/webui-2.dll' with { type: 'file' }
 
-if( process.env.NODE_ENV === 'production' )
+const dllFile = Bun.file(dll)
+
+if( process.env.NODE_ENV === 'production' && !(await dllFile.exists()) )
 	await Bun.write('./webui-windows-msvc-x64/webui-2.dll', await Bun.file(dll).arrayBuffer());
 
 const { WebUI } = await import('@webui-dev/bun-webui');
 
-const BIN_SUFFIX = process.env.NO_SIMD === '1' ? '-no-simd.exe' : '.exe';
-
-const { default: bin } = await import(`../dist/bununban-windows-x64${ BIN_SUFFIX }`, {
-	with: { type: 'file' },
-});
-
-const BIN_PATH = `C:\\bununban\\bununban-windows-x64${ BIN_SUFFIX }`;
+const BIN_PATH = `C:\\bununban\\bununban-windows-x64.exe`;
 const BIN = await Bun.file(bin).arrayBuffer();
 
 const ICO_PATH = 'C:\\bununban\\icon.ico';
