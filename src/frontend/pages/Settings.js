@@ -162,6 +162,8 @@ export default {
 			await ketchup(`${ newOrigin }/api/ping`, { retry: Infinity });
 
 			location.href = `${ newOrigin }/settings`;
+
+			await loadParams();
 		}
 
 		const save = async () => {

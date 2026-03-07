@@ -387,6 +387,7 @@ export default {
 			if( !( await checkAuth(req) ) )
 				return FORBIDDEN;
 
+			await settings.set('version', '0.0.0');
 			await $`rm -rf ${ APPDATA_DIR }`;
 			server.restart();
 			return OK;
