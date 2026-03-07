@@ -217,11 +217,6 @@ class Zapret
 		await $`rm -f ${ logsPath }`;
 		await $`touch ${ logsPath }`;
 
-		const { before, after } = await settings.get('startup.scripts') ?? {};
-
-		if( before )
-			await $`${{ raw: await this.replaceVarsWithLists(before) }}`;
-
 		const logsFile = Bun.file(logsPath);
 		const logsWriter = logsFile.writer();
 
@@ -280,13 +275,8 @@ class Zapret
 			stdout: 'pipe',
 			stderr: 'pipe',
 			onExit: async () => {
-				if( after )
-					await $`${{ raw: await this.replaceVarsWithLists(after) }}`;
-
 				await this.deleteWindivert();
-
 				logsWriter.end();
-
 				this.#proc = null;
 			},
 		});

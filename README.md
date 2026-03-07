@@ -6,7 +6,6 @@ Web-panel for [bol-van/zapret2](https://github.com/bol-van/zapret2)
 - zapret2 binaries downloading
 - resources management (profiles, hostlists, ipsets, lua-scripts, blobs)
 - resources synchronization by url
-- startup shell-scripts (before/after starting/stopping zapret2)
 - logs viewer
 
 ## Development

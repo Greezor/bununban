@@ -83,14 +83,11 @@ export default {
 			if( route.path.startsWith('/blobs') )
 				return 4;
 
-			if( route.path.startsWith('/startup') )
+			if( route.path.startsWith('/logs') )
 				return 5;
 
-			if( route.path.startsWith('/logs') )
-				return 6;
-
 			if( route.path.startsWith('/settings') )
-				return 7;
+				return 6;
 		});
 
 		return { navCursorPos };
@@ -137,14 +134,6 @@ export default {
 					to="/blobs"
 					draggable="false">
 					<Icon class="${ style.navIcon }" icon="fa7-solid:square-binary" />
-				</RouterLink>
-
-				<RouterLink
-					class="${ style.navBtn }"
-					active-class="${ style.navBtnActive }"
-					to="/startup"
-					draggable="false">
-					<Icon class="${ style.navIcon }" icon="material-symbols:rocket-launch-rounded" />
 				</RouterLink>
 
 				<RouterLink

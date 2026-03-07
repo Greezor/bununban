@@ -306,31 +306,6 @@ export default {
 	},
 
 
-	'/api/startup': {
-		GET: async req => {
-			const empty = {
-				before: '',
-				after: '',
-			};
-
-			if( !( await checkAuth(req) ) )
-				return Response.json(empty);
-
-			return Response.json(
-				await settings.get('startup.scripts') ?? empty
-			);
-		},
-		PUT: async req => {
-			if( !( await checkAuth(req) ) )
-				return FORBIDDEN;
-
-			const { before, after } = await req.json();
-			await settings.set('startup.scripts', { before, after });
-			return OK;
-		},
-	},
-
-
 	'/api/logs': {
 		GET: async req => {
 			if( !( await checkAuth(req) ) )
@@ -431,7 +406,7 @@ export default {
 		POST: async req => {
 			if( !( await checkAuth(req) ) )
 				return FORBIDDEN;
-			
+
 			const { url } = await req.json();
 			
 			return new Response(
