@@ -1,11 +1,11 @@
 import { join } from 'node:path'
 
-import lists from './stores/lists'
-import lua from './stores/lua'
-import blobs from './stores/blobs'
-import settings from './stores/settings'
+import lists from '../stores/lists'
+import lua from '../stores/lua'
+import blobs from '../stores/blobs'
+import settings from '../stores/settings'
 
-import { APPDATA_DIR } from './utils/appdata'
+import { APPDATA_DIR } from './appdata'
 
 export default async (version, addNewResources) => {
 
