@@ -1,0 +1,6 @@
+--filter-l7=mtproto
+    --payload=mtproto_initial
+        --lua-desync=mangled2:ops=pad=-300,rnd=0.-1,rpl=0x160301.0,rpl=0x0100.5:qty=11-15:tcp_seq=-300:tcp_ts_up:tcp_ts_rnd
+        --lua-desync=mangled2:ops=pad=-300,rnd=0.299,rpl=0x160301.0,rpl=0x0100.5:qty=1:tcp_seq=-300:tcp_ts_up
+        --lua-desync=mangled2:ops=pad=-300,rnd=0.-1,rpl=0x160301.0,rpl=0x0100.5:qty=1-3:tcp_seq=-300:tcp_ts_up:tcp_ts_rnd
+        --lua-desync=drop

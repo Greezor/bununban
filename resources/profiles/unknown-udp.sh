@@ -1,6 +1,8 @@
 --filter-udp=*
-    --payload=unknown
-        --lua-desync=mangled:rnd=1--1:qty=3-5:payload=~empty
-        --lua-desync=send
-        --lua-desync=mangled:rnd=1--1:qty=1-3:payload=~empty
-        --lua-desync=drop
+    --ipset={ipset-telegram}
+    --ipset={ipset-roblox}
+        --payload=unknown
+            --lua-desync=mangled2:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-5:payload=~empty
+            --lua-desync=send
+            --lua-desync=mangled2:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=1-3:payload=~empty
+            --lua-desync=drop

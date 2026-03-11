@@ -1,12 +1,15 @@
 --filter-l7=quic
+    --hostlist={google}
     --hostlist={rulist}
     --hostlist={apple}
     --hostlist={cloudflare}
     --hostlist={discord}
     --hostlist={instagram}
     --hostlist={meta}
+    --hostlist={rezka}
     --hostlist={rutor}
     --hostlist={rutracker}
+    --hostlist={soundcloud}
     --hostlist={speedtest}
     --hostlist={telegram}
     --hostlist={tor}
@@ -16,10 +19,10 @@
     --hostlist={roblox}
     --hostlist={vrchat}
     --hostlist={whatsapp}
-    --hostlist={google}
+    --hostlist={other}
     --hostlist={custom}
         --payload=quic_initial
-            --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=11-20:starts_with=0x17fefd
+            --lua-desync=mangled2:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=11-15
             --lua-desync=send
-            --lua-desync=mangled:rnd=dcid,scid,token,payload:qty=1-12
+            --lua-desync=mangled2:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=1-4
             --lua-desync=drop

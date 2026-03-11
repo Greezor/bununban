@@ -1,6 +1,6 @@
 --filter-l7=wireguard
     --payload=wireguard_initiation,wireguard_cookie
-        --lua-desync=mangled:rnd=1--1:qty=3-5
+        --lua-desync=mangled2:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-3
         --lua-desync=send
-        --lua-desync=mangled:rnd=1--1:qty=1-3
+        --lua-desync=mangled2:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=1-2
         --lua-desync=drop

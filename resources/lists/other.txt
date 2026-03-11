@@ -5,3 +5,7 @@ codecademy.com
 adguard.com
 anydesk.com
 artstation.com
+primevue.org
+curseforge.com
+tx.me
+quora.com

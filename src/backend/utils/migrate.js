@@ -48,18 +48,29 @@ export default async (version, addNewResources) => {
 				{ name: 'stun', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/stun.sh', content: '' },
 				{ name: 'wireguard', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/wireguard.sh', content: '' },
 				{ name: 'tls', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/tls.sh', content: '' },
+				{ name: 'mtproto', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/mtproto.sh', content: '' },
 				{ name: 'unknown-udp', active: true, priority: 1, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/unknown-udp.sh', content: '' },
+				{ name: 'unknown-tcp', active: true, priority: 1, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/unknown-tcp.sh', content: '' },
 			]);
+
+			// ipsets
+			await lists.set('ipset-all', { syncUrl: 'https://raw.githubusercontent.com/V3nilla/IPSets-For-Bypass-in-Russia/refs/heads/main/ipset-all.txt' });
+			await lists.set('ipset-exclude', { syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/ipset/zapret-hosts-user-exclude.txt.default' });
+			await lists.set('ipset-telegram', { syncUrl: 'https://core.telegram.org/resources/cidr.txt' });
+			await lists.set('ipset-roblox', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/ipsets/roblox.txt' });
 
 			// lists
 			await lists.set('rulist', { syncUrl: 'https://raw.githubusercontent.com/bol-van/rulist/refs/heads/main/reestr_hostname.txt' });
+			await lists.set('google', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/google.txt' });
 			await lists.set('apple', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-apple.txt' });
 			await lists.set('cloudflare', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-cloudflare.txt' });
 			await lists.set('discord', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-discord.txt' });
 			await lists.set('instagram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-instagram.txt' });
 			await lists.set('meta', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-meta.txt' });
+			await lists.set('rezka', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rezka.txt' });
 			await lists.set('rutor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutor.txt' });
 			await lists.set('rutracker', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-rutracker.txt' });
+			await lists.set('soundcloud', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-soundcloud.txt' });
 			await lists.set('speedtest', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-speedtest.txt' });
 			await lists.set('telegram', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-telegram.txt' });
 			await lists.set('tor', { syncUrl: 'https://raw.githubusercontent.com/ankddev/zapret-discord-youtube/refs/heads/main/lists/list-tor.txt' });
@@ -69,8 +80,8 @@ export default async (version, addNewResources) => {
 			await lists.set('roblox', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/roblox.txt' });
 			await lists.set('vrchat', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/vrchat.txt' });
 			await lists.set('whatsapp', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/whatsapp.txt' });
-			await lists.set('google', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/google.txt' });
-			await lists.set('custom', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/custom.txt' });
+			await lists.set('other', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lists/other.txt' });
+			await lists.set('custom', { syncUrl: '' });
 
 			// create empty file for custom list
 			await Bun.write( join(APPDATA_DIR, 'files', 'lists', 'custom'), '' );
