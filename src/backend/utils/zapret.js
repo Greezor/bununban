@@ -230,23 +230,29 @@ class Zapret
 			),
 
 			...(
-				Object.entries( await lua.getAll() ?? {} )
-					.filter(([ name, props ]) => props.active)
-					.map(([ name, props ]) => (
-						`--lua-init=@${
-							join(APPDATA_DIR, 'files', 'lua', name)
-						}`
-					))
+				Object.entries( await blobs.getAll() ?? {} )
+					.map(([ name, props ]) => {
+						const path = join(APPDATA_DIR, 'files', 'blobs', name);
+						const file = Bun.file(path);
+
+						if( props.active && await file.exists() )
+							return `--blob=${ name }:@${ path }`;
+
+						return '';
+					})
 			),
 
 			...(
-				Object.entries( await blobs.getAll() ?? {} )
-					.filter(([ name, props ]) => props.active)
-					.map(([ name, props ]) => (
-						`--blob=${ name }:@${
-							join(APPDATA_DIR, 'files', 'blobs', name)
-						}`
-					))
+				Object.entries( await lua.getAll() ?? {} )
+					.map(([ name, props ]) => {
+						const path = join(APPDATA_DIR, 'files', 'lua', name);
+						const file = Bun.file(path);
+
+						if( props.active && await file.exists() )
+							return `--lua-init=@${ path }`;
+
+						return '';
+					})
 			),
 
 			...stringArgv(
@@ -258,7 +264,7 @@ class Zapret
 			...stringArgv(
 				await this.replaceVarsWithLists(
 					( await settings.get('profiles') ?? [] )
-						.filter(({ active }) => active)
+						.filter(({ active, content }) => active && !!content)
 						.sort((a, b) => (b?.priority ?? 0) - (a?.priority ?? 0))
 						.map(({ content }) => (
 							content
