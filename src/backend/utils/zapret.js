@@ -230,29 +230,33 @@ class Zapret
 			),
 
 			...(
-				Object.entries( await blobs.getAll() ?? {} )
-					.map(([ name, props ]) => {
-						const path = join(APPDATA_DIR, 'files', 'blobs', name);
-						const file = Bun.file(path);
+				Promise.all(
+					Object.entries( await blobs.getAll() ?? {} )
+						.map(async ([ name, props ]) => {
+							const path = join(APPDATA_DIR, 'files', 'blobs', name);
+							const file = Bun.file(path);
 
-						if( props.active && await file.exists() )
-							return `--blob=${ name }:@${ path }`;
+							if( props.active && await file.exists() )
+								return `--blob=${ name }:@${ path }`;
 
-						return '';
-					})
+							return '';
+						})
+				)
 			),
 
 			...(
-				Object.entries( await lua.getAll() ?? {} )
-					.map(([ name, props ]) => {
-						const path = join(APPDATA_DIR, 'files', 'lua', name);
-						const file = Bun.file(path);
+				Promise.all(
+					Object.entries( await lua.getAll() ?? {} )
+						.map(async ([ name, props ]) => {
+							const path = join(APPDATA_DIR, 'files', 'lua', name);
+							const file = Bun.file(path);
 
-						if( props.active && await file.exists() )
-							return `--lua-init=@${ path }`;
+							if( props.active && await file.exists() )
+								return `--lua-init=@${ path }`;
 
-						return '';
-					})
+							return '';
+						})
+				)
 			),
 
 			...stringArgv(
