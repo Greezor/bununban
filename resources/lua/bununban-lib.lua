@@ -368,7 +368,7 @@ function tangled(ctx, desync)
             local function create_fake()
                 local fake = fakedata
 
-                if desync.arg.fake_tls_mod then
+                if desync.arg.fake_tls_mod and tls_dissect(fake) then
                     fake = tls_mod_shim(desync, fake, desync.arg.fake_tls_mod, fake)
                 end
 
@@ -446,9 +446,9 @@ function tangled(ctx, desync)
             replay_drop_set(desync)
             return desync.arg.nodrop and VERDICT_PASS or VERDICT_DROP
         end
-    end
 
-    if replay_drop(desync) then
-        return desync.arg.nodrop and VERDICT_PASS or VERDICT_DROP
+        if replay_drop(desync) then
+            return desync.arg.nodrop and VERDICT_PASS or VERDICT_DROP
+        end
     end
 end
