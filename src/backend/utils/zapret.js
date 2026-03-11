@@ -230,7 +230,7 @@ class Zapret
 			),
 
 			...(
-				Promise.all(
+				await Promise.all(
 					Object.entries( await blobs.getAll() ?? {} )
 						.map(async ([ name, props ]) => {
 							const path = join(APPDATA_DIR, 'files', 'blobs', name);
@@ -245,7 +245,7 @@ class Zapret
 			),
 
 			...(
-				Promise.all(
+				await Promise.all(
 					Object.entries( await lua.getAll() ?? {} )
 						.map(async ([ name, props ]) => {
 							const path = join(APPDATA_DIR, 'files', 'lua', name);
