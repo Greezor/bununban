@@ -7,6 +7,7 @@ import api from './routes/api'
 import frontend from './routes/frontend'
 
 import zapret from './utils/zapret'
+import migrate from './utils/migrate'
 
 import lists from './stores/lists'
 import lua from './stores/lua'
@@ -14,7 +15,6 @@ import blobs from './stores/blobs'
 import settings from './stores/settings'
 
 import { APPDATA_DIR } from './utils/appdata'
-
 import packageJSON from '../../package.json'
 
 class BackendApp
