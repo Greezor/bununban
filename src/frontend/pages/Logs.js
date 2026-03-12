@@ -4,8 +4,6 @@ import Icon from '../components/Icon'
 
 import ketchup from '../../common/utils/ketchup'
 
-import Loader from '../components/Loader'
-
 const style = {
 	page: css`
 		position: relative;
@@ -289,11 +287,8 @@ export default {
 				</div>
 			</template>
 		</div>
-
-		<Loader v-if="loading" />
 	`,
 	components: {
 		Icon,
-		Loader,
 	},
 }

@@ -36,6 +36,17 @@ const style = {
 			height: 100%!important;
 			max-height: 100%!important;
 		}
+
+		.p-listbox-empty-message{
+			position: absolute;
+			top: 0;
+			left: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+		}
 	`,
 
 	listItem: css`
@@ -129,6 +140,7 @@ export default {
 	{
 		const pageLoading = ref(false);
 		const editorLoading = ref(false);
+		const saving = ref(false);
 
 		const mobileView = ref(false);
 
@@ -187,6 +199,7 @@ export default {
 		const loadProfiles = async () => {
 			pageLoading.value = true;
 
+			profiles.value = [];
 			profiles.value = await ketchup('/api/profiles');
 
 			pageLoading.value = false;
@@ -220,9 +233,7 @@ export default {
 			editorLoading.value = false;
 		}
 
-		const sync = async () => {
-			pageLoading.value = true;
-			
+		const sync = async () => {		
 			await ketchup(`/api/profiles`, {
 				method: 'PUT',
 				body: JSON.stringify(profiles.value),
@@ -233,13 +244,13 @@ export default {
 			});
 
 			await loadProfiles();
-
-			pageLoading.value = false;
 		}
 
 		const save = async () => {
 			if( !canSave.value )
 				return;
+
+			saving.value = true;
 
 			const index = profiles.value
 				.findIndex(({ name }) => name === selectedProfileName.value);
@@ -258,9 +269,12 @@ export default {
 			selectedProfileName.value = form.value.name;
 
 			await sync();
+
+			saving.value = false;
 		}
 
 		const removeProfile = async name => {
+			pageLoading.value = true;
 			selectedProfileName.value = null;
 
 			const index = profiles.value
@@ -271,6 +285,8 @@ export default {
 					.splice(index, 1);
 			
 			await sync();
+
+			pageLoading.value = false;
 		}
 
 		watch(
@@ -296,6 +312,7 @@ export default {
 		return {
 			pageLoading,
 			editorLoading,
+			saving,
 			mobileView,
 			profiles,
 			sortedProfiles,
@@ -318,7 +335,7 @@ export default {
 		<Default
 			header="Профили"
 			v-model:mobile-view="mobileView"
-			:loading="pageLoading"
+			:loading="saving"
 			@back="selectedProfileName = null">
 
 			<template #sidebar>
@@ -348,7 +365,11 @@ export default {
 								class="${ style.listItemSwitch }"
 								v-model="option.active"
 								@click.stop
-								@update:model-value="sync()" />
+								@update:model-value="async () => {
+									saving = true;
+									await sync();
+									saving = false;
+								}" />
 
 							<Button
 								class="${ style.listItemRemoveBtn }"
@@ -376,7 +397,12 @@ export default {
 					</template>
 
 					<template #empty>
-						<div>Пусто</div>
+						<Icon
+							v-if="pageLoading"
+							icon="svg-spinners:270-ring-with-bg"
+							width="32" />
+
+						<div v-else>Пусто</div>
 					</template>
 				</Listbox>
 			</template>
@@ -434,7 +460,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || editorLoading || !canSave">
+				:disabled="pageLoading || editorLoading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>

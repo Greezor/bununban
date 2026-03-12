@@ -33,6 +33,17 @@ const style = {
 			height: 100%!important;
 			max-height: 100%!important;
 		}
+
+		.p-listbox-empty-message{
+			position: absolute;
+			top: 0;
+			left: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+		}
 	`,
 
 	listItem: css`
@@ -120,6 +131,7 @@ export default {
 	{
 		const pageLoading = ref(false);
 		const editorLoading = ref(false);
+		const saving = ref(false);
 
 		const mobileView = ref(false);
 
@@ -172,6 +184,7 @@ export default {
 		const loadFiles = async () => {
 			pageLoading.value = true;
 
+			files.value = [];
 			files.value = await ketchup('/api/lists');
 
 			pageLoading.value = false;
@@ -230,7 +243,7 @@ export default {
 			if( !canSave.value )
 				return;
 
-			pageLoading.value = true;
+			saving.value = true;
 
 			await ketchup(`/api/lists/${ selectedFileName.value ?? form.value.name }`, {
 				method: 'PUT',
@@ -243,7 +256,7 @@ export default {
 			selectedFileName.value = form.value.name;
 			await loadContent();
 
-			pageLoading.value = false;
+			saving.value = false;
 		}
 
 		const removeFile = async name => {
@@ -290,6 +303,7 @@ export default {
 		return {
 			pageLoading,
 			editorLoading,
+			saving,
 			mobileView,
 			files,
 			selectedFileName,
@@ -311,7 +325,7 @@ export default {
 		<Default
 			header="Файлы и списки"
 			v-model:mobile-view="mobileView"
-			:loading="pageLoading"
+			:loading="saving"
 			@back="selectedFileName = null">
 
 			<template #sidebar>
@@ -363,7 +377,12 @@ export default {
 					</template>
 
 					<template #empty>
-						<div>Пусто</div>
+						<Icon
+							v-if="pageLoading"
+							icon="svg-spinners:270-ring-with-bg"
+							width="32" />
+
+						<div v-else>Пусто</div>
 					</template>
 				</Listbox>
 			</template>
@@ -409,7 +428,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || editorLoading || !canSave">
+				:disabled="pageLoading || editorLoading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>

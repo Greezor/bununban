@@ -31,6 +31,17 @@ const style = {
 			height: 100%!important;
 			max-height: 100%!important;
 		}
+
+		.p-listbox-empty-message{
+			position: absolute;
+			top: 0;
+			left: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+		}
 	`,
 
 	listItem: css`
@@ -123,6 +134,7 @@ export default {
 	setup()
 	{
 		const pageLoading = ref(false);
+		const saving = ref(false);
 
 		const mobileView = ref(false);
 
@@ -137,7 +149,7 @@ export default {
 
 		const createForm = () => ({
 			name: '',
-			active: true,
+			active: false,
 			syncUrl: '',
 		})
 
@@ -173,6 +185,7 @@ export default {
 		const loadFiles = async () => {
 			pageLoading.value = true;
 
+			files.value = [];
 			files.value = await ketchup('/api/blobs');
 
 			pageLoading.value = false;
@@ -203,7 +216,7 @@ export default {
 			if( !canSave.value )
 				return;
 
-			pageLoading.value = true;
+			saving.value = true;
 			
 			const name = selectedFileName.value ?? form.value.name;
 
@@ -222,7 +235,7 @@ export default {
 			await loadFiles();
 			selectedFileName.value = form.value.name;
 
-			pageLoading.value = false;
+			saving.value = false;
 		}
 
 		const removeFile = async name => {
@@ -262,6 +275,7 @@ export default {
 
 		return {
 			pageLoading,
+			saving,
 			mobileView,
 			files,
 			selectedFileName,
@@ -281,7 +295,7 @@ export default {
 		<Default
 			header="Blob'ы"
 			v-model:mobile-view="mobileView"
-			:loading="pageLoading"
+			:loading="saving"
 			@back="selectedFileName = null">
 
 			<template #sidebar>
@@ -312,11 +326,11 @@ export default {
 								v-model="option.active"
 								@click.stop
 								@update:model-value="async () => {
-									pageLoading = true;
+									saving = true;
 
 									await saveItem(option.name, option);
 									
-									pageLoading = false;
+									saving = false;
 								}" />
 
 							<Button
@@ -345,7 +359,12 @@ export default {
 					</template>
 
 					<template #empty>
-						<div>Пусто</div>
+						<Icon
+							v-if="pageLoading"
+							icon="svg-spinners:270-ring-with-bg"
+							width="32" />
+
+						<div v-else>Пусто</div>
 					</template>
 				</Listbox>
 			</template>
@@ -379,7 +398,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || !canSave">
+				:disabled="pageLoading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>

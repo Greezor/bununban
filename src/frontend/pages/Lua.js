@@ -34,6 +34,17 @@ const style = {
 			height: 100%!important;
 			max-height: 100%!important;
 		}
+
+		.p-listbox-empty-message{
+			position: absolute;
+			top: 0;
+			left: 0;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			height: 100%;
+		}
 	`,
 
 	listItem: css`
@@ -125,6 +136,7 @@ export default {
 	{
 		const pageLoading = ref(false);
 		const editorLoading = ref(false);
+		const saving = ref(false);
 
 		const mobileView = ref(false);
 
@@ -139,7 +151,7 @@ export default {
 
 		const createForm = () => ({
 			name: '',
-			active: true,
+			active: false,
 			syncUrl: '',
 			content: '',
 		})
@@ -178,6 +190,7 @@ export default {
 		const loadFiles = async () => {
 			pageLoading.value = true;
 
+			files.value = [];
 			files.value = await ketchup('/api/lua');
 
 			pageLoading.value = false;
@@ -251,7 +264,7 @@ export default {
 			if( !canSave.value )
 				return;
 
-			pageLoading.value = true;
+			saving.value = true;
 			
 			await saveItem(selectedFileName.value ?? form.value.name, form.value);
 
@@ -259,7 +272,7 @@ export default {
 			selectedFileName.value = form.value.name;
 			await loadContent();
 
-			pageLoading.value = false;
+			saving.value = false;
 		}
 
 		const removeFile = async name => {
@@ -306,6 +319,7 @@ export default {
 		return {
 			pageLoading,
 			editorLoading,
+			saving,
 			mobileView,
 			files,
 			selectedFileName,
@@ -328,7 +342,7 @@ export default {
 		<Default
 			header="Lua-скрипты"
 			v-model:mobile-view="mobileView"
-			:loading="pageLoading"
+			:loading="saving"
 			@back="selectedFileName = null">
 
 			<template #sidebar>
@@ -359,12 +373,12 @@ export default {
 								v-model="option.active"
 								@click.stop
 								@update:model-value="async () => {
-									pageLoading = true;
+									saving = true;
 
 									await saveItem(option.name, option);
 									await loadContent();
 									
-									pageLoading = false;
+									saving = false;
 								}" />
 
 							<Button
@@ -393,7 +407,12 @@ export default {
 					</template>
 
 					<template #empty>
-						<div>Пусто</div>
+						<Icon
+							v-if="pageLoading"
+							icon="svg-spinners:270-ring-with-bg"
+							width="32" />
+
+						<div v-else>Пусто</div>
 					</template>
 				</Listbox>
 			</template>
@@ -439,7 +458,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || editorLoading || !canSave">
+				:disabled="pageLoading || editorLoading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>
