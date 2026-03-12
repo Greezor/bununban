@@ -548,6 +548,19 @@ export default {
 										<span>Сброс</span>
 									</Button>
 								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Github</span>
+									<Button
+										severity="contrast"
+										variant="text"
+										size="small"
+										as="a"
+										href="https://github.com/Greezor/bununban"
+										target="_blank">
+										<Icon icon="fa7-brands:github" width="22" />
+									</Button>
+								</div>
 							</div>
 						</AccordionContent>
 					</AccordionPanel>

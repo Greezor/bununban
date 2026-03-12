@@ -3,6 +3,7 @@ import { Icon } from '@iconify/vue'
 import { getIconData } from '@iconify/utils'
 
 import fa7solid from '@iconify-json/fa7-solid/icons.json'
+import fa7brands from '@iconify-json/fa7-brands/icons.json'
 import materialsymbols from '@iconify-json/material-symbols/icons.json'
 import svgspinners from '@iconify-json/svg-spinners/icons.json'
 
@@ -22,6 +23,10 @@ export default {
 			switch(prefix){
 				case 'fa7-solid':
 					lib = fa7solid;
+					break;
+
+				case 'fa7-brands':
+					lib = fa7brands;
 					break;
 
 				case 'material-symbols':
