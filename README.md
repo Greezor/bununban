@@ -1,4 +1,8 @@
-# Bununban 🍌
+<p align="center">
+	<img src="./src/frontend/assets/logo.png" width="200">
+</p>
+
+# Bununban
 
 Web-panel for [bol-van/zapret2](https://github.com/bol-van/zapret2)
 
@@ -7,6 +11,7 @@ Web-panel for [bol-van/zapret2](https://github.com/bol-van/zapret2)
 - resources management (profiles, hostlists, ipsets, lua-scripts, blobs)
 - resources synchronization by url
 - logs viewer
+- auto-updater
 
 ## Development
 
