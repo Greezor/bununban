@@ -1,6 +1,6 @@
 import { ref, useTemplateRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
-import { Icon } from '@iconify/vue'
+import Icon from '../components/Icon'
 
 import ketchup from '../../common/utils/ketchup'
 

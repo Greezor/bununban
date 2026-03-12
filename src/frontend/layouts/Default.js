@@ -1,6 +1,6 @@
 import { useModel } from 'vue'
 import { css } from '@emotion/css'
-import { Icon } from '@iconify/vue'
+import Icon from '../components/Icon'
 
 import Butn from '../components/Butn'
 import Loader from '../components/Loader'

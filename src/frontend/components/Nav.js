@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { css } from '@emotion/css'
-import { Icon } from '@iconify/vue'
+
+import Icon from './Icon'
 
 const style = {
 	nav: css`

@@ -29,6 +29,11 @@
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",
+    "@iconify-json/fa7-solid": "^1.2.4",
+    "@iconify-json/material-symbols": "^1.2.62",
+    "@iconify-json/svg-spinners": "^1.2.4",
+    "@iconify/utils": "^3.1.0",
+    "@iconify/vue": "^5.0.0",
     "@primeuix/themes": "^2.0.2",
     "@vueuse/core": "^14.1.0",
     "@webui-dev/bun-webui": "^2.5.4",
@@ -38,11 +43,5 @@
     "string-argv": "^0.3.2",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
-  },
-  "devDependencies": {
-    "@iconify-json/fa7-solid": "^1.2.3",
-    "@iconify-json/material-symbols": "^1.2.50",
-    "@iconify-json/svg-spinners": "^1.2.4",
-    "@iconify/vue": "^5.0.0"
   }
 }

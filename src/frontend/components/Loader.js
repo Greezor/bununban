@@ -1,5 +1,5 @@
 import { css } from '@emotion/css'
-import { Icon } from '@iconify/vue'
+import Icon from './Icon'
 
 const style = {
 	loader: css`
