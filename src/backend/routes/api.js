@@ -14,6 +14,11 @@ import settings from '../stores/settings'
 import zapret from '../utils/zapret'
 import server from '../index'
 
+import { generateSecret, EncryptJWT, jwtDecrypt } from 'jose'
+
+const SESSION_KEY = 'bununban-session'
+let jwtSecret = await generateSecret('A256GCM')
+
 const stores = {
 	lists,
 	lua,
@@ -24,21 +29,45 @@ const stores = {
 const OK = new Response('OK')
 const FORBIDDEN = new Response('Forbidden', { status: 403 })
 
-const sessions = new Set()
+const authUser = async (req, server) => {
+	const { address } = server.requestIP(req);
 
-const checkAuth = async req => {
+	const jwt = await new EncryptJWT({ ip: address })
+		.setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+		.setExpirationTime('2d')
+		.encrypt(jwtSecret);
+
+	req.cookies.set(SESSION_KEY, jwt, {
+		httpOnly: true,
+		sameSite: 'lax',
+		path: '/',
+	});
+}
+
+const checkAuth = async (req, server) => {
 	const hash = await settings.get('password');
 
 	if( !hash )
 		return true;
 
-	return sessions.has(
-		req?.cookies?.get?.('session')
-	);
+	const { address } = server.requestIP(req);
+	const jwt = req?.cookies?.get?.(SESSION_KEY);
+
+	try{
+		const { payload } = await jwtDecrypt(jwt, jwtSecret);
+		
+		if( payload.ip === address ){
+			await authUser(req, server);
+			return true;
+		}
+	}
+	catch(e){}
+
+	return false;
 }
 
-const storeToArrayEndpoint = store => async req => {
-	if( !( await checkAuth(req) ) )
+const storeToArrayEndpoint = store => async (req, server) => {
+	if( !( await checkAuth(req, server) ) )
 		return Response.json([]);
 
 	return Response.json(
@@ -50,8 +79,8 @@ const storeToArrayEndpoint = store => async req => {
 	);
 }
 
-const getFromStoreEndpoint = storeName => async req => {
-	if( !( await checkAuth(req) ) )
+const getFromStoreEndpoint = storeName => async (req, server) => {
+	if( !( await checkAuth(req, server) ) )
 		return Response.json(null);
 
 	const key = req.params.name;
@@ -74,8 +103,8 @@ const getFromStoreEndpoint = storeName => async req => {
 	});
 }
 
-const putToStoreEndpoint = storeName => async req => {
-	if( !( await checkAuth(req) ) )
+const putToStoreEndpoint = storeName => async (req, server) => {
+	if( !( await checkAuth(req, server) ) )
 		return FORBIDDEN;
 
 	const store = stores[storeName];
@@ -119,8 +148,8 @@ const putToStoreEndpoint = storeName => async req => {
 	return OK;
 }
 
-const deleteFromStoreEndpoint = storeName => async req => {
-	if( !( await checkAuth(req) ) )
+const deleteFromStoreEndpoint = storeName => async (req, server) => {
+	if( !( await checkAuth(req, server) ) )
 		return FORBIDDEN;
 
 	const key = req.params.name;
@@ -141,24 +170,15 @@ export default {
 
 
 	'/api/auth/login': {
-		POST: async req => {
-			if( await checkAuth(req) )
+		POST: async (req, server) => {
+			if( await checkAuth(req, server) )
 				return Response.json(true);
 
 			const password = await req.json();
 			const hash = await settings.get('password');
 
 			if( await Bun.password.verify(password, hash) ){
-				const id = Bun.randomUUIDv7();
-
-				sessions.add(id);
-
-				req.cookies.set('session', id, {
-					httpOnly: true,
-					sameSite: 'lax',
-					path: '/',
-				});
-
+				await authUser(req, server);
 				return Response.json(true);
 			}
 
@@ -166,31 +186,29 @@ export default {
 		},
 	},
 	'/api/auth/logout': {
-		GET: async req => {
-			sessions.delete( req?.cookies?.get?.('session') );
-			req?.cookies?.delete?.('session');
-
+		GET: async (req, server) => {
+			req?.cookies?.delete?.(SESSION_KEY);
 			return OK;
 		},
 	},
 	'/api/auth/check': {
-		GET: async req => Response.json(
-			await checkAuth(req)
+		GET: async (req, server) => Response.json(
+			await checkAuth(req, server)
 		),
 	},
 
 
 	'/api/antidpi': {
-		GET: async req => {
-			if( !( await checkAuth(req) ) )
+		GET: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return Response.json(false);
 
 			return Response.json(
 				zapret.isStarted
 			);
 		},
-		PUT: async req => {
-			if( !( await checkAuth(req) ) )
+		PUT: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 			
 			const activate = await req.json();
@@ -206,8 +224,8 @@ export default {
 		},
 	},
 	'/api/antidpi/restart': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			if( zapret.isStarted )
@@ -219,8 +237,8 @@ export default {
 
 
 	'/api/server/restart': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			server.restart();
@@ -230,16 +248,16 @@ export default {
 
 
 	'/api/profiles': {
-		GET: async req => {
-			if( !( await checkAuth(req) ) )
+		GET: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return Response.json([]);
 
 			return Response.json(
 				await settings.get('profiles') ?? []
 			);
 		},
-		PUT: async req => {
-			if( !( await checkAuth(req) ) )
+		PUT: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			const profiles = await req.json();
@@ -289,8 +307,8 @@ export default {
 		GET: getFromStoreEndpoint('blobs'),
 		PUT: putToStoreEndpoint('blobs'),
 		DELETE: deleteFromStoreEndpoint('blobs'),
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			const formData = await req.formData();
@@ -307,8 +325,8 @@ export default {
 
 
 	'/api/logs': {
-		GET: async req => {
-			if( !( await checkAuth(req) ) )
+		GET: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return new Response('');
 
 			const logs = Bun.file(join(APPDATA_DIR, 'logs'));
@@ -322,8 +340,8 @@ export default {
 
 
 	'/api/settings': {
-		GET: async req => {
-			if( !( await checkAuth(req) ) )
+		GET: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return Response.json({});
 
 			const params = await settings.getAll();
@@ -331,8 +349,8 @@ export default {
 
 			return Response.json(params);
 		},
-		PUT: async req => {
-			if( !( await checkAuth(req) ) )
+		PUT: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			const data = await req.json();
@@ -341,7 +359,7 @@ export default {
 				if( prop === 'password' ){
 					if( value ){
 						await settings.set('password', await Bun.password.hash(value));
-						sessions.clear();
+						jwtSecret = await generateSecret('A256GCM');
 					}
 					
 					continue;
@@ -354,8 +372,8 @@ export default {
 		},
 	},
 	'/api/settings/antidpi/zapret2/versions': {
-		GET: async req => {
-			if( !( await checkAuth(req) ) )
+		GET: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return Response.json([]);
 
 			return Response.json(
@@ -364,8 +382,8 @@ export default {
 		},
 	},
 	'/api/settings/antidpi/zapret2/install/:version': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			await zapret.install(req.params.version);
@@ -373,18 +391,18 @@ export default {
 		},
 	},
 	'/api/settings/reset-password': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			await settings.set('password', '');
-			sessions.clear();
+			jwtSecret = await generateSecret('A256GCM');
 			return OK;
 		},
 	},
 	'/api/settings/reset': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			await settings.set('version', '0.0.0');
@@ -396,8 +414,8 @@ export default {
 
 
 	'/api/updater/update-now': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			await server.autoUpdate();
@@ -407,8 +425,8 @@ export default {
 
 
 	'/api/cors-hole': {
-		POST: async req => {
-			if( !( await checkAuth(req) ) )
+		POST: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
 			const { url } = await req.json();

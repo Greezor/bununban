@@ -38,6 +38,7 @@
     "@primeuix/themes": "^2.0.2",
     "@vueuse/core": "^14.1.0",
     "@webui-dev/bun-webui": "^2.5.4",
+    "jose": "^6.2.1",
     "monaco-editor": "^0.55.1",
     "nanotar": "^0.2.0",
     "primevue": "^4.5.4",
