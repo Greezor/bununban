@@ -264,7 +264,11 @@ class BackendApp
 
 		const updatePath = join( ...path, 'update.bin' );
 
-		await Bun.write(updatePath, await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/latest/download/${ bin }`));
+		await Bun.write(updatePath, (
+			Bun.gunzipSync(
+				await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/latest/download/${ bin }.gz`)
+			)
+		));
 
 		if( process.platform === 'win32' ){
 			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }'"`);
