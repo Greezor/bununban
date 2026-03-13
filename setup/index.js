@@ -2,80 +2,86 @@ import { join } from 'node:path'
 import { homedir } from 'node:os'
 import { execSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
+import { dlopen, FFIType } from 'bun:ffi'
+
+import { intro, outro, confirm, spinner, log, isCancel } from '@clack/prompts'
 
 import { APPDATA_DIR } from '../src/backend/utils/appdata'
 import settings from '../src/backend/stores/settings'
 
-import bin from '../dist/bununban-windows-x64.exe' with { type: 'file' }
+import modernBin from '../dist/bununban-windows-x64.exe.gz' with { type: 'file' }
+import baselineBin from '../dist/bununban-windows-x64-no-simd.exe.gz' with { type: 'file' }
+
 import ico from '../src/frontend/assets/favicon.ico' with { type: 'file' }
 import lnk from './Bununban.lnk' with { type: 'file' }
 import dll from '../node_modules/@webui-dev/bun-webui/src/webui-windows-msvc-x64/webui-2.dll' with { type: 'file' }
 
-const dllFile = Bun.file(dll)
+const AVX2_SUPPORT = (() => {
+	const PF_AVX2_INSTRUCTIONS_AVAILABLE = 40;
 
-if( process.env.NODE_ENV === 'production' && !(await dllFile.exists()) )
-	await Bun.write('./webui-windows-msvc-x64/webui-2.dll', await Bun.file(dll).arrayBuffer());
+	const kernel32 = dlopen('kernel32.dll', {
+		IsProcessorFeaturePresent: {
+			args: [FFIType.u32],
+			returns: FFIType.bool,
+		},
+	});
 
-const { WebUI } = await import('@webui-dev/bun-webui');
+	try{
+		return kernel32.symbols.IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE);
+	}
+	catch(e){}
 
-const BIN_PATH = `C:\\bununban\\bununban-windows-x64.exe`;
-const BIN = await Bun.file(bin).arrayBuffer();
+	return false;
+})()
 
-const ICO_PATH = 'C:\\bununban\\icon.ico';
-const ICO = await Bun.file(ico).arrayBuffer();
+const MODERN_PATH = 'C:\\bununban\\bununban-windows-x64.exe'
+const BASELINE_PATH = 'C:\\bununban\\bununban-windows-x64-no-simd.exe'
 
-const LNK_PATH = join(homedir(), 'Desktop', 'Bununban.lnk');
-const LNK = await Bun.file(lnk).arrayBuffer();
+const BIN_PATH = AVX2_SUPPORT ? MODERN_PATH : BASELINE_PATH
+const BIN = await Bun.file( AVX2_SUPPORT ? modernBin : baselineBin ).bytes()
 
-const window = new WebUI();
+const ICO_PATH = 'C:\\bununban\\icon.ico'
+const ICO = await Bun.file(ico).arrayBuffer()
 
-window.setSize(500, 250);
-window.setFrameless(true);
-window.setTransparent(true);
-window.setResizable(false);
-window.setCenter();
+const LNK_PATH = join(homedir(), 'Desktop', 'Bununban.lnk')
+const LNK = await Bun.file(lnk).arrayBuffer()
 
-const isInstalled = (
-	await Bun.file('C:\\bununban\\bununban-windows-x64.exe').exists()
+const IS_INSTALLED = (
+	await Bun.file(MODERN_PATH).exists()
 	||
-	await Bun.file('C:\\bununban\\bununban-windows-x64-no-simd.exe').exists()
-);
+	await Bun.file(BASELINE_PATH).exists()
+)
 
-const settingsFile = Bun.file( join(APPDATA_DIR, 'settings') );
-const hasSettings = await settingsFile.exists();
+const HAS_SETTINGS = await Bun.file( join(APPDATA_DIR, 'settings') ).exists()
 
-const port = await settings.get('port') ?? '8008';
-const hostname = await settings.get('hostname') ?? '0.0.0.0';
+const PORT = await settings.get('port') ?? '8008'
+const HOSTNAME = await settings.get('hostname') ?? '0.0.0.0'
 
 const sh = cmd => {
 	try{
 		execSync(cmd, { stdio: ['ignore', 'ignore', 'ignore'], windowsHide: true })
 	}
 	catch(e){}
-};
+}
 
-window.bind('installApp', async e => {
-	const clr = e.arg.boolean(0);
-
+const installApp = clr => {
 	if( clr )
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
 
 	sh(`mkdir C:\\bununban`);
-	writeFileSync(BIN_PATH, BIN);
+	writeFileSync(BIN_PATH, Bun.gunzipSync(BIN));
 	writeFileSync(ICO_PATH, ICO);
 	writeFileSync(LNK_PATH, LNK);
 	sh(`netsh interface tcp set global timestamps=enabled`);
 	sh(`schtasks /create /tn "bununban" /tr "${ BIN_PATH }" /sc onlogon /rl highest`);
 	sh(`schtasks /run /tn "bununban"`);
 
-	return hasSettings && !clr
-		? `http://${ hostname == '0.0.0.0' ? 'localhost' : hostname }:${ port }`
+	return HAS_SETTINGS && !clr
+		? `http://${ HOSTNAME == '0.0.0.0' ? 'localhost' : HOSTNAME }:${ PORT }`
 		: `http://localhost:8008`;
-});
+}
 
-window.bind('uninstallApp', async e => {
-	const clr = e.arg.boolean(0);
-
+const uninstallApp = clr => {
 	sh(`schtasks /delete /tn "bununban" /f`);
 	sh(`taskkill /f /im bununban-windows-x64.exe`);
 	sh(`taskkill /f /im bununban-windows-x64-no-simd.exe`);
@@ -90,246 +96,394 @@ window.bind('uninstallApp', async e => {
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
 
 	return true;
-});
+}
 
-window.bind('openUrl', async e => {
-	const url = e.arg.string(0);
+const openUrl = url => {
 	sh(`start ${ url }`);
 	return true;
-});
+}
 
-window.bind('closeSetup', async () => {
-	window.close();
-	WebUI.exit();
-});
+const waitAvailability = async url => {
+	try{
+		await fetch(url);
+	}
+	catch(e){
+		await new Promise(resolve => setTimeout(resolve, 500));
+		return waitAvailability(url);
+	}
+}
 
-window.show(`
-	<html>
-		<head>
-			<script src="webui.js"></script>
-			<title>Setup</title>
-			<meta charset="UTF-8">
-			<style>
-				*{
-					margin: 0;
-					padding: 0;
-					box-sizing: border-box;
-				}
+const runCLI = async () => {
+	if( IS_INSTALLED ){
+		const clr = (
+			HAS_SETTINGS
+				? await confirm({
+					message: 'Сбросить настройки?',
+					active: 'Да',
+					inactive: 'Нет',
+				})
+				: false
+		);
 
-				body{
-					padding: 10px;
-					display: flex;
-					flex-direction: column;
-					justify-content: center;
-					align-items: center;
-					gap: 10px;
-					width: 100vw;
-					height: 100vh;
-					font-family: system-ui;
-					font-size: 16px;
-					color: #333;
-					user-select: none;
-					overflow: hidden;
-				}
+		if( isCancel(clr) )
+			process.exit();
 
-				body:before{
-					content: '';
-					position: fixed;
-					top: 3px;
-					left: 4px;
-					right: 4px;
-					bottom: 5px;
-					background-color: #fff;
-					border-radius: 5px;
-					box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-					z-index: -1;
-				}
+		const spin = spinner();
 
-				body:after{
-					content: '';
-					position: fixed;
-					top: 3px;
-					left: 4px;
-					right: 4px;
-					height: 50px;
-					app-region: drag;
-				}
+		spin.start('Удаление...');
+		await uninstallApp(clr);
 
-				h1{
-					margin: 0;
-					font-size: 24px;
-					font-weight: 200;
-				}
+		spin.stop('Удаление завершено');	
+	}
+	else
+	{
+		const clr = (
+			HAS_SETTINGS
+				? await confirm({
+					message: 'Сбросить предыдущие настройки?',
+				})
+				: false
+		);
 
-				.icon{
-					display: inline-block;
-					width: 60px;
-					height: 60px;
-					line-height: 60px;
-					font-size: 52px;
-					text-align: center;
-				}
+		if( isCancel(clr) )
+			process.exit();
 
-				.view{
-					display: flex;
-					flex-direction: column;
-					justify-content: center;
-					align-items: center;
-					gap: 10px;
-				}
+		const spin = spinner();
 
-				.row{
-					margin: 0;
-					display: flex;
-					align-items: center;
-					gap: 10px;
-					font-weight: 400;
-				}
+		spin.start('Установка...');
+		const url = await installApp(clr);
 
-				.spinner{
-					display: inline-flex;
-					justify-content: center;
-					align-items: center;
-				}
+		spin.message('Загрузка ресурсов...');
+		await waitAvailability(url + '/api/ping');
 
-				.spinner:before{
-					content: '';
-					display: inline-block;
-					width: 15px;
-					height: 15px;
-					border: 2px solid currentColor;
-					border-right: 2px solid transparent;
-					border-radius: 50%;
-					animation: spin 1s linear infinite;
-				}
+		spin.stop('Установка завершена');
 
-				@keyframes spin{
-					0%{
-						transform: rotate(0deg);
+		openUrl(url);
+	}
+}
+
+const runGUI = async () => {
+	log.message('Запуск интерфейса WebUI...');
+
+	let guiStarted = false;
+
+	const dllFile = Bun.file(dll);
+
+	if( process.env.NODE_ENV === 'production' && !(await dllFile.exists()) )
+		await Bun.write('./webui-windows-msvc-x64/webui-2.dll', await dllFile.arrayBuffer());
+
+	const { WebUI } = await import('@webui-dev/bun-webui');
+
+	const window = new WebUI();
+
+	window.setSize(500, 250);
+	window.setFrameless(true);
+	window.setTransparent(true);
+	window.setResizable(false);
+	window.setCenter();
+
+	window.bind('guiStarted', async e => {
+		guiStarted = true;
+	});
+
+	window.bind('installApp', async e => {
+		const clr = e.arg.boolean(0);
+		return installApp(clr);
+	});
+
+	window.bind('uninstallApp', async e => {
+		const clr = e.arg.boolean(0);
+		return uninstallApp(clr);
+	});
+
+	window.bind('openUrl', async e => {
+		const url = e.arg.string(0);
+		return openUrl(url);
+	});
+
+	window.bind('closeSetup', async () => {
+		window.close();
+		WebUI.exit();
+	});
+
+	window.show(`
+		<html>
+			<head>
+				<script src="webui.js"></script>
+				<title>Setup</title>
+				<meta charset="UTF-8">
+				<style>
+					*{
+						margin: 0;
+						padding: 0;
+						box-sizing: border-box;
 					}
-					100%{
-						transform: rotate(360deg);
+
+					body{
+						padding: 10px;
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						align-items: center;
+						gap: 10px;
+						width: 100vw;
+						height: 100vh;
+						font-family: system-ui;
+						font-size: 16px;
+						color: #333;
+						user-select: none;
+						overflow: hidden;
 					}
-				}
-				
-				input[type="checkbox"]{
-					accent-color: #ffcd19;
-				}
 
-				button{
-					padding: 10px 25px;
-					background-color: #ffcd19;
-					border: none;
-					border-radius: 5px;
-					font-size: 14px;
-					color: #fff;
-					box-shadow: 0 5px 10px -5px rgba(0, 0, 0, 0.3);
-					transition: all 0.2s ease;
-					cursor: pointer;
-				}
-
-				button:active{
-					transform: translateY(1px);
-					box-shadow: none;
-				}
-			</style>
-		</head>
-
-		<body>
-			<div class="icon">🍌</div>
-			<h1>Bununban</h1>
-
-			<div id="main-view" class="view">
-				${
-					hasSettings
-						? `
-							<label class="row">
-								<input id="clear-settings" type="checkbox"> 
-								${ isInstalled ? 'Сбросить настройки' : 'Сбросить предыдущие настройки' }
-							</label>
-						`
-						: ''
-				}
-				${
-					isInstalled
-						? `<button id="uninstall" type="button">Удалить</button>`
-						: `<button id="install" type="button">Установить</button>`
-				}
-			</div>
-
-			<script>
-				const installBtn = document.querySelector('#install');
-				const uninstallBtn = document.querySelector('#uninstall');
-				const clrSettingsCheckbox = document.querySelector('#clear-settings');
-				const view = document.querySelector('#main-view');
-
-				const setStatus = text => {
-					const statusEl = document.querySelector('#status');
-
-					if( statusEl )
-						statusEl.innerText = text;
-				}
-
-				const waitAvailability = async url => {
-					try{
-						await fetch(url);
+					body:before{
+						content: '';
+						position: fixed;
+						top: 3px;
+						left: 4px;
+						right: 4px;
+						bottom: 5px;
+						background-color: #fff;
+						border-radius: 5px;
+						box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+						z-index: -1;
 					}
-					catch(e){
-						await new Promise(resolve => setTimeout(resolve, 500));
-						return waitAvailability(url);
+
+					body:after{
+						content: '';
+						position: fixed;
+						top: 3px;
+						left: 4px;
+						right: 4px;
+						height: 40px;
+						app-region: drag;
 					}
-				}
 
-				const finish = (label, url = null) => {
-					view.innerHTML = '<button id="exit" type="button">' + label + '</button>';
+					h1{
+						margin: 0;
+						font-size: 24px;
+						font-weight: 200;
+					}
 
-					document.querySelector('#exit')
-						.addEventListener('click', async () => {
-							if( url )
-								await openUrl(url);
+					.icon{
+						display: inline-block;
+						width: 60px;
+						height: 60px;
+						line-height: 60px;
+						font-size: 52px;
+						text-align: center;
+					}
 
-							await closeSetup();
-						});
-				}
+					.view{
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						align-items: center;
+						gap: 10px;
+					}
 
-				installBtn?.addEventListener?.('click', async () => {
-					const clr = clrSettingsCheckbox?.checked ?? false;
+					.row{
+						margin: 0;
+						display: flex;
+						align-items: center;
+						gap: 10px;
+						font-weight: 400;
+					}
 
-					view.innerHTML = \`
-						<div class="row">
-							<div class="spinner"></div>
-							<div id="status">Установка...</div>
-						</div>
-					\`;
+					.spinner{
+						display: inline-flex;
+						justify-content: center;
+						align-items: center;
+					}
 
-					const url = await installApp(clr);
+					.spinner:before{
+						content: '';
+						display: inline-block;
+						width: 15px;
+						height: 15px;
+						border: 2px solid currentColor;
+						border-right: 2px solid transparent;
+						border-radius: 50%;
+						animation: spin 1s linear infinite;
+					}
 
-					setStatus('Загрузка ресурсов...');
+					@keyframes spin{
+						0%{
+							transform: rotate(0deg);
+						}
+						100%{
+							transform: rotate(360deg);
+						}
+					}
+					
+					input[type="checkbox"]{
+						accent-color: #ffcd19;
+					}
 
-					await waitAvailability(url + '/api/ping');
+					button{
+						padding: 10px 25px;
+						background-color: #ffcd19;
+						border: none;
+						border-radius: 5px;
+						font-size: 14px;
+						color: #fff;
+						box-shadow: 0 5px 10px -5px rgba(0, 0, 0, 0.3);
+						transition: all 0.2s ease;
+						cursor: pointer;
+					}
 
-					finish('Начать', url);
-				});
+					button:active{
+						transform: translateY(1px);
+						box-shadow: none;
+					}
 
-				uninstallBtn?.addEventListener?.('click', async () => {
-					const clr = clrSettingsCheckbox?.checked ?? false;
+					.close{
+						position: fixed;
+						top: 3px;
+						right: 4px;
+						width: 40px;
+						height: 40px;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+						border-top-right-radius: 5px;
+						line-height: 1;
+						font-size: 18px;
+						font-weight: 600;
+						color: #555;
+						z-index: 99;
+					}
 
-					view.innerHTML = \`
-						<div class="row">
-							<div class="spinner"></div>
-							<div id="status">Удаление...</div>
-						</div>
-					\`;
+					.close:hover{
+						background: #e81123;
+						color: white;
+					}
+				</style>
+			</head>
 
-					await uninstallApp(clr);
+			<body>
+				<div class="icon">🍌</div>
+				<h1>Bununban</h1>
 
-					finish('Закрыть');
-				});
-			</script>
-		</body>
-	</html>
-`);
+				<div id="main-view" class="view">
+					${
+						HAS_SETTINGS
+							? `
+								<label class="row">
+									<input id="clear-settings" type="checkbox"> 
+									${ IS_INSTALLED ? 'Сбросить настройки' : 'Сбросить предыдущие настройки' }
+								</label>
+							`
+							: ''
+					}
+					${
+						IS_INSTALLED
+							? `<button id="uninstall" type="button">Удалить</button>`
+							: `<button id="install" type="button">Установить</button>`
+					}
+				</div>
 
-await WebUI.wait();
+				<div id="close" class="close">✕</div>
+
+				<script>
+					const closeBtn = document.querySelector('#close');
+					const installBtn = document.querySelector('#install');
+					const uninstallBtn = document.querySelector('#uninstall');
+					const clrSettingsCheckbox = document.querySelector('#clear-settings');
+					const view = document.querySelector('#main-view');
+
+					const setStatus = text => {
+						const statusEl = document.querySelector('#status');
+
+						if( statusEl )
+							statusEl.innerText = text;
+					}
+
+					const waitAvailability = async url => {
+						try{
+							await fetch(url);
+						}
+						catch(e){
+							await new Promise(resolve => setTimeout(resolve, 500));
+							return waitAvailability(url);
+						}
+					}
+
+					const finish = (label, url = null) => {
+						view.innerHTML = '<button id="exit" type="button">' + label + '</button>';
+
+						document.querySelector('#exit')
+							.addEventListener('click', async () => {
+								if( url )
+									await openUrl(url);
+
+								await closeSetup();
+							});
+					}
+
+					closeBtn?.addEventListener?.('click', async () => {
+						await guiStarted();
+						await closeSetup();
+					});
+
+					installBtn?.addEventListener?.('click', async () => {
+						await guiStarted();
+
+						const clr = clrSettingsCheckbox?.checked ?? false;
+
+						view.innerHTML = \`
+							<div class="row">
+								<div class="spinner"></div>
+								<div id="status">Установка...</div>
+							</div>
+						\`;
+
+						const url = await installApp(clr);
+
+						setStatus('Загрузка ресурсов...');
+
+						await waitAvailability(url + '/api/ping');
+
+						finish('Начать', url);
+					});
+
+					uninstallBtn?.addEventListener?.('click', async () => {
+						await guiStarted();
+
+						const clr = clrSettingsCheckbox?.checked ?? false;
+
+						view.innerHTML = \`
+							<div class="row">
+								<div class="spinner"></div>
+								<div id="status">Удаление...</div>
+							</div>
+						\`;
+
+						await uninstallApp(clr);
+
+						finish('Закрыть');
+					});
+
+					setTimeout(async () => await guiStarted(), 1000);
+				</script>
+			</body>
+		</html>
+	`);
+
+	await WebUI.wait();
+
+	if( !guiStarted ){
+		log.error('Ошибка WebUI. Процесс продолжается в окне консоли...');
+		await runCLI();
+	}
+}
+
+intro('Bununban 🍌');
+
+if( Bun.argv.includes('--console') )
+	await runCLI();
+else
+	await runGUI();
+
+outro('Готово');
 
 process.exit();
