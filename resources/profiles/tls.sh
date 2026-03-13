@@ -21,5 +21,5 @@
     --hostlist={other}
     --hostlist={custom}
         --payload=tls_client_hello
-            --lua-desync=mangled:blob=fake_default_tls:tls_mod=rnd,sni=www.google.com:qty=11-15:tcp_ts_up:tcp_ts_rnd
-            --lua-desync=tangled:scope=tls:fake_tls_mod=rnd,sni=www.google.com:fake_mod=mangle_tls:qty=12-18:dup=1-2:pre=6:origsplit=midsld+1:fakesplit=endsld:seqovl=0-80:seqovl_step=2:tcp_ts_up:tcp_ts_rnd
+            --lua-desync=mangled:blob=fake_default_tls:tls_mod=rnd,dupsid,sni=www.google.com:qty=11-15:tcp_ts_up:tcp_ts_rnd
+            --lua-desync=tangled:scope=tls:fake=fake_default_tls:fake_tls_mod=rnd,dupsid,sni=www.google.com:fake_mod=mangle_tls:qty=12-18:dup=1-2:pre=6:origsplit=midsld+1:fakesplit=endsld:seqovl=0-80:seqovl_step=2:tcp_ts_up:tcp_ts_rnd
