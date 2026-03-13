@@ -50,6 +50,26 @@ function createShuffledBag(bag, resetIndex)
     end
 end
 
+-- arg : tcp_ts_rnd - set random tcp_ts. default: -1000--600000
+-- arg : tcp_seq_rnd - set random tcp_seq. default: 10000-10000000
+-- arg : tcp_ack_rnd - set random tcp_ack. default: 10000-10000000
+function bununban_fooling(desync)
+    if desync.arg.tcp_ts_rnd then
+        if desync.arg.tcp_ts_rnd == "" then desync.arg.tcp_ts_rnd = "-1000--600000" end
+        desync.arg.tcp_ts = tostring(math.random(parse_range(desync.arg.tcp_ts_rnd)))
+    end
+
+    if desync.arg.tcp_seq_rnd then
+        if desync.arg.tcp_seq_rnd == "" then desync.arg.tcp_seq_rnd = "10000-10000000" end
+        desync.arg.tcp_seq = tostring(math.random(parse_range(desync.arg.tcp_seq_rnd)))
+    end
+
+    if desync.arg.tcp_ack_rnd then
+        if desync.arg.tcp_ack_rnd == "" then desync.arg.tcp_ack_rnd = "10000-10000000" end
+        desync.arg.tcp_ack = tostring(math.random(parse_range(desync.arg.tcp_ack_rnd)))
+    end
+end
+
 -- standard args : direction, payload, fooling, ip_id, rawsend, reconstruct, ipfrag
 -- arg : rnd=<number-number,number-number,...> - segments to randomize
 -- arg : qty=<number|number-number> - number of unique payloads or range for random number
@@ -59,7 +79,6 @@ end
 -- arg : put=<var> - add mangled payloads to desync.<var>[]
 -- arg : blob=<var> - use blob instead of payload
 -- arg : nosend - do not send mangled payload
--- arg : tcp_ts_rnd - set random tcp_ts. default: -10000--100500
 function mangled(ctx, desync)
     local function parse_segment(segment, payload)
         local from, to = string.match(segment, "^([+-]?.-)%.%.([+-]?.-)$")
@@ -123,10 +142,7 @@ function mangled(ctx, desync)
                         table.insert(desync[desync.arg.put], result)
                     end
 
-                    if desync.arg.tcp_ts_rnd then
-                        if desync.arg.tcp_ts_rnd == "" then desync.arg.tcp_ts_rnd = "-10000--100500" end
-                        desync.arg.tcp_ts = tostring(math.random(parse_range(desync.arg.tcp_ts_rnd)))
-                    end
+                    bununban_fooling(desync)
 
                     if not desync.arg.nosend then
                         if b_debug then DLOG("mangled: len=" .. #result .. " : " .. hexdump_dlog(result)) end
@@ -153,7 +169,6 @@ end
 -- arg : blob=<var> - use blob instead of payload
 -- arg : blob_type=<l7payload> - set payload type. default: desync.l7payload
 -- arg : nosend - do not send mangled payload
--- arg : tcp_ts_rnd - set random tcp_ts. default: -10000--100500
 function mangled2(ctx, desync)
     local function get_range(range, payload, payload_type)
         local from, to = string.match(range, "^([+-]?.-)%.([+-]?.-)$")
@@ -251,10 +266,7 @@ function mangled2(ctx, desync)
                         table.insert(desync[desync.arg.put], fake)
                     end
 
-                    if desync.arg.tcp_ts_rnd then
-                        if desync.arg.tcp_ts_rnd == "" then desync.arg.tcp_ts_rnd = "-10000--100500" end
-                        desync.arg.tcp_ts = tostring(math.random(parse_range(desync.arg.tcp_ts_rnd)))
-                    end
+                    bununban_fooling(desync)
 
                     if not desync.arg.nosend then
                         if b_debug then DLOG("mangled2: len=" .. #fake .. " : " .. hexdump_dlog(fake)) end
@@ -331,7 +343,6 @@ end
 -- arg : origsplit=<number|posmarker> - first spliting position for orig. default: -1
 -- arg : fakesplit=<number|posmarker> - first spliting position for fake. default: -1
 -- arg : nodrop - do not drop current dissect
--- arg : tcp_ts_rnd - set random tcp_ts. default: -10000--100500
 function tangled(ctx, desync)
     if not desync.dis.tcp then
 		instance_cutoff_shim(ctx, desync)
@@ -434,10 +445,7 @@ function tangled(ctx, desync)
             local opts_fake = { rawsend = rawsend_opts(desync), reconstruct = reconstruct_opts(desync), ipfrag = {}, ipid = desync.arg, fooling = desync.arg }
 
             for i, packet in ipairs(packets) do
-                if desync.arg.tcp_ts_rnd then
-                    if desync.arg.tcp_ts_rnd == "" then desync.arg.tcp_ts_rnd = "-10000--100500" end
-                    desync.arg.tcp_ts = tostring(math.random(parse_range(desync.arg.tcp_ts_rnd)))
-                end
+                bununban_fooling(desync)
 
                 if b_debug then DLOG("tangled: len=" .. #packet.payload .. " : " .. hexdump_dlog(packet.payload)) end
                 rawsend_payload_segmented(desync, packet.payload, packet.seq, packet.is_fake and opts_fake or opts_orig)
