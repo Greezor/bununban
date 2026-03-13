@@ -425,7 +425,7 @@ export default {
 											<Button
 												raised
 												@click="updateNow()">
-												<span>Выполнить сейчас</span>
+												<span>Обновить сейчас</span>
 											</Button>
 										</div>
 									</div>
