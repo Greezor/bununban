@@ -149,7 +149,7 @@ export default {
 		}
 
 		const waitServerReload = async () => {
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			await new Promise(resolve => setTimeout(resolve, 5000));
 
 			const newOrigin = `http://${
 				params.value.hostname === '0.0.0.0'
@@ -184,6 +184,8 @@ export default {
 			}
 
 			await waitServerReload();
+
+			loading.value = false;
 		}
 
 		const resetPassword = async () => {
@@ -198,7 +200,7 @@ export default {
 				console.error(e)
 			}
 
-			await waitServerReload();
+			loading.value = false;
 		}
 
 		const resetSettings = async () => {
@@ -217,6 +219,8 @@ export default {
 			}
 
 			await waitServerReload();
+
+			loading.value = false;
 		}
 
 		const updateNow = async () => {
@@ -232,6 +236,8 @@ export default {
 			}
 
 			await waitServerReload();
+
+			loading.value = false;
 		}
 
 		const logout = async () => {

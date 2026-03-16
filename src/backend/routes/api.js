@@ -396,7 +396,6 @@ export default {
 				return FORBIDDEN;
 
 			await settings.set('password', '');
-			jwtSecret = await generateSecret('A256GCM');
 			return OK;
 		},
 	},
@@ -406,8 +405,14 @@ export default {
 				return FORBIDDEN;
 
 			await settings.set('version', '0.0.0');
+			
+			setTimeout(() => {}, 60000);
+
+			await server.stop();
+			await Bun.sleep(3000);
 			await $`rm -rf ${ APPDATA_DIR }`;
-			server.restart();
+			await server.start();
+			
 			return OK;
 		},
 	},

@@ -92,7 +92,7 @@ class BackendApp
 
 	async restart()
 	{
-		setTimeout(() => {}, 15000); // keep process
+		setTimeout(() => {}, 60000); // keep process
 
 		await this.stop();
 		await new Promise(resolve => setTimeout(resolve, 3000));
