@@ -312,7 +312,7 @@ class Zapret
 			this.#proc.kill();
 
 		do{
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await Bun.sleep(100);
 		}
 		while(this.isStarted)
 	}

@@ -108,7 +108,7 @@ const waitAvailability = async url => {
 		await fetch(url);
 	}
 	catch(e){
-		await new Promise(resolve => setTimeout(resolve, 500));
+		await Bun.sleep(500);
 		return waitAvailability(url);
 	}
 }

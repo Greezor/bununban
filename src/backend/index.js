@@ -95,7 +95,7 @@ class BackendApp
 		setTimeout(() => {}, 60000); // keep process
 
 		await this.stop();
-		await new Promise(resolve => setTimeout(resolve, 3000));
+		await Bun.sleep(3000);
 		await this.start();
 	}
 
