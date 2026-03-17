@@ -26,6 +26,7 @@
     "dockerize:arm64": "bun run build:linux-arm64 && docker run --name bununban --restart always --net=host --cap-add=NET_ADMIN -d -v ./dist:/bununban -w /bununban arm64v8/ubuntu:latest ./bununban-linux-arm64 --homedir=/bununban",
     "clear:dist": "rm -rf dist",
     "gzip:dist": "bun utils/gzip.js dist/\\*",
+    "dedup-ipsets": "bun utils/dedup-ipsets.js resources/ipsets/\\*",
     "postinstall": "bun run ./postinstall.js"
   },
   "dependencies": {
