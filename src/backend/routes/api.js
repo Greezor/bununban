@@ -12,7 +12,7 @@ import blobs from '../stores/blobs'
 import settings from '../stores/settings'
 
 import zapret from '../utils/zapret'
-import server from '../index'
+import app from '../index'
 
 import { generateSecret, EncryptJWT, jwtDecrypt } from 'jose'
 
@@ -241,7 +241,7 @@ export default {
 			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
-			server.restart();
+			app.restart();
 			return OK;
 		},
 	},
@@ -408,10 +408,10 @@ export default {
 			
 			setTimeout(() => {}, 60000);
 
-			await server.stop();
+			await app.stop();
 			await Bun.sleep(3000);
 			await $`rm -rf ${ APPDATA_DIR }`;
-			await server.start();
+			await app.start();
 			
 			return OK;
 		},
@@ -423,7 +423,7 @@ export default {
 			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
-			await server.autoUpdate();
+			await app.autoUpdate();
 			return OK;
 		},
 	},
