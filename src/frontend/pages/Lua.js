@@ -276,7 +276,7 @@ export default {
 		}
 
 		const removeFile = async name => {
-			pageLoading.value = true;
+			saving.value = true;
 			selectedFileName.value = null;
 
 			await ketchup(`/api/lua/${ name }`, {
@@ -287,7 +287,7 @@ export default {
 			
 			await loadFiles();
 
-			pageLoading.value = false;
+			saving.value = false;
 		}
 
 		watch(
@@ -374,10 +374,8 @@ export default {
 								@click.stop
 								@update:model-value="async () => {
 									saving = true;
-
 									await saveItem(option.name, option);
 									await loadContent();
-									
 									saving = false;
 								}" />
 

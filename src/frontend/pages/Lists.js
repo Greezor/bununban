@@ -136,6 +136,10 @@ export default {
 		const mobileView = ref(false);
 
 		const files = ref([]);
+		const sortedFiles = computed(() => (
+			files.value.slice()
+				.sort((a, b) => a.name.localeCompare(b.name)))
+		));
 
 		const selectedFileName = ref(null);
 
@@ -260,7 +264,7 @@ export default {
 		}
 
 		const removeFile = async name => {
-			pageLoading.value = true;
+			saving.value = true;
 			selectedFileName.value = null;
 
 			await ketchup(`/api/lists/${ name }`, {
@@ -271,7 +275,7 @@ export default {
 			
 			await loadFiles();
 
-			pageLoading.value = false;
+			saving.value = false;
 		}
 
 		watch(
@@ -306,6 +310,7 @@ export default {
 			saving,
 			mobileView,
 			files,
+			sortedFiles,
 			selectedFileName,
 			selectedFile,
 			form,
@@ -343,7 +348,7 @@ export default {
 				<Listbox
 					class="${ style.list }"
 					v-model="selectedFileName"
-					:options="files"
+					:options="sortedFiles"
 					optionValue="name">
 					<template #option="{ option }">
 						<div class="${ style.listItem }">

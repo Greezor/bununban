@@ -274,7 +274,7 @@ export default {
 		}
 
 		const removeProfile = async name => {
-			pageLoading.value = true;
+			saving.value = true;
 			selectedProfileName.value = null;
 
 			const index = profiles.value
@@ -286,7 +286,7 @@ export default {
 			
 			await sync();
 
-			pageLoading.value = false;
+			saving.value = false;
 		}
 
 		watch(
