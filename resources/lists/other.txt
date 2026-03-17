@@ -1,3 +1,6 @@
+sh
+dev
+org
 betterttv.com
 tampermonkey.net
 fandom.com
@@ -9,3 +12,7 @@ primevue.org
 curseforge.com
 tx.me
 quora.com
+auroraoss.com
+xd.com
+amazon.com
+glasswire.com
