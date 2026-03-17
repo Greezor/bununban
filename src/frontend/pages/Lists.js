@@ -138,7 +138,7 @@ export default {
 		const files = ref([]);
 		const sortedFiles = computed(() => (
 			files.value.slice()
-				.sort((a, b) => a.name.localeCompare(b.name)))
+				.sort((a, b) => a.name.localeCompare(b.name))
 		));
 
 		const selectedFileName = ref(null);
