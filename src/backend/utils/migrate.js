@@ -98,4 +98,10 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.3.2') ){
+		if( addNewResources ){
+			await lists.set('ipset-heartopia', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/ipsets/heartopia.txt' });
+		}
+	}
+
 }
