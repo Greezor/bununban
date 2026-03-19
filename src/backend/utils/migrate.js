@@ -104,4 +104,10 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.3.4') ){
+		if( addNewResources ){
+			await lists.delete('ipset-heartopia');
+		}
+	}
+
 }
