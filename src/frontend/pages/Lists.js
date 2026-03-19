@@ -136,10 +136,6 @@ export default {
 		const mobileView = ref(false);
 
 		const files = ref([]);
-		const sortedFiles = computed(() => (
-			files.value.slice()
-				.sort((a, b) => a.name.localeCompare(b.name))
-		));
 
 		const selectedFileName = ref(null);
 
@@ -310,7 +306,6 @@ export default {
 			saving,
 			mobileView,
 			files,
-			sortedFiles,
 			selectedFileName,
 			selectedFile,
 			form,
@@ -348,7 +343,7 @@ export default {
 				<Listbox
 					class="${ style.list }"
 					v-model="selectedFileName"
-					:options="sortedFiles"
+					:options="files"
 					optionValue="name">
 					<template #option="{ option }">
 						<div class="${ style.listItem }">
