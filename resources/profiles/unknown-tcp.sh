@@ -1,7 +1,5 @@
 --filter-tcp=*
-    --ipset={ipset-telegram}
-    --ipset={ipset-roblox}
-    --ipset={ipset-heartopia}
+    --out-range=-n3
         --payload=unknown
             --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd:qty=11-18:tcp_ts_rnd:payload=~empty
             --lua-desync=send

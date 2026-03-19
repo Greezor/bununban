@@ -1,6 +1,7 @@
 --filter-l7=mtproto
-    --payload=mtproto_initial
-        --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd:qty=11-18:tcp_ts_rnd
-        --lua-desync=send
-        --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd:qty=2-6:tcp_ts_rnd
-        --lua-desync=drop
+    --out-range=-n3
+        --payload=mtproto_initial
+            --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd:qty=11-18:tcp_ts_rnd
+            --lua-desync=send
+            --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd:qty=2-6:tcp_ts_rnd
+            --lua-desync=drop

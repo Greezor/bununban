@@ -1,7 +1,8 @@
 --filter-l7=tls
-    --hostlist={google}
-        --payload=tls_client_hello
-            --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=11-18:tcp_ts_rnd:ip_id=zero
-            --lua-desync=send:ip_id=zero
-            --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=2-6:tcp_ts_rnd:ip_id=zero
-            --lua-desync=drop
+    --out-range=-d10
+        --hostlist={google}
+            --payload=tls_client_hello
+                --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=11-18:tcp_ts_rnd:ip_id=zero
+                --lua-desync=send:ip_id=zero
+                --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=2-6:tcp_ts_rnd:ip_id=zero
+                --lua-desync=drop
