@@ -27,7 +27,7 @@ else
 		}))
 	), ...(
 		html.files.map(({ path, headers }) => ({
-			[path.replace('B:/~BUN/root', '')]: new Response(Bun.file(path), {
+			[path.replace(/(B:\/~BUN\/root|\/\$bunfs\/root)/i, '')]: new Response(Bun.file(path), {
 				headers: {
 					'content-type': headers['content-type'],
 					...cacheHeaders,
