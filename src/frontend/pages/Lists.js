@@ -129,7 +129,7 @@ const style = {
 export default {
 	setup()
 	{
-		const pageLoading = ref(false);
+		const loading = ref(false);
 		const editorLoading = ref(false);
 		const saving = ref(false);
 
@@ -182,12 +182,12 @@ export default {
 		}
 
 		const loadFiles = async () => {
-			pageLoading.value = true;
+			loading.value = true;
 
 			files.value = [];
 			files.value = await ketchup('/api/lists');
 
-			pageLoading.value = false;
+			loading.value = false;
 		}
 
 		const contentController = shallowRef(null);
@@ -301,7 +301,7 @@ export default {
 		});
 
 		return {
-			pageLoading,
+			loading,
 			editorLoading,
 			saving,
 			mobileView,
@@ -378,7 +378,7 @@ export default {
 
 					<template #empty>
 						<Icon
-							v-if="pageLoading"
+							v-if="loading"
 							icon="svg-spinners:270-ring-with-bg"
 							width="32" />
 
@@ -428,7 +428,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || editorLoading || saving || !canSave">
+				:disabled="loading || editorLoading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>

@@ -138,7 +138,7 @@ const style = {
 export default {
 	setup()
 	{
-		const pageLoading = ref(false);
+		const loading = ref(false);
 		const editorLoading = ref(false);
 		const saving = ref(false);
 
@@ -197,12 +197,12 @@ export default {
 		}
 
 		const loadProfiles = async () => {
-			pageLoading.value = true;
+			loading.value = true;
 
 			profiles.value = [];
 			profiles.value = await ketchup('/api/profiles');
 
-			pageLoading.value = false;
+			loading.value = false;
 		}
 
 		const contentController = shallowRef(null);
@@ -233,17 +233,26 @@ export default {
 			editorLoading.value = false;
 		}
 
-		const sync = async () => {		
-			await ketchup(`/api/profiles`, {
-				method: 'PUT',
-				body: JSON.stringify(profiles.value),
-			});
 
+		const restartAntidpi = async () => {
 			await ketchup('/api/antidpi/restart', {
 				method: 'POST',
 			});
+		}
 
-			await loadProfiles();
+		const saveItem = async (name, form) => {
+			const profile = profiles.value
+				.find(item => item.name === name);
+
+			await ketchup(`/api/profiles/${ name }`, {
+				method: 'PUT',
+				json: {
+					...form,
+					active: profile?.active ?? form.active,
+				},
+			});
+
+			await restartAntidpi();
 		}
 
 		const save = async () => {
@@ -252,23 +261,10 @@ export default {
 
 			saving.value = true;
 
-			const index = profiles.value
-				.findIndex(({ name }) => name === selectedProfileName.value);
+			await saveItem(selectedProfileName.value ?? form.value.name, form.value);
 
-			if( index === -1 ){
-				profiles.value
-					.push({ ...form.value });
-			}else{
-				profiles.value
-					.splice(index, 1, {
-						...form.value,
-						active: profiles.value[index].active,
-					});
-			}
-
+			await loadProfiles();
 			selectedProfileName.value = form.value.name;
-
-			await sync();
 
 			saving.value = false;
 		}
@@ -277,14 +273,13 @@ export default {
 			saving.value = true;
 			selectedProfileName.value = null;
 
-			const index = profiles.value
-				.findIndex(profile => name === profile.name);
+			await ketchup(`/api/profiles/${ name }`, {
+				method: 'DELETE',
+			});
 
-			if( index > -1 )
-				profiles.value
-					.splice(index, 1);
+			await restartAntidpi();
 			
-			await sync();
+			await loadProfiles();
 
 			saving.value = false;
 		}
@@ -310,7 +305,7 @@ export default {
 		});
 
 		return {
-			pageLoading,
+			loading,
 			editorLoading,
 			saving,
 			mobileView,
@@ -326,7 +321,7 @@ export default {
 			clearForm,
 			loadProfiles,
 			syncContent,
-			sync,
+			saveItem,
 			save,
 			removeProfile,
 		};
@@ -367,7 +362,7 @@ export default {
 								@click.stop
 								@update:model-value="async () => {
 									saving = true;
-									await sync();
+									await saveItem(option.name, option);
 									saving = false;
 								}" />
 
@@ -398,7 +393,7 @@ export default {
 
 					<template #empty>
 						<Icon
-							v-if="pageLoading"
+							v-if="loading"
 							icon="svg-spinners:270-ring-with-bg"
 							width="32" />
 
@@ -460,7 +455,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || editorLoading || saving || !canSave">
+				:disabled="loading || editorLoading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>

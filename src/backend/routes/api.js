@@ -256,24 +256,55 @@ export default {
 				await settings.get('profiles') ?? []
 			);
 		},
+	},
+	'/api/profiles/:name': {
+		GET: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
+				return Response.json(null);
+
+			const profiles = await settings.get('profiles') ?? [];
+
+			return Response.json(
+				profiles.find(profile => profile.name === req.params.name) ?? null
+			);
+		},
 		PUT: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
 				return FORBIDDEN;
 
-			const profiles = await req.json();
+			const form = await req.json();
 
-			for(const profile of profiles){
-				if( profile.syncUrl ){
-					try{
-						profile.content = await ketchup.text(profile.syncUrl);
-					}
-					catch(e){
-						console.error(e)
-					}
+			if( form.syncUrl ){
+				try{
+					form.content = await ketchup.text(form.syncUrl);
+				}
+				catch(e){
+					console.error(e)
 				}
 			}
 
-			await settings.set('profiles', profiles);
+			const profiles = await settings.get('profiles') ?? [];
+			const index = profiles.findIndex(profile => profile.name === req.params.name);
+
+			await settings.set('profiles', (
+				index === -1
+					? [ ...profiles, form ]
+					: profiles.map((profile, i) => (
+						index === i ? form : profile
+					))
+			));
+
+			return OK;
+		},
+		DELETE: async (req, server) => {
+			if( !( await checkAuth(req, server) ) )
+				return FORBIDDEN;
+
+			const profiles = await settings.get('profiles') ?? [];
+
+			await settings.set('profiles', (
+				profiles.filter(profile => profile.name !== req.params.name)
+			));
 
 			return OK;
 		},

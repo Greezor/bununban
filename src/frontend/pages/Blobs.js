@@ -133,7 +133,7 @@ const style = {
 export default {
 	setup()
 	{
-		const pageLoading = ref(false);
+		const loading = ref(false);
 		const saving = ref(false);
 
 		const mobileView = ref(false);
@@ -183,12 +183,12 @@ export default {
 		}
 
 		const loadFiles = async () => {
-			pageLoading.value = true;
+			loading.value = true;
 
 			files.value = [];
 			files.value = await ketchup('/api/blobs');
 
-			pageLoading.value = false;
+			loading.value = false;
 		}
 
 		const restartAntidpi = async () => {
@@ -274,7 +274,7 @@ export default {
 		});
 
 		return {
-			pageLoading,
+			loading,
 			saving,
 			mobileView,
 			files,
@@ -358,7 +358,7 @@ export default {
 
 					<template #empty>
 						<Icon
-							v-if="pageLoading"
+							v-if="loading"
 							icon="svg-spinners:270-ring-with-bg"
 							width="32" />
 
@@ -396,7 +396,7 @@ export default {
 			<Butn
 				class="${ style.saveBtn }"
 				@click="save()"
-				:disabled="pageLoading || saving || !canSave">
+				:disabled="loading || saving || !canSave">
 				<Icon icon="material-symbols:save" width="20" />
 				<b>Сохранить</b>
 			</Butn>
