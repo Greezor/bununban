@@ -265,7 +265,7 @@ class BackendApp
 
 		await Bun.write(updatePath, (
 			Bun.gunzipSync(
-				await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/latest/download/${ bin }.gz`)
+				await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/download/${ latest }/${ bin }.gz`)
 			)
 		));
 
