@@ -22,7 +22,7 @@
     --hostlist={other}
     --hostlist={custom}
         --payload=quic_initial
-            --lua-desync=mangled:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=11-18
+            --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=11-18
             --lua-desync=send
-            --lua-desync=mangled:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-6
+            --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-6
             --lua-desync=drop

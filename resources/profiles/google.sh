@@ -2,7 +2,5 @@
     --out-range=-d10
         --hostlist={google}
             --payload=tls_client_hello
-                --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=11-18:tcp_ts_rnd:ip_id=zero
-                --lua-desync=send:ip_id=zero
-                --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=2-6:tcp_ts_rnd:ip_id=zero
-                --lua-desync=drop
+                --lua-desync=wangle:to=tls_fakes:only_valid_tls:limit=50
+                --lua-desync=tangle:fakes=tls_clienthello_www_google_com:fakes_tls_mod=rnd,dupsid:qty=13-18:pre=11:origsplit=midsld+1:fakesplit=endsld:tcp_ts_rnd:ip_id=zero

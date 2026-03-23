@@ -3,7 +3,7 @@
         --ipset={ipset-telegram}
         --ipset={ipset-roblox}
             --payload=unknown
-                --lua-desync=mangled:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-5:payload=~empty
+                --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-5:payload=~empty
                 --lua-desync=send
-                --lua-desync=mangled:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=1-3:payload=~empty
+                --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=1-3:payload=~empty
                 --lua-desync=drop

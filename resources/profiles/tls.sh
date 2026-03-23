@@ -22,7 +22,10 @@
         --hostlist={other}
         --hostlist={custom}
             --payload=tls_client_hello
-                --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=11-18:tcp_ts_rnd
-                --lua-desync=multisplit:pos=midsld+1
-                --lua-desync=mangled:blob=tls_clienthello_www_google_com:tls_mod=rnd,dupsid:qty=2-6:tcp_ts_rnd
-                --lua-desync=drop
+                --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_tls_mod=rnd,dupsid,sni=www.google.com:qty=13-18:pre=11:origsplit=midsld+1:tcp_ts_rnd
+
+--new
+
+--filter-l7=tls
+    --payload=tls_client_hello
+        --lua-desync=wangle:to=tls_fakes:only_valid_tls:limit=50
