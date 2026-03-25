@@ -1,28 +1,27 @@
 --filter-l7=tls
-    --out-range=-d10
-        --hostlist={rulist}
-        --hostlist={apple}
-        --hostlist={cloudflare}
-        --hostlist={discord}
-        --hostlist={instagram}
-        --hostlist={meta}
-        --hostlist={rezka}
-        --hostlist={rutor}
-        --hostlist={rutracker}
-        --hostlist={soundcloud}
-        --hostlist={speedtest}
-        --hostlist={telegram}
-        --hostlist={tor}
-        --hostlist={twitter}
-        --hostlist={viber}
-        --hostlist={riotgames}
-        --hostlist={roblox}
-        --hostlist={vrchat}
-        --hostlist={whatsapp}
-        --hostlist={other}
-        --hostlist={custom}
-            --payload=tls_client_hello
-                --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_tls_mod=rnd,dupsid,sni=www.google.com:qty=13-18:pre=11:origsplit=midsld+1:tcp_ts_rnd
+    --hostlist={rulist}
+    --hostlist={apple}
+    --hostlist={cloudflare}
+    --hostlist={discord}
+    --hostlist={instagram}
+    --hostlist={meta}
+    --hostlist={rezka}
+    --hostlist={rutor}
+    --hostlist={rutracker}
+    --hostlist={soundcloud}
+    --hostlist={speedtest}
+    --hostlist={telegram}
+    --hostlist={tor}
+    --hostlist={twitter}
+    --hostlist={viber}
+    --hostlist={riotgames}
+    --hostlist={roblox}
+    --hostlist={vrchat}
+    --hostlist={whatsapp}
+    --hostlist={other}
+    --hostlist={custom}
+        --payload=tls_client_hello
+            --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_tls_mod=rnd,dupsid,sni=www.google.com:qty=13-18:pre=11:origsplit=midsld+1:tcp_ts_rnd
 
 --new
 

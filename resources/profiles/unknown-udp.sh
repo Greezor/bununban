@@ -1,9 +1,8 @@
 --filter-udp=*
-    --out-range=-n3
-        --ipset={ipset-telegram}
-        --ipset={ipset-roblox}
-            --payload=unknown
-                --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-5:payload=~empty
-                --lua-desync=send
-                --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=1-3:payload=~empty
-                --lua-desync=drop
+    --ipset={ipset-telegram}
+    --ipset={ipset-roblox}
+        --payload=unknown
+            --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=8-12:payload=~empty
+            --lua-desync=send
+            --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd0001.0:qty=2-4:payload=~empty
+            --lua-desync=drop

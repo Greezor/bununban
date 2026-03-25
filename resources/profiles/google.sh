@@ -1,6 +1,5 @@
 --filter-l7=tls
-    --out-range=-d10
-        --hostlist={google}
-            --payload=tls_client_hello
-                --lua-desync=wangle:to=tls_fakes:only_valid_tls:limit=50
-                --lua-desync=tangle:fakes=tls_clienthello_www_google_com:fakes_tls_mod=rnd,dupsid:qty=13-18:pre=11:tcp_ts_rnd:ip_id=zero
+    --hostlist={google}
+        --payload=tls_client_hello
+            --lua-desync=wangle:to=tls_fakes:only_valid_tls:limit=50
+            --lua-desync=tangle:fakes=tls_clienthello_www_google_com:fakes_tls_mod=rnd,dupsid:qty=13-18:pre=11:tcp_ts_rnd:ip_id=zero

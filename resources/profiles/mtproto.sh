@@ -1,3 +1,2 @@
 --filter-l7=mtproto
-    --payload=mtproto_initial
-        --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_type=tls_client_hello:fakes_tls_mod=rnd,sni=www.google.com:qty=13-18:pre=11:tcp_ts_rnd
+    --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_type=tls_client_hello:fakes_tls_mod=rnd,sni=www.google.com:qty=13-18:pre=11:tcp_ts_rnd:payload=~empty
