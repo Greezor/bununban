@@ -71,7 +71,10 @@ const installApp = clr => {
 	sh(`mkdir C:\\bununban`);
 	writeFileSync(BIN_PATH, Bun.gunzipSync(BIN));
 	writeFileSync(ICO_PATH, ICO);
-	writeFileSync(LNK_PATH, LNK);
+	try{
+		writeFileSync(LNK_PATH, LNK);
+	}
+	catch(e){}
 	sh(`netsh interface tcp set global timestamps=enabled`);
 	sh(`schtasks /create /tn "bununban" /tr "${ BIN_PATH }" /sc onlogon /rl highest`);
 	sh(`schtasks /run /tn "bununban"`);
