@@ -1,5 +1,3 @@
-sh
-dev
 org
 betterttv.com
 tampermonkey.net
@@ -8,12 +6,12 @@ codecademy.com
 adguard.com
 anydesk.com
 artstation.com
-primevue.org
 curseforge.com
-tx.me
 quora.com
 auroraoss.com
 xd.com
 amazon.com
 glasswire.com
 betterdiscord.app
+cloudflare.com
+fbfree.lat
