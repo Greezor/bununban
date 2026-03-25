@@ -110,4 +110,10 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.3.6') ){
+		if( addNewResources ){
+			await lists.set('ipset-telegram', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/ipsets/telegram.txt' });
+		}
+	}
+
 }
