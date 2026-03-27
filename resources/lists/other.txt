@@ -15,3 +15,5 @@ glasswire.com
 betterdiscord.app
 cloudflare.com
 fbfree.lat
+amazonaws.com
+cloudfront.net
