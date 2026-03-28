@@ -270,7 +270,7 @@ class BackendApp
 		));
 
 		if( process.platform === 'win32' ){
-			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }'"`);
+			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 10; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }'"`);
 
 			Bun.spawn([ 'cmd', '/c', updateScript ], {
 				windowsHide: true,
@@ -280,7 +280,7 @@ class BackendApp
 		}
 		else
 		{
-			await Bun.write(updateScript, `sleep 2; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }"`);
+			await Bun.write(updateScript, `sleep 10; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }"`);
 
 			Bun.spawn([ 'sh', updateScript ], {
 				windowsHide: true,
