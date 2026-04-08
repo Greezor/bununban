@@ -17,3 +17,8 @@ cloudflare.com
 fbfree.lat
 amazonaws.com
 cloudfront.net
+greezor.ru
+hydralauncher.gg
+workwonders.app
+nzxt.com
+cpuid.com
