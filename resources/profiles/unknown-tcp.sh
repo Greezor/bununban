@@ -1,4 +1,7 @@
 --filter-tcp=*
     --out-range=-n3
         --payload=unknown
-            --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_type=tls_client_hello:fakes_tls_mod=rnd,sni=www.google.com:qty=13-18:pre=11:tcp_ts_rnd:payload=~empty
+            --lua-desync=mangle:blob=0x001caaaa0100000100000000000006676f6f676c6503636f6d0000010001:qty=8-12:tcp_seq_rnd:payload=~empty
+            --lua-desync=send
+            --lua-desync=mangle:blob=0x001caaaa0100000100000000000006676f6f676c6503636f6d0000010001:qty=2-4:tcp_seq_rnd:payload=~empty
+            --lua-desync=drop
