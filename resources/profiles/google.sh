@@ -2,7 +2,6 @@
     --hostlist={google}
         --payload=tls_client_hello
             --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=www.google.com
-            --lua-desync=mangle:blob=tls:qty=8-12:tcp_ts_rnd:ip_id=zero
+            --lua-desync=mangle:blob=tls:qty=11-16:tcp_ts_rnd:ip_id=zero
             --lua-desync=send:ip_id=zero
-            --lua-desync=mangle:blob=tls:qty=2-4:tcp_ts_rnd:ip_id=zero
             --lua-desync=drop

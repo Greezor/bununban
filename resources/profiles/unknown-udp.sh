@@ -1,6 +1,3 @@
 --filter-udp=*
     --payload=unknown
         --lua-desync=mangle:blob=0xaaaa0100000100000000000006676f6f676c6503636f6d0000010001:qty=8-12:payload=~empty
-        --lua-desync=send
-        --lua-desync=mangle:blob=0xaaaa0100000100000000000006676f6f676c6503636f6d0000010001:qty=2-4:payload=~empty
-        --lua-desync=drop
