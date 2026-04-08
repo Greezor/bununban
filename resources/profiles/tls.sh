@@ -21,10 +21,8 @@
     --hostlist={other}
     --hostlist={custom}
         --payload=tls_client_hello
-            --lua-desync=tangle:fakes=tls_clienthello_www_google_com,tls_fakes:fakes_tls_mod=rnd,dupsid,sni=www.google.com:qty=13-18:pre=11:origsplit=midsld+1:tcp_ts_rnd
-
---new
-
---filter-l7=tls
-    --payload=tls_client_hello
-        --lua-desync=wangle:to=tls_fakes:only_valid_tls:limit=50
+            --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=www.google.com
+            --lua-desync=mangle:blob=tls:qty=8-12:tcp_ts_rnd
+            --lua-desync=send
+            --lua-desync=mangle:blob=tls:qty=2-4:tcp_ts_rnd
+            --lua-desync=drop
