@@ -1,2 +1,4 @@
 --filter-l7=mtproto
-    --lua-desync=mangle:blob=0x001caaaa0100000100000000000006676f6f676c6503636f6d0000010001:qty=8-12:tcp_seq_rnd:payload=~empty
+    --lua-desync=luaexec:code=desync.qty=math.random(8,12)
+    --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
+    --lua-desync=fake:blob=0x001caaaa0100000100000000000006676f6f676c6503636f6d0000010001:repeats=%qty:tcp_seq=%rndseq:payload=~empty

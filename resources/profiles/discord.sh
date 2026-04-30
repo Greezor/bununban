@@ -1,3 +1,6 @@
 --filter-l7=discord
     --payload=discord_ip_discovery
-        --lua-desync=mangle:ops=rnd=0.-1,rpl=0x17fefd.0:qty=8-12
+        --lua-desync=luaexec:code=desync.len=math.random(1300,1400)
+        --lua-desync=luaexec:code=desync.fak=blob(desync,"0x17fefd")..brandom(desync.len)
+        --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+        --lua-desync=fake:blob=fak:repeats=%qty
