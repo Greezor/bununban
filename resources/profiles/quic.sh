@@ -22,7 +22,8 @@
     --hostlist={other}
     --hostlist={custom}
         --payload=quic_initial
-            --lua-desync=luaexec:code=desync.len=math.random(1300,1400)
-            --lua-desync=luaexec:code=desync.fak=blob(desync,"0x17fefd")..brandom(desync.len)
             --lua-desync=luaexec:code=desync.qty=math.random(11,16)
-            --lua-desync=fake:blob=fak:repeats=%qty
+            --lua-desync=repeater:instances=3:repeats=%qty
+                --lua-desync=luaexec:code=desync.len=math.random(1300,1400)
+                --lua-desync=luaexec:code=desync.fak=blob(desync,"0x17fefd")..brandom(desync.len)
+                --lua-desync=fake:blob=fak
