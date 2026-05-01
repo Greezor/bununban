@@ -1,4 +1,7 @@
 --filter-l7=mtproto
-    --lua-desync=luaexec:code=desync.qty=math.random(8,12)
-    --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
-    --lua-desync=fake:blob=0x001caaaa0100000100000000000006676f6f676c6503636f6d0000010001:repeats=%qty:tcp_seq=%rndseq:payload=~empty
+    --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+    --lua-desync=repeater:instances=4:repeats=%qty
+        --lua-desync=luaexec:code=desync.len=math.random(600,800)
+        --lua-desync=luaexec:code=desync.fak=brandom(desync.len)
+        --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
+        --lua-desync=fake:blob=fak:tcp_seq=%rndseq:payload=~empty
