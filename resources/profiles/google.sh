@@ -4,7 +4,6 @@
             --lua-desync=luaexec:code=desync.ts=math.random(-1000,-600000)
             --lua-desync=luaexec:code=desync.qty=math.random(11,16)
             --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=google.com
-            --lua-desync=luaexec:code=desync.negseq=-#desync.tls
             --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_ts=%ts:ip_id=zero
-            --lua-desync=send:tcp_seq=%negseq:tcp_ts=%ts:ip_id=zero
+            --lua-desync=send:ip_id=zero
             --lua-desync=drop
