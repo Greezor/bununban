@@ -4,14 +4,14 @@ import { mkdirSync } from 'node:fs'
 
 import ketchup from '../../common/utils/ketchup'
 
-import { APPDATA_DIR } from '../utils/appdata'
+import { APPDATA_DIR } from '../lib/appdata'
 
 import lists from '../stores/lists'
 import lua from '../stores/lua'
 import blobs from '../stores/blobs'
 import settings from '../stores/settings'
 
-import zapret from '../utils/zapret'
+import zapret from '../lib/zapret'
 import app from '../index'
 
 import { generateSecret, EncryptJWT, jwtDecrypt } from 'jose'

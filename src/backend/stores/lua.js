@@ -1,3 +1,3 @@
-import Store from '../utils/store'
+import Store from '../lib/store'
 
 export default new Store('lua')

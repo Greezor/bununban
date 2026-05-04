@@ -6,7 +6,7 @@ import { dlopen, FFIType } from 'bun:ffi'
 
 import { intro, outro, confirm, spinner, log, isCancel } from '@clack/prompts'
 
-import { APPDATA_DIR } from '../src/backend/utils/appdata'
+import { APPDATA_DIR } from '../src/backend/lib/appdata'
 import settings from '../src/backend/stores/settings'
 
 import modernBin from '../dist/bununban-windows-x64.exe.gz' with { type: 'file' }

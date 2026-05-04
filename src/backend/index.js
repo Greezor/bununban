@@ -6,15 +6,15 @@ import ketchup from '../common/utils/ketchup'
 import api from './routes/api'
 import frontend from './routes/frontend'
 
-import zapret from './utils/zapret'
-import migrate from './utils/migrate'
+import zapret from './lib/zapret'
+import migrate from './lib/migrate'
 
 import lists from './stores/lists'
 import lua from './stores/lua'
 import blobs from './stores/blobs'
 import settings from './stores/settings'
 
-import { APPDATA_DIR } from './utils/appdata'
+import { APPDATA_DIR } from './lib/appdata'
 import packageJSON from '../../package.json'
 
 class BackendApp
