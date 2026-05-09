@@ -1,6 +1,6 @@
 {
   "name": "bununban",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "type": "module",
   "module": "src/index.js",
   "private": true,
@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
+    "@dnsquery/dns-packet": "^6.1.1",
     "@emotion/css": "^11.13.5",
     "@iconify-json/fa7-brands": "^1.2.2",
     "@iconify-json/fa7-solid": "^1.2.4",
@@ -41,6 +42,7 @@
     "@primeuix/themes": "^2.0.2",
     "@vueuse/core": "^14.1.0",
     "@webui-dev/bun-webui": "^2.5.4",
+    "dohjs": "^0.3.3",
     "jose": "^6.2.1",
     "monaco-editor": "^0.55.1",
     "nanotar": "^0.2.0",
