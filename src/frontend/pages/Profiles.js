@@ -173,7 +173,7 @@ export default {
 		}));
 
 		const profileNameIsValid = computed(() => (
-			form.value.name.match(/^(\w|\-)+$/i)
+			form.value.name.match(/^[\w\.-]+$/i)
 			&&
 			!profiles.value.find(({ name }) => (
 				name == form.value.name

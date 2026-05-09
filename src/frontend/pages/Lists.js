@@ -158,7 +158,7 @@ export default {
 		}));
 
 		const filenameIsValid = computed(() => (
-			form.value.name.match(/^(\w|\-)+$/i)
+			form.value.name.match(/^[\w\.-]+$/i)
 			&&
 			!files.value.find(({ name }) => (
 				name == form.value.name
