@@ -8,6 +8,7 @@ import frontend from './routes/frontend'
 
 import zapret from './lib/zapret'
 import migrate from './lib/migrate'
+import DNSProxy from './lib/dnsProxy'
 
 import lists from './stores/lists'
 import lua from './stores/lua'
@@ -19,12 +20,15 @@ import packageJSON from '../../package.json'
 
 class BackendApp
 {
-	#server = null;
-	#autoUpdateInterval = null;
+	#started = false
+
+	#server = null
+	#dnsProxy = null
+	#autoUpdateInterval = null
 
 	async start(startup = false)
 	{
-		if( this.#server ) return;
+		if( this.#started ) return;
 
 		const settingsFile = Bun.file(
 			join(APPDATA_DIR, 'settings')
@@ -41,52 +45,53 @@ class BackendApp
 			await this.syncBlobs(true);
 		}
 
-		try{
-			const port = await settings.get('port') ?? '8008';
-			const hostname = await settings.get('hostname') ?? '0.0.0.0';
+		this.#dnsProxy = new DNSProxy();
+		
+		await this.#dnsProxy.winSetDNS(['8.8.8.8', '8.8.4.4']);
+		
+		if( await settings.get('dns.active') )
+			await this.#dnsProxy.start();
 
-			this.#server = Bun.serve({
-				idleTimeout: 255,
+		this.#server = Bun.serve({
+			port: await settings.get('port') || '8008',
+			hostname: await settings.get('hostname') || '0.0.0.0',
 
-				port,
-				hostname,
+			idleTimeout: 255,
+			development: process.env.NODE_ENV === 'development',
 
-				routes: {
-					...api,
-					...frontend,
-				},
+			routes: {
+				...api,
+				...frontend,
+			},
+		});
 
-				development: process.env.NODE_ENV === 'development',
-			});
+		console.info(`Server started at ${ this.#server.url }`);
 
-			console.info(`Server started at http://${ hostname == '0.0.0.0' ? 'localhost' : hostname }:${ port }`);
+		this.#started = true;
 
-			if( await settings.get('antidpi.active') )
-				await zapret.start();
+		if( await settings.get('antidpi.active') )
+			await zapret.start();
 
-			if( startup && !isFirstLaunch && await settings.get('updater.on-startup') )
-				await this.autoUpdate();
+		if( startup && !isFirstLaunch && await settings.get('updater.on-startup') )
+			await this.autoUpdate();
 
-			this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
-				await settings.get('updater.interval') ?? (1000 * 60 * 60 * 24)
-			));
-		}
-		catch(e){
-			console.error('Failed to start server:', e);
-			throw e;
-		}
+		this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
+			await settings.get('updater.interval') || (1000 * 60 * 60 * 24)
+		));
 	}
 
 	async stop(force = false)
 	{
-		if( this.#server === null ) return;
+		if( !this.#started ) return;
 
 		clearInterval(this.#autoUpdateInterval);
 
 		await zapret.stop();
 
 		await this.#server.stop(force);
-		this.#server = null;
+		await this.#dnsProxy.stop();
+
+		this.#started = false;
 	}
 
 	async restart()
@@ -100,7 +105,7 @@ class BackendApp
 
 	async applyMigrations()
 	{
-		const version = await settings.get('version') ?? '0.0.0';
+		const version = await settings.get('version') || '0.0.0';
 		const addNewResources = await settings.get('updater.new-resources') ?? true;
 
 		await migrate(version, addNewResources);
@@ -270,7 +275,7 @@ class BackendApp
 		));
 
 		if( process.platform === 'win32' ){
-			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 10; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }'"`);
+			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 10; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }' -ArgumentList ${ Bun.argv.slice(2).map(arg => `\\"${arg.replace(/"/g, '\\"')}\\"`).join(', ') }"`);
 
 			Bun.spawn([ 'cmd', '/c', updateScript ], {
 				windowsHide: true,
@@ -280,7 +285,7 @@ class BackendApp
 		}
 		else
 		{
-			await Bun.write(updateScript, `sleep 10; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }"`);
+			await Bun.write(updateScript, `sleep 10; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }" ${ Bun.argv.slice(2).join(' ') }`);
 
 			Bun.spawn([ 'sh', updateScript ], {
 				windowsHide: true,
@@ -291,7 +296,7 @@ class BackendApp
 
 		await this.stop(true);
 
-		process.exit();
+		process.exit(3);
 	}
 }
 

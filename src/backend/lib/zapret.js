@@ -70,10 +70,7 @@ class Zapret
 		if( this.platform != 'windows' )
 			return;
 
-		try{
-			await $`sc delete windivert; sc stop windivert`.quiet();
-		}
-		catch(e){}
+		await $`sc delete windivert; sc stop windivert`.nothrow().quiet();
 	}
 
 	get nfqws()
@@ -261,7 +258,7 @@ class Zapret
 
 			...stringArgv(
 				await this.replaceVarsWithLists(
-					await settings.get('startup.args') ?? ''
+					await settings.get('antidpi.args') ?? ''
 				)
 			),
 

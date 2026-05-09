@@ -9,10 +9,12 @@ import AccordionPanel from 'primevue/accordionpanel'
 import AccordionHeader from 'primevue/accordionheader'
 import AccordionContent from 'primevue/accordioncontent'
 import Fieldset from 'primevue/fieldset'
+import FloatLabel from 'primevue/floatlabel'
 import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Select from 'primevue/select'
+import MultiSelect from 'primevue/multiselect'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import ConfirmDialog from 'primevue/confirmdialog'
@@ -63,6 +65,23 @@ const style = {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+
+		small{
+			font-size: 70%;
+		}
+
+		&.disabled{
+			opacity: 0.3;
+			pointer-events: none;
+		}
+	`,
+
+	settingsRowActions: css`
+		display: flex;
+		gap: 5px;
+		justify-content: end;
+		align-items: center;
+		min-width: 40px;
 	`,
 
 	saveBtn: css`
@@ -94,8 +113,17 @@ export default {
 		const loading = ref(false);
 
 		const params = ref({
+			'antidpi.active': false,
 			'antidpi.debug': false,
-			'startup.args': '',
+			'antidpi.args': '',
+
+			'dns.active': false,
+			'dns.nameserver': '',
+			'dns.doh': false,
+			'dns.doh-url': '',
+			'dns.hosts': [],
+			'dns.hosts-mem': 0,
+			'dns.hosts-ttl': 0,
 
 			'updater.self': false,
 			'updater.zapret2': false,
@@ -123,14 +151,29 @@ export default {
 		const antidpiModal = ref(false);
 		const antidpiVersion = ref(null);
 		const antidpiVersions = ref([]);
+		const listFiles = ref([])
 
 		const bununbanVersion = computed(() => {
 			return packageJSON.version;
 		});
 
+		const hostsFiles = computed(() => {
+			return [
+				...new Set([
+					...params.value['dns.hosts'],
+					...listFiles.value.map(({ name }) => name),
+				]),
+			].map(name => ({ filename: name }));
+		});
+
 		const loadAntidpiVersions = async () => {
 			antidpiVersions.value = [];
 			antidpiVersions.value = await ketchup('/api/settings/antidpi/zapret2/versions');
+		}
+
+		const loadListFiles = async () => {
+			listFiles.value = [];
+			listFiles.value = await ketchup('/api/lists');
 		}
 
 		const installAntidpi = async () => {
@@ -247,6 +290,7 @@ export default {
 
 		onActivated(() => {
 			loadParams();
+			loadListFiles();
 		});
 
 		return {
@@ -256,9 +300,12 @@ export default {
 			antidpiModal,
 			antidpiVersion,
 			antidpiVersions,
+			listFiles,
 			bununbanVersion,
+			hostsFiles,
 			loadParams,
 			loadAntidpiVersions,
+			loadListFiles,
 			installAntidpi,
 			waitServerReload,
 			save,
@@ -288,24 +335,40 @@ export default {
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
 									<span>Zapret2</span>
-									<Button
-										severity="secondary"
-										rounded>
-										{{ params['antidpi.version'] || '—' }}
-									</Button>
+									
+									<div class="${ style.settingsRowActions }">
+										<Button
+											severity="secondary"
+											rounded>
+											{{ params['antidpi.version'] || '—' }}
+										</Button>
+
+										<Button
+											raised
+											@click="() => {
+												antidpiModal = true;
+												antidpiVersion = null;
+												loadAntidpiVersions();	
+											}">
+											<span>Установить</span>
+										</Button>
+									</div>
+								</div>
+								
+								<div class="${ style.settingsRow }">
+									<span>Дебаг-логи</span>
+									<ToggleSwitch
+										v-model="params['antidpi.debug']" />
 								</div>
 
 								<div class="${ style.settingsRow }">
-									<span></span>
-									<Button
-										raised
-										@click="() => {
-											antidpiModal = true;
-											antidpiVersion = null;
-											loadAntidpiVersions();	
-										}">
-										<span>Установить</span>
-									</Button>
+									<FloatLabel variant="in">
+										<InputText
+											v-model="params['antidpi.args']"
+											fluid />
+
+										<label>Параметры запуска</label>
+									</FloatLabel>
 								</div>
 							</div>
 						</AccordionContent>
@@ -316,27 +379,134 @@ export default {
 					<AccordionPanel value="2">
 						<AccordionHeader>
 							<div class="${ style.settingsTitle }">
-								<Icon icon="fa7-solid:rocket" />
-								<span>Запуск</span>
+								<Icon icon="fa7-solid:globe" />
+								<span>DNS-прокси</span>
 							</div>
 						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
-									<span>Дебаг-логи</span>
+									<span>Включить DNS-прокси</span>
 									<ToggleSwitch
-										v-model="params['antidpi.debug']" />
+										v-model="params['dns.active']" />
 								</div>
 
-								<div class="${ style.settingsRow }">
-									<span>Параметры запуска</span>
+								<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
+									<span>IP-адрес целевого DNS-сервера</span>
+									<Select
+										v-model="params['dns.nameserver']"
+										option-label="ip"
+										option-value="ip"
+										:options="[
+											{ name: 'Google — 8.8.8.8', ip: '8.8.8.8' },
+											{ name: 'Cloudflare — 1.1.1.1', ip: '1.1.1.1' },
+											{ name: 'AdGuard — 94.140.14.14', ip: '94.140.14.14' },
+											{ name: 'AdGuard Unfiltered — 94.140.14.140', ip: '94.140.14.140' },
+											{ name: 'AdGuard Family — 94.140.14.15', ip: '94.140.14.15' },
+											{ name: 'Malw.link — 84.21.189.133', ip: '84.21.189.133' },
+											{ name: 'XBox DNS — 111.88.96.50', ip: '111.88.96.50' },
+											{ name: 'Control D Unfiltered — 76.76.2.0', ip: '76.76.2.0' },
+											{ name: 'Control D Malware — 76.76.2.1', ip: '76.76.2.1' },
+											{ name: 'Control D Ads — 76.76.2.2', ip: '76.76.2.2' },
+											{ name: 'Control D Social — 76.76.2.3', ip: '76.76.2.3' },
+											{ name: 'Control D Family — 76.76.2.4', ip: '76.76.2.4' },
+											{ name: 'Control D Advanced — 76.76.2.5', ip: '76.76.2.5' },
+										]"
+										placeholder="8.8.8.8"
+										editable
+										style="width:200px">
+										<template #option="{ option }">
+											{{ option.name }}
+										</template>
+									</Select>
 								</div>
 
-								<div class="${ style.settingsRow }">
-									<InputText
-										v-model="params['startup.args']"
-										fluid />
-								</div>
+								<Fieldset
+									legend="DNS over HTTPS"
+									style="margin: 0 -19px">
+									<div class="${ style.settingsList }">
+										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
+											<span>Использовать DoH</span>
+											<ToggleSwitch
+												v-model="params['dns.doh']" />
+										</div>
+
+										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] || !params['dns.doh'] }">
+											<FloatLabel variant="in">
+												<Select
+													v-model="params['dns.doh-url']"
+													option-label="url"
+													option-value="url"
+													:options="[
+														{ name: 'Google — dns.google', url: 'https://dns.google/dns-query' },
+														{ name: 'Cloudflare — one.one.one.one', url: 'https://one.one.one.one/dns-query' },
+														{ name: 'Cloudflare — cloudflare-dns.com', url: 'https://cloudflare-dns.com/dns-query' },
+														{ name: 'AdGuard — dns.adguard-dns.com', url: 'https://dns.adguard-dns.com/dns-query' },
+														{ name: 'AdGuard Unfiltered — unfiltered.adguard-dns.com', url: 'https://unfiltered.adguard-dns.com/dns-query' },
+														{ name: 'AdGuard Family — family.adguard-dns.com', url: 'https://family.adguard-dns.com/dns-query' },
+														{ name: 'Malw.link — dns.malw.link', url: 'https://dns.malw.link/dns-query' },
+														{ name: 'XBox DNS — xbox-dns.ru', url: 'https://xbox-dns.ru/dns-query' },
+														{ name: 'Control D Unfiltered — freedns.controld.com', url: 'https://freedns.controld.com/p0' },
+														{ name: 'Control D Malware — freedns.controld.com', url: 'https://freedns.controld.com/p1' },
+														{ name: 'Control D Ads — freedns.controld.com', url: 'https://freedns.controld.com/p2' },
+														{ name: 'Control D Social — freedns.controld.com', url: 'https://freedns.controld.com/p3' },
+														{ name: 'Control D Family — freedns.controld.com', url: 'https://freedns.controld.com/family' },
+														{ name: 'Control D Advanced — freedns.controld.com', url: 'https://freedns.controld.com/uncensored' },
+													]"
+													placeholder="https://dns.google/dns-query"
+													editable
+													fluid>
+													<template #option="{ option }">
+														{{ option.name }}
+													</template>
+												</Select>
+
+												<label>URL-адрес DoH-сервера</label>
+											</FloatLabel>
+										</div>
+									</div>
+								</Fieldset>
+
+								<Fieldset
+									legend="Хост-маппинг"
+									style="margin: 0 -19px">
+									<div class="${ style.settingsList }">
+										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
+											<FloatLabel variant="in">
+												<MultiSelect
+													v-model="params['dns.hosts']"
+													option-label="filename"
+													option-value="filename"
+													:options="hostsFiles"
+													:loading="!listFiles.length"
+													:show-toggle-all="false"
+													display="chip"
+													filter
+													fluid>
+													<template #emptyfilter>
+														Нет совпадений
+													</template>
+												</MultiSelect>
+
+												<label>Файлы Hosts</label>
+											</FloatLabel>
+										</div>
+
+										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
+											<span>Хост-ip mem-кэш</span>
+											<InputNumber
+												v-model="params['dns.hosts-mem']"
+												placeholder="500" />
+										</div>
+
+										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
+											<span>TTL</span>
+											<InputNumber
+												v-model="params['dns.hosts-ttl']"
+												placeholder="0" />
+										</div>
+									</div>
+								</Fieldset>
 							</div>
 						</AccordionContent>
 					</AccordionPanel>
@@ -346,8 +516,78 @@ export default {
 					<AccordionPanel value="3">
 						<AccordionHeader>
 							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:lock" />
+								<span>Доступ</span>
+							</div>
+						</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Хост</span>
+									<InputText
+										v-model="params['hostname']" />
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Порт</span>
+									<InputNumber
+										v-model="params['port']"
+										:format="false"
+										:min="8000"
+										:max="65535" />
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Пароль</span>
+									<InputText
+										v-model="params['password']"
+										placeholder="••••••" />
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Сбросить пароль</span>
+									<Button
+										raised
+										@click="() => {
+											$confirm.require({
+												group: 'password-reset',
+												header: 'Вы уверены?',
+												message: '',
+												acceptLabel: 'Сброс',
+												rejectLabel: 'Отмена',
+												acceptProps: {
+													severity: 'danger',
+												},
+												rejectProps: {
+													severity: 'secondary',
+													variant: 'outlined',
+												},
+												accept: () => resetPassword(),
+											})
+										}">
+										<span>Сброс</span>
+									</Button>
+								</div>
+
+								<div class="${ style.settingsRow }">
+									<span>Завершить текущую сессию</span>
+									<Button
+										raised
+										@click="logout()">
+										<span>Выход</span>
+									</Button>
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
+
+
+
+					<AccordionPanel value="4">
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
 								<Icon icon="fa7-solid:sync" />
-								<span>Автообновление</span>
+								<span>Обновление</span>
 							</div>
 						</AccordionHeader>
 						<AccordionContent>
@@ -358,16 +598,19 @@ export default {
 										v-model="params['updater.self']" />
 								</div>
 
+								<div class="${ style.settingsRow }" :class="{ 'disabled': !params['updater.self'] }">
+									<div>
+										<Icon icon="material-symbols:subdirectory-arrow-right-rounded" style="margin-right:10px" />
+										<span>Добавлять новые ресурсы</span>
+									</div>
+									<ToggleSwitch
+										v-model="params['updater.new-resources']" />
+								</div>
+
 								<div class="${ style.settingsRow }">
 									<span>Обновлять Zapret2</span>
 									<ToggleSwitch
 										v-model="params['updater.zapret2']" />
-								</div>
-
-								<div class="${ style.settingsRow }">
-									<span>Добавлять новые ресурсы</span>
-									<ToggleSwitch
-										v-model="params['updater.new-resources']" />
 								</div>
 
 								<Fieldset
@@ -442,98 +685,20 @@ export default {
 
 
 
-					<AccordionPanel value="4">
-						<AccordionHeader>
-							<div class="${ style.settingsTitle }">
-								<Icon icon="fa7-solid:lock" />
-								<span>Доступ</span>
-							</div>
-						</AccordionHeader>
-						<AccordionContent>
-							<div class="${ style.settingsList }">
-								<div class="${ style.settingsRow }">
-									<span>Хост</span>
-									<InputText
-										v-model="params['hostname']" />
-								</div>
-
-								<div class="${ style.settingsRow }">
-									<span>Порт</span>
-									<InputNumber
-										v-model="params['port']"
-										:format="false"
-										:min="8000"
-										:max="65535" />
-								</div>
-
-								<div class="${ style.settingsRow }">
-									<span>Пароль</span>
-									<InputText
-										v-model="params['password']"
-										placeholder="••••••" />
-								</div>
-
-								<div class="${ style.settingsRow }">
-									<span>Сбросить пароль</span>
-									<Button
-										raised
-										@click="() => {
-											$confirm.require({
-												group: 'password-reset',
-												header: 'Вы уверены?',
-												message: '',
-												acceptLabel: 'Сброс',
-												rejectLabel: 'Отмена',
-												acceptProps: {
-													severity: 'danger',
-												},
-												rejectProps: {
-													severity: 'secondary',
-													variant: 'outlined',
-												},
-												accept: () => resetPassword(),
-											})
-										}">
-										<span>Сброс</span>
-									</Button>
-								</div>
-
-								<div class="${ style.settingsRow }">
-									<span>Завершить текущую сессию</span>
-									<Button
-										raised
-										@click="logout()">
-										<span>Выход</span>
-									</Button>
-								</div>
-							</div>
-						</AccordionContent>
-					</AccordionPanel>
-
-
-
 					<AccordionPanel value="5">
 						<AccordionHeader>
 							<div class="${ style.settingsTitle }">
-								<Icon icon="fa7-solid:bars" />
-								<span>Другое</span>
+								<Icon icon="fa7-solid:fire" />
+								<span>Сброс</span>
 							</div>
 						</AccordionHeader>
 						<AccordionContent>
 							<div class="${ style.settingsList }">
-								<div class="${ style.settingsRow }">
-									<span>Версия Bununban</span>
-									<Button
-										severity="secondary"
-										rounded>
-										{{ bununbanVersion }}
-									</Button>
-								</div>
-
 								<div class="${ style.settingsRow }">
 									<span>Сбросить настройки</span>
 									<Button
 										raised
+										severity="danger"
 										@click="() => {
 											$confirm.require({
 												group: 'settings-reset',
@@ -552,6 +717,29 @@ export default {
 											})
 										}">
 										<span>Сброс</span>
+									</Button>
+								</div>
+							</div>
+						</AccordionContent>
+					</AccordionPanel>
+
+
+
+					<AccordionPanel value="6">
+						<AccordionHeader>
+							<div class="${ style.settingsTitle }">
+								<Icon icon="fa7-solid:circle-info" />
+								<span>Информация</span>
+							</div>
+						</AccordionHeader>
+						<AccordionContent>
+							<div class="${ style.settingsList }">
+								<div class="${ style.settingsRow }">
+									<span>Версия Bununban</span>
+									<Button
+										severity="secondary"
+										rounded>
+										{{ bununbanVersion }}
 									</Button>
 								</div>
 
@@ -638,10 +826,12 @@ export default {
 		AccordionHeader,
 		AccordionContent,
 		Fieldset,
+		FloatLabel,
 		InputText,
 		InputNumber,
 		ToggleSwitch,
 		Select,
+		MultiSelect,
 		Button,
 		Dialog,
 		ConfirmDialog,
