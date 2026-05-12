@@ -1,0 +1,4 @@
+[wsl2]
+dnsProxy = false
+networkingMode = mirrored
+dnsTunneling = false

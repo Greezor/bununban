@@ -26,9 +26,17 @@ class BackendApp
 	#dnsProxy = null
 	#autoUpdateInterval = null
 
+	get IS_NSSM()
+	{
+		return Bun.file('C:\\bununban\\nssm.exe').exists();
+	}
+
 	async start(startup = false)
 	{
 		if( this.#started ) return;
+
+		if( await this.IS_NSSM )
+			await Bun.$`"C:\\bununban\\nssm.exe" set "Bununban" AppExit Default Restart`.nothrow().quiet();
 
 		const settingsFile = Bun.file(
 			join(APPDATA_DIR, 'settings')
@@ -275,7 +283,17 @@ class BackendApp
 		));
 
 		if( process.platform === 'win32' ){
-			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 10; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }' -ArgumentList ${ Bun.argv.slice(2).map(arg => `\\"${arg.replace(/"/g, '\\"')}\\"`).join(', ') }"`);
+			if( await this.IS_NSSM )
+				await Bun.$`"C:\\bununban\\nssm.exe" set "Bununban" AppExit Default Ignore`.nothrow().quiet();
+
+			const args = Bun.argv.slice(2)
+				.map(arg => `'${
+					arg
+						.replace(/"/g, '\\"')
+						.replace(/'/g, '\\\'')
+				}'`);
+
+			await Bun.write(updateScript, `powershell -WindowStyle Hidden -Command "Start-Sleep -Seconds 5; Move-Item -Path '${ updatePath }' -Destination '${ process.execPath }' -Force; Start-Process -FilePath '${ process.execPath }'${ args.length ? ` -ArgumentList ${ args.join(', ') }` : '' }"`);
 
 			Bun.spawn([ 'cmd', '/c', updateScript ], {
 				windowsHide: true,
@@ -285,7 +303,7 @@ class BackendApp
 		}
 		else
 		{
-			await Bun.write(updateScript, `sleep 10; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }" ${ Bun.argv.slice(2).join(' ') }`);
+			await Bun.write(updateScript, `sleep 5; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }" ${ Bun.argv.slice(2).join(' ') }`);
 
 			Bun.spawn([ 'sh', updateScript ], {
 				windowsHide: true,
@@ -294,9 +312,7 @@ class BackendApp
 			}).unref();
 		}
 
-		await this.stop(true);
-
-		process.exit(3);
+		process.exit();
 	}
 }
 

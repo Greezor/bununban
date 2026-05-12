@@ -16,6 +16,10 @@ import ico from '../src/frontend/assets/favicon.ico' with { type: 'file' }
 import lnk from './Bununban.lnk' with { type: 'file' }
 import dll from '../node_modules/@webui-dev/bun-webui/src/webui-windows-msvc-x64/webui-2.dll' with { type: 'file' }
 
+import nssm from './nssm.exe' with { type: 'file' }
+
+import wslConfig from './.wslconfig' with { type: 'file' }
+
 const AVX2_SUPPORT = (() => {
 	const PF_AVX2_INSTRUCTIONS_AVAILABLE = 40;
 
@@ -46,6 +50,12 @@ const ICO = await Bun.file(ico).arrayBuffer()
 const LNK_PATH = join(homedir(), 'Desktop', 'Bununban.lnk')
 const LNK = await Bun.file(lnk).arrayBuffer()
 
+const NSSM_PATH = 'C:\\bununban\\nssm.exe'
+const NSSM = await Bun.file(nssm).arrayBuffer()
+
+const WSL_CONFIG_PATH = join(homedir(), '.wslconfig')
+const WSL_CONFIG = await Bun.file(wslConfig).arrayBuffer()
+
 const IS_INSTALLED = (
 	await Bun.file(MODERN_PATH).exists()
 	||
@@ -54,8 +64,8 @@ const IS_INSTALLED = (
 
 const HAS_SETTINGS = await Bun.file( join(APPDATA_DIR, 'settings') ).exists()
 
-const PORT = await settings.get('port') ?? '8008'
-const HOSTNAME = await settings.get('hostname') ?? '0.0.0.0'
+const PORT = await settings.get('port') || '8008'
+const HOSTNAME = await settings.get('hostname') || '0.0.0.0'
 
 const sh = cmd => {
 	try{
@@ -69,15 +79,30 @@ const installApp = clr => {
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
 
 	sh(`mkdir C:\\bununban`);
+
 	writeFileSync(BIN_PATH, Bun.gunzipSync(BIN));
 	writeFileSync(ICO_PATH, ICO);
 	try{
 		writeFileSync(LNK_PATH, LNK);
 	}
 	catch(e){}
+	writeFileSync(NSSM_PATH, NSSM);
+	writeFileSync(WSL_CONFIG_PATH, WSL_CONFIG);
+
+	sh('wsl --shutdown');
 	sh(`netsh interface tcp set global timestamps=enabled`);
-	sh(`schtasks /create /tn "bununban" /tr "${ BIN_PATH }" /sc onlogon /rl highest`);
-	sh(`schtasks /run /tn "bununban"`);
+	sh(`${ NSSM_PATH } install "Bununban" "${ BIN_PATH }"`);
+	sh(`${ NSSM_PATH } set "Bununban" AppParameters "--nssm --homedir \\"${ homedir() }\\""`);
+	sh(`${ NSSM_PATH } set "Bununban" AppDirectory "C:\\bununban"`);
+	sh(`${ NSSM_PATH } set "Bununban" DisplayName "Bununban"`);
+	sh(`${ NSSM_PATH } set "Bununban" Description "Bununban"`);
+	sh(`${ NSSM_PATH } set "Bununban" AppStdout "C:\\bununban\\app.log"`);
+	sh(`${ NSSM_PATH } set "Bununban" AppStderr "C:\\bununban\\error.log"`);
+	sh(`${ NSSM_PATH } set "Bununban" Start SERVICE_AUTO_START`);
+	sh(`${ NSSM_PATH } set "Bununban" AppExit Default Restart`);
+	sh(`${ NSSM_PATH } set "Bununban" AppRestartDelay 1000`);
+	sh(`${ NSSM_PATH } set "Bununban" AppThrottle 1000`);
+	sh(`${ NSSM_PATH } start "Bununban"`);
 
 	return HAS_SETTINGS && !clr
 		? `http://${ HOSTNAME == '0.0.0.0' ? 'localhost' : HOSTNAME }:${ PORT }`
@@ -85,6 +110,10 @@ const installApp = clr => {
 }
 
 const uninstallApp = clr => {
+	sh(`${ NSSM_PATH } stop "Bununban"`);
+	sh(`${ NSSM_PATH } remove "Bununban" confirm`);
+
+	// legacy
 	sh(`schtasks /delete /tn "bununban" /f`);
 	sh(`taskkill /f /im bununban-windows-x64.exe`);
 	sh(`taskkill /f /im bununban-windows-x64-no-simd.exe`);
@@ -94,6 +123,8 @@ const uninstallApp = clr => {
 
 	sh(`rmdir /s /q C:\\bununban`);
 	sh(`del /f /q "${ LNK_PATH }"`);
+
+	sh(`powershell -command "$interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Sort-Object RouteMetric | Select-Object -First 1 -ExpandProperty InterfaceAlias; Set-DnsClientServerAddress -InterfaceAlias $interface -ServerAddresses ('8.8.8.8', '8.8.4.4')"`);
 
 	if( clr )
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
@@ -488,5 +519,7 @@ else
 	await runGUI();
 
 outro('Готово');
+
+sh(`rmdir /s /q ${ join(homedir(), '.WebUI') }`);
 
 process.exit();
