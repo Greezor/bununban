@@ -20,6 +20,36 @@ import nssm from './nssm.exe' with { type: 'file' }
 
 import wslConfig from './.wslconfig' with { type: 'file' }
 
+const { hideConsole, showConsole } = (() => {
+	const user32 = dlopen('user32.dll', {
+		GetForegroundWindow: {
+			args: [],
+			returns: FFIType.ptr,
+		},
+		ShowWindow: {
+			args: [FFIType.ptr, FFIType.i32],
+			returns: FFIType.bool,
+		},
+	});
+
+	const kernel32 = dlopen("kernel32.dll", {
+		GetConsoleWindow: {
+			args: [],
+			returns: FFIType.ptr,
+		},
+	});
+
+	const SW_HIDE = 0;
+	const SW_SHOW = 5;
+
+	const hwnd = kernel32.symbols.GetConsoleWindow();
+
+	return {
+		hideConsole: () => user32.symbols.ShowWindow(hwnd, SW_HIDE),
+		showConsole: () => user32.symbols.ShowWindow(hwnd, SW_SHOW),
+	};
+})()
+
 const AVX2_SUPPORT = (() => {
 	const PF_AVX2_INSTRUCTIONS_AVAILABLE = 40;
 
@@ -503,9 +533,12 @@ const runGUI = async () => {
 		</html>
 	`);
 
+	hideConsole();
+
 	await WebUI.wait();
 
 	if( !guiStarted ){
+		showConsole();
 		log.error('Ошибка WebUI. Процесс продолжается в окне консоли...');
 		await runCLI();
 	}
