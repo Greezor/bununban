@@ -131,6 +131,10 @@ export default async (version, addNewResources) => {
 		await settings.set('dns.hosts-mem', 500);
 		await settings.set('dns.hosts-ttl', 0);
 
+		if( process.platform === 'win32' ){
+			await settings.set('antidpi.args', '--wf-tcp-out=80,443-65535 --wf-udp-out=80,443-65535 --wf-tcp-in=80,443-65535 --wf-udp-in=80,443-65535');
+		}
+
 		if( addNewResources ){
 			await lists.set('dns.malw.link.hosts', { syncUrl: 'https://raw.githubusercontent.com/ImMALWARE/dns.malw.link/refs/heads/master/hosts' });
 			await settings.set('dns.hosts', ['dns.malw.link.hosts']);
