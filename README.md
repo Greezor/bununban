@@ -12,6 +12,7 @@ Web-panel for [bol-van/zapret2](https://github.com/bol-van/zapret2)
 - resources synchronization by url
 - logs viewer
 - auto-updater
+- dns-proxy (DoH + Host mapping)
 
 ## Development
 
