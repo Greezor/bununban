@@ -138,6 +138,9 @@ export default async (version, addNewResources) => {
 		if( addNewResources ){
 			await lists.set('dns.malw.link.hosts', { syncUrl: 'https://raw.githubusercontent.com/ImMALWARE/dns.malw.link/refs/heads/master/hosts' });
 			await settings.set('dns.hosts', ['dns.malw.link.hosts']);
+
+			await lists.set('user-hostlist-exclude', { syncUrl: '' });
+			await lists.set('user-ipset-exclude', { syncUrl: '' });
 		}
 	}
 

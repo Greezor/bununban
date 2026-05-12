@@ -1,7 +1,8 @@
 --filter-l7=wireguard
-    --payload=wireguard_initiation,wireguard_cookie
-        --lua-desync=luaexec:code=desync.qty=math.random(11,16)
-        --lua-desync=repeater:instances=3:repeats=%qty
-            --lua-desync=luaexec:code=desync.len=math.random(1300,1400)
-            --lua-desync=luaexec:code=desync.fak=blob(desync,"0x17fefd")..brandom(desync.len)
-            --lua-desync=fake:blob=fak
+    --ipset-exclude={user-ipset-exclude}
+        --payload=wireguard_initiation,wireguard_cookie
+            --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+            --lua-desync=repeater:instances=3:repeats=%qty
+                --lua-desync=luaexec:code=desync.len=math.random(1300,1400)
+                --lua-desync=luaexec:code=desync.fak=blob(desync,"0x17fefd")..brandom(desync.len)
+                --lua-desync=fake:blob=fak

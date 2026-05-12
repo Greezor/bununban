@@ -1,4 +1,5 @@
 --filter-udp=*
-    --payload=unknown
-        --lua-desync=luaexec:code=desync.qty=math.random(8,12)
-        --lua-desync=fake:blob=0xaaaa0100000100000000000006676f6f676c6503636f6d0000010001:repeats=%qty:payload=~empty
+    --ipset-exclude={user-ipset-exclude}
+        --payload=unknown
+            --lua-desync=luaexec:code=desync.qty=math.random(8,12)
+            --lua-desync=fake:blob=0xaaaa0100000100000000000006676f6f676c6503636f6d0000010001:repeats=%qty:payload=~empty

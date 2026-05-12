@@ -1,30 +1,16 @@
 --lua-init=_G.randomSNI=createShuffledBag({"store.steampowered.com","api.steampowered.com","www.wikipedia.org","github.com","figma.com","comss.ru","4pda.to"})
 
 --filter-l7=tls
-    --hostlist={rulist}
-    --hostlist={apple}
-    --hostlist={cloudflare}
-    --hostlist={discord}
-    --hostlist={instagram}
-    --hostlist={meta}
-    --hostlist={rezka}
-    --hostlist={rutor}
-    --hostlist={rutracker}
-    --hostlist={soundcloud}
-    --hostlist={speedtest}
-    --hostlist={telegram}
-    --hostlist={tor}
-    --hostlist={twitter}
-    --hostlist={viber}
-    --hostlist={riotgames}
-    --hostlist={roblox}
-    --hostlist={vrchat}
-    --hostlist={whatsapp}
-    --hostlist={other}
-    --hostlist={custom}
-        --payload=tls_client_hello
-            --lua-desync=luaexec:code=desync.sni=randomSNI()
-            --lua-desync=luaexec:code=desync.ts=math.random(-1000,-600000)
-            --lua-desync=luaexec:code=desync.qty=math.random(11,16)
-            --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=%sni
-            --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_ts=%ts
+    --hostlist-exclude={user-hostlist-exclude}
+    --ipset-exclude={user-ipset-exclude}
+        --out-range=-n3
+            --payload=tls_client_hello
+                --lua-desync=luaexec:code=desync.sni=randomSNI()
+                --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+                --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=%sni
+                --lua-desync=per_instance_condition
+                    --lua-desync=luaexec:code=desync.rndts=math.random(-1000,-600000):cond=cond_tcp_has_ts
+                    --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_ts=%rndts:cond=cond_tcp_has_ts
+                    --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000):cond=cond_tcp_has_ts:cond_neg
+                    --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_seq=%rndseq:cond=cond_tcp_has_ts:cond_neg
+                    --lua-desync=multisplit:pos=midsld+1:cond=cond_true

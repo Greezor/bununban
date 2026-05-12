@@ -1,26 +1,6 @@
 --filter-l7=quic
-    --hostlist={google}
-    --hostlist={rulist}
-    --hostlist={apple}
-    --hostlist={cloudflare}
-    --hostlist={discord}
-    --hostlist={instagram}
-    --hostlist={meta}
-    --hostlist={rezka}
-    --hostlist={rutor}
-    --hostlist={rutracker}
-    --hostlist={soundcloud}
-    --hostlist={speedtest}
-    --hostlist={telegram}
-    --hostlist={tor}
-    --hostlist={twitter}
-    --hostlist={viber}
-    --hostlist={riotgames}
-    --hostlist={roblox}
-    --hostlist={vrchat}
-    --hostlist={whatsapp}
-    --hostlist={other}
-    --hostlist={custom}
+    --hostlist-exclude={user-hostlist-exclude}
+    --ipset-exclude={user-ipset-exclude}
         --payload=quic_initial
             --lua-desync=luaexec:code=desync.qty=math.random(11,16)
             --lua-desync=fake:blob=quic_initial_www_google_com:repeats=%qty
