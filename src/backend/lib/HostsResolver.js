@@ -31,6 +31,9 @@ export default class HostsResolver{
 		}
 
 		for(const hosts of this.#hosts){
+			if( !( await hosts.exists() ) )
+				continue;
+
 			const stream = hosts.stream();
 			const decoder = new TextDecoderStream();
 

@@ -38,6 +38,13 @@ class BackendApp
 		if( await this.IS_NSSM )
 			await Bun.$`"C:\\bununban\\nssm.exe" set "Bununban" AppExit Default Restart`.nothrow().quiet();
 
+		this.#dnsProxy = new DNSProxy();
+		
+		await this.#dnsProxy.winSetDNS(['8.8.8.8', '8.8.4.4']);
+		
+		if( await settings.get('dns.active') )
+			await this.#dnsProxy.start();
+
 		const settingsFile = Bun.file(
 			join(APPDATA_DIR, 'settings')
 		);
@@ -51,14 +58,9 @@ class BackendApp
 			await this.syncLists(true);
 			await this.syncLua(true);
 			await this.syncBlobs(true);
-		}
 
-		this.#dnsProxy = new DNSProxy();
-		
-		await this.#dnsProxy.winSetDNS(['8.8.8.8', '8.8.4.4']);
-		
-		if( await settings.get('dns.active') )
-			await this.#dnsProxy.start();
+			return await this.restart();
+		}
 
 		this.#server = Bun.serve({
 			port: await settings.get('port') || '8008',
@@ -80,7 +82,7 @@ class BackendApp
 		if( await settings.get('antidpi.active') )
 			await zapret.start();
 
-		if( startup && !isFirstLaunch && await settings.get('updater.on-startup') )
+		if( startup && await settings.get('updater.on-startup') )
 			await this.autoUpdate();
 
 		this.#autoUpdateInterval = setInterval(() => this.autoUpdate(), (
@@ -90,14 +92,12 @@ class BackendApp
 
 	async stop(force = false)
 	{
-		if( !this.#started ) return;
-
 		clearInterval(this.#autoUpdateInterval);
 
 		await zapret.stop();
 
-		await this.#server.stop(force);
-		await this.#dnsProxy.stop();
+		await this.#server?.stop?.(force);
+		await this.#dnsProxy?.stop?.();
 
 		this.#started = false;
 	}
@@ -127,15 +127,15 @@ class BackendApp
 		let restartNeeded = false;
 
 		try{
-		restartNeeded = await this.syncProfiles(force) || restartNeeded;
-		restartNeeded = await this.syncLists(force) || restartNeeded;
-		restartNeeded = await this.syncLua(force) || restartNeeded;
-		restartNeeded = await this.syncBlobs(force) || restartNeeded;
+			restartNeeded = await this.syncProfiles(force) || restartNeeded;
+			restartNeeded = await this.syncLists(force) || restartNeeded;
+			restartNeeded = await this.syncLua(force) || restartNeeded;
+			restartNeeded = await this.syncBlobs(force) || restartNeeded;
 
-		if( await this.updateZapret2(force) )
-			restartNeeded = false;
+			if( await this.updateZapret2(force) )
+				restartNeeded = false;
 
-		await this.updateSelf(force);
+			await this.updateSelf(force);
 		}
 		catch(e){
 			console.error(e)
