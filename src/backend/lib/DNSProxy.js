@@ -99,6 +99,10 @@ export default class DNSProxy
 							await new Promise(async resolve => {
 								const client = await createUDPSocket({
 									onClose: () => resolve(),
+									onError: () => {
+										clearTimeout(timeout);
+										resolve();
+									},
 									onData: answerBuf => {
 										const { answers } = decode(answerBuf);
 										response.answers = answers;

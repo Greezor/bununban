@@ -5,16 +5,23 @@ export default async ({ hostname, port, queueBatchSize = 32, keepAliveInterval =
 	const queue = []
 
 	const processQueue = () => {
-		for(let i = 0; i < queue.length; i += queueBatchSize){
+		while(queue.length){
 			if( socket?.closed ?? true )
 				break;
 
-			const processed = socket.sendMany([...queue.slice(i, i + queueBatchSize).flat()]);
+			try{
+				const processed = socket.sendMany(
+					queue.slice(0, queueBatchSize).flat()
+				);
 
-			queue.splice(i, processed);
+				queue.splice(0, processed);
 
-			if( processed < queueBatchSize )
+				if( processed < queueBatchSize )
+					break;
+			}
+			catch(e){
 				break;
+			}
 		}
 	}
 
