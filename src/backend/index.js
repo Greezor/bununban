@@ -276,7 +276,7 @@ class BackendApp
 		const html = await ketchup.text('https://github.com/Greezor/bununban/releases/latest');
 		const [ _, latest ] = html.match(/href="\/Greezor\/bununban\/releases\/tag\/(.*?)"/ms);
 
-		if( packageJSON.version === latest )
+		if( Bun.semver.satisfies(packageJSON.version, `>=${ latest ?? '0.0.0' }`) )
 			return;
 
 		const updatePath = join( ...path, 'update.bin' );
