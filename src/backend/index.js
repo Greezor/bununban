@@ -126,6 +126,7 @@ class BackendApp
 	{
 		let restartNeeded = false;
 
+		try{
 		restartNeeded = await this.syncProfiles(force) || restartNeeded;
 		restartNeeded = await this.syncLists(force) || restartNeeded;
 		restartNeeded = await this.syncLua(force) || restartNeeded;
@@ -135,6 +136,10 @@ class BackendApp
 			restartNeeded = false;
 
 		await this.updateSelf(force);
+		}
+		catch(e){
+			console.error(e)
+		}
 
 		if( restartNeeded && await settings.get('antidpi.active') )
 			await zapret.restart();
