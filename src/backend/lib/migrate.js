@@ -144,4 +144,12 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.1') ){
+		if( addNewResources ){
+			// create empty files for user lists
+			await Bun.write( join(APPDATA_DIR, 'files', 'lists', 'user-hostlist-exclude'), '' );
+			await Bun.write( join(APPDATA_DIR, 'files', 'lists', 'user-ipset-exclude'), '' );
+		}
+	}
+
 }
