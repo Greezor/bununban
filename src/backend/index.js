@@ -264,7 +264,7 @@ class BackendApp
 		if( path[0] == '' )
 			path[0] = '/';
 
-		const updateScript = join( ...path, process.platform === 'win32' ? 'bununban-update.cmd' : 'bununban-update.sh' );
+		const updateScript = join( ...path, process.platform === 'win32' ? 'update.cmd' : 'update.sh' );
 
 		await Bun.$`rm -rf ${ updateScript }`;
 
@@ -308,7 +308,10 @@ class BackendApp
 		}
 		else
 		{
-			await Bun.write(updateScript, `sleep 5; mv -f "${ updatePath }" "${ process.execPath }"; chmod +x "${ process.execPath }"; "${ process.execPath }" ${ Bun.argv.slice(2).join(' ') }`);
+			await Bun.$`mv -f "${ updatePath }" "${ process.execPath }"`.nothrow().quiet();
+			await Bun.$`chmod +x "${ process.execPath }"`.nothrow().quiet();
+
+			await Bun.write(updateScript, `sleep 5; "${ process.execPath }" ${ Bun.argv.slice(2).join(' ') }`);
 
 			Bun.spawn([ 'sh', updateScript ], {
 				windowsHide: true,
