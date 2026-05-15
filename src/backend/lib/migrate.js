@@ -152,4 +152,8 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.3') ){
+		await settings.set('dns.active', true);
+	}
+
 }
