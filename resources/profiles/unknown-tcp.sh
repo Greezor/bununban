@@ -1,7 +1,10 @@
 --filter-tcp=*
     --ipset-exclude={user-ipset-exclude}
+    --ipset-exclude={ipset-exclude}
         --out-range=-n3
             --payload=unknown
                 --lua-desync=luaexec:code=desync.qty=math.random(8,12)
-                --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
-                --lua-desync=fake:blob=0x001caaaa0100000100000000000006676f6f676c6503636f6d0000010001:repeats=%qty:tcp_seq=%rndseq:payload=~empty
+                --lua-desync=repeater:instances=3:repeats=%qty
+                    --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
+                    --lua-desync=luaexec:code=desync.fak=blob(desync,"0x001c")..brandom(2)..blob(desync,"0x0100000100000000000006676f6f676c6503636f6d0000010001")
+                    --lua-desync=fake:blob=fak:tcp_seq=%rndseq:payload=~empty

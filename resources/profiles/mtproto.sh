@@ -1,5 +1,6 @@
 --filter-l7=mtproto
     --ipset-exclude={user-ipset-exclude}
+    --ipset-exclude={ipset-exclude}
         --lua-desync=luaexec:code=desync.qty=math.random(11,16)
         --lua-desync=repeater:instances=4:repeats=%qty
             --lua-desync=luaexec:code=desync.len=math.random(600,800)

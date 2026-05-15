@@ -3,6 +3,7 @@
 --filter-l7=tls
     --hostlist-exclude={user-hostlist-exclude}
     --ipset-exclude={user-ipset-exclude}
+    --ipset-exclude={ipset-exclude}
         --out-range=-n3
             --payload=tls_client_hello
                 --lua-desync=luaexec:code=desync.sni=randomSNI()

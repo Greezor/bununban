@@ -1,6 +1,7 @@
 --filter-l7=quic
     --hostlist-exclude={user-hostlist-exclude}
     --ipset-exclude={user-ipset-exclude}
+    --ipset-exclude={ipset-exclude}
         --payload=quic_initial
             --lua-desync=luaexec:code=desync.qty=math.random(11,16)
             --lua-desync=fake:blob=quic_initial_www_google_com:repeats=%qty

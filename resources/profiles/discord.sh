@@ -1,5 +1,6 @@
 --filter-l7=discord
     --ipset-exclude={user-ipset-exclude}
+    --ipset-exclude={ipset-exclude}
         --payload=discord_ip_discovery
             --lua-desync=luaexec:code=desync.qty=math.random(11,16)
             --lua-desync=fake:blob=quic_initial_www_google_com:repeats=%qty

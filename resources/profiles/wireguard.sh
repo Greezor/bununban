@@ -1,5 +1,6 @@
 --filter-l7=wireguard
     --ipset-exclude={user-ipset-exclude}
+    --ipset-exclude={ipset-exclude}
         --payload=wireguard_initiation,wireguard_cookie
             --lua-desync=luaexec:code=desync.qty=math.random(11,16)
             --lua-desync=repeater:instances=3:repeats=%qty
