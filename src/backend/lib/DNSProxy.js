@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { DohResolver } from 'dohjs'
 import { decode, encode, AUTHORITATIVE_ANSWER } from '@dnsquery/dns-packet'
 
+import zapret from './zapret'
 import HostsResolver from './hostsResolver'
 import createUDPSocket from './createUDPSocket'
 
@@ -48,7 +49,12 @@ export default class DNSProxy
 		await this.winSetDNS(['127.0.0.1']);
 
 		this.#socket = await createUDPSocket({
+			hostname: process.platform === 'win32' ? '127.0.0.1' : '0.0.0.0',
 			port: 53,
+			onReopen: async () => {
+				if( process.platform === 'win32' && await settings.get('antidpi.active') )
+					await zapret.restart();
+			},
 			onData: async (queryBuf, port, addr) => {
 				const query = decode(queryBuf);
 				const [ question ] = query.questions;
@@ -123,6 +129,9 @@ export default class DNSProxy
 				this.#socket.send(encode(response), port, addr);
 			},
 		});
+
+		if( process.platform === 'win32' && await settings.get('antidpi.active') )
+			await zapret.restart();
 	}
 
 	async stop()
@@ -132,7 +141,7 @@ export default class DNSProxy
 
 		await this.winSetDNS(['8.8.8.8', '8.8.4.4']);
 
-		this.#socket.close();
+		await this.#socket.close();
 		this.#socket = null;
 	}
 }
