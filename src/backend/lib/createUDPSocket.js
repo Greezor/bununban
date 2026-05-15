@@ -1,28 +1,33 @@
-export default async ({ hostname, port, queueBatchSize = 32, keepAliveInterval = 500, onData, onError, onClose }) => {
+export default async ({ hostname, port, queueBatchSize = 32, keepAliveInterval = 500, onData, onReopen, onError, onClose }) => {
 	let socket
 	let keepAlive = true
 
 	const queue = []
 
 	const processQueue = () => {
-		while(queue.length){
-			if( socket?.closed ?? true )
-				break;
+		const q = queue.slice();
+		queue.splice(0, queue.length);
 
+		while(q.length){
 			try{
+				if( socket?.closed ?? true )
+					throw 1;
+
 				const processed = socket.sendMany(
-					queue.slice(0, queueBatchSize).flat()
+					q.slice(0, queueBatchSize).flat()
 				);
 
-				queue.splice(0, processed);
+				q.splice(0, processed);
 
 				if( processed < queueBatchSize )
-					break;
+					throw 2;
 			}
 			catch(e){
 				break;
 			}
 		}
+
+		queue.push(...q);
 	}
 
 	const options = {
@@ -45,8 +50,10 @@ export default async ({ hostname, port, queueBatchSize = 32, keepAliveInterval =
 
 	setTimeout(async () => {
 		while(keepAlive){
-			if( socket?.closed ?? true )
+			if( socket?.closed ?? true ){
 				socket = await Bun.udpSocket(options);
+				await onReopen?.();
+			}
 
 			processQueue();
 
@@ -56,18 +63,18 @@ export default async ({ hostname, port, queueBatchSize = 32, keepAliveInterval =
 
 	return {
 		send: (buf, port, addr) => {
-			queue.push([ buf, port, addr ]);
-			processQueue();
-		},
+			try{
+				if( socket?.closed ?? true )
+					throw 1;
 
-		multiSend: args => {
-			for(const [ buf, port, addr ] of args)
+				socket.send(buf, port, addr);
+			}
+			catch(e){
 				queue.push([ buf, port, addr ]);
-
-			processQueue();
+			}
 		},
 
-		close: () => {
+		close: async () => {
 			if( !keepAlive )
 				return;
 
@@ -77,7 +84,7 @@ export default async ({ hostname, port, queueBatchSize = 32, keepAliveInterval =
 			if( !!socket && !socket.closed )
 				socket.close();
 
-			onClose?.();
+			await onClose?.();
 		},
 
 		getBunSocket: () => socket,
