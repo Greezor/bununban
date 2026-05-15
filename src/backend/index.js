@@ -38,13 +38,6 @@ class BackendApp
 		if( await this.IS_NSSM )
 			await Bun.$`"C:\\bununban\\nssm.exe" set "Bununban" AppExit Default Restart`.nothrow().quiet();
 
-		this.#dnsProxy = new DNSProxy();
-		
-		await this.#dnsProxy.winSetDNS(['8.8.8.8', '8.8.4.4']);
-		
-		if( await settings.get('dns.active') )
-			await this.#dnsProxy.start();
-
 		const settingsFile = Bun.file(
 			join(APPDATA_DIR, 'settings')
 		);
@@ -52,6 +45,12 @@ class BackendApp
 		const isFirstLaunch = !( await settingsFile.exists() );
 
 		await this.applyMigrations();
+
+		this.#dnsProxy = new DNSProxy();
+		await this.#dnsProxy.winSetDNS(['8.8.8.8', '8.8.4.4']);
+
+		if( await settings.get('dns.active') )
+			await this.#dnsProxy.start();
 
 		if( isFirstLaunch ){
 			await this.syncProfiles(true);
