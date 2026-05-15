@@ -19,7 +19,9 @@ import app from '../index'
 
 class Zapret
 {
-	#proc = null;
+	#started = false
+
+	#proc = null
 
 	constructor()
 	{
@@ -185,7 +187,7 @@ class Zapret
 
 	get isStarted()
 	{
-		return !!this.#proc;
+		return this.#started;
 	}
 
 	async replaceVarsWithLists(str)
@@ -206,8 +208,10 @@ class Zapret
 		if( !( await this.isInstalled() ) )
 			await this.install();
 
-		if( this.isStarted )
+		if( this.#started )
 			return;
+
+		this.#started = true;
 
 		const logsPath = join(APPDATA_DIR, 'logs');
 
@@ -283,8 +287,11 @@ class Zapret
 			stderr: 'pipe',
 			onExit: async () => {
 				await this.deleteWindivert();
+
 				logsWriter.end();
+
 				this.#proc = null;
+				this.#started = false;
 			},
 		});
 
@@ -302,7 +309,7 @@ class Zapret
 
 	async stop()
 	{
-		if( !this.isStarted )
+		if( !this.#started )
 			return;
 
 		if( !this.#proc.killed )
@@ -311,7 +318,7 @@ class Zapret
 		do{
 			await Bun.sleep(100);
 		}
-		while(this.isStarted)
+		while(this.#started)
 	}
 
 	async restart()
