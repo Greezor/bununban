@@ -1,6 +1,7 @@
 --lua-init=_G.randomSNI=createShuffledBag({"store.steampowered.com","api.steampowered.com","www.wikipedia.org","github.com","figma.com","comss.ru","4pda.to"})
 
 --filter-l7=tls
+    --hostlist-exclude-domains=ru
     --hostlist-exclude={user-hostlist-exclude}
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
@@ -14,4 +15,3 @@
                     --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_ts=%rndts:cond=cond_tcp_has_ts
                     --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000):cond=cond_tcp_has_ts:cond_neg
                     --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_seq=%rndseq:cond=cond_tcp_has_ts:cond_neg
-                    --lua-desync=multisplit:pos=midsld+1:cond=cond_true
