@@ -2,8 +2,8 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=wireguard_initiation,wireguard_cookie
-            --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+            --lua-desync=luaexec:code=desync.qty=math.random(3,6)
             --lua-desync=repeater:instances=3:repeats=%qty
-                --lua-desync=luaexec:code=desync.len=math.random(1300,1400)
-                --lua-desync=luaexec:code=desync.fak=blob(desync,"0x17fefd")..brandom(desync.len)
+                --lua-desync=luaexec:code=desync.len=math.random(1200,1300)
+                --lua-desync=luaexec:code=desync.fak="\x17\xfe\xfd"..brandom(desync.len)
                 --lua-desync=fake:blob=fak

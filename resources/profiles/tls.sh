@@ -1,17 +1,17 @@
---lua-init=_G.randomSNI=createShuffledBag({"store.steampowered.com","api.steampowered.com","www.wikipedia.org","github.com","figma.com","comss.ru","4pda.to"})
-
 --filter-l7=tls
     --hostlist-exclude-domains=ru
     --hostlist-exclude={user-hostlist-exclude}
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
-        --out-range=-n3
+        --out-range=-d3
             --payload=tls_client_hello
-                --lua-desync=luaexec:code=desync.sni=randomSNI()
+                --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=%domain4fakes
                 --lua-desync=luaexec:code=desync.qty=math.random(11,16)
-                --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=%sni
-                --lua-desync=per_instance_condition
-                    --lua-desync=luaexec:code=desync.rndts=math.random(-1000,-600000):cond=cond_tcp_has_ts
-                    --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_ts=%rndts:cond=cond_tcp_has_ts
-                    --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000):cond=cond_tcp_has_ts:cond_neg
-                    --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_seq=%rndseq:cond=cond_tcp_has_ts:cond_neg
+                --lua-desync=luaexec:code=desync.rndts=math.random(-81000,-600000)
+                --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
+                --lua-desync=repeater:instances=4:repeats=%qty
+                    --lua-desync=per_instance_condition:instances=2
+                        --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:tcp_ts=%rndts:cond=cond_tcp_has_ts
+                        --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:tcp_seq=%rndseq:cond=cond_tcp_has_ts:cond_neg
+                    --lua-desync=luaexec:code=desync.rndts=desync.rndts+math.random(800,5000)
+                --lua-desync=luaexec:code=debounced_switch_domain4fakes()

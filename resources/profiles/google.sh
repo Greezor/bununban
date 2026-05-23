@@ -2,12 +2,16 @@
     --hostlist={google}
     --hostlist-exclude={user-hostlist-exclude}
     --ipset-exclude={user-ipset-exclude}
-    --ipset-exclude={ipset-exclude}
-        --out-range=-n3
+        --out-range=-d3
             --payload=tls_client_hello
-                --lua-desync=luaexec:code=desync.rndts=math.random(-1000,-600000)
-                --lua-desync=luaexec:code=desync.qty=math.random(11,16)
                 --lua-desync=tls_client_hello_clone:blob=tls:fallback=tls_clienthello_www_google_com:sni_snt_new=0:sni_del:sni_first=google.com
-                --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:repeats=%qty:tcp_ts=%rndts:ip_id=zero
+                --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+                --lua-desync=luaexec:code=desync.rndts=math.random(-81000,-600000)
+                --lua-desync=luaexec:code=desync.rndseq=math.random(10000,10000000)
+                --lua-desync=repeater:instances=4:repeats=%qty
+                    --lua-desync=per_instance_condition:instances=2
+                        --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:tcp_ts=%rndts:ip_id=zero:cond=cond_tcp_has_ts
+                        --lua-desync=fake:blob=tls:tls_mod=rnd,dupsid:tcp_seq=%rndseq:ip_id=zero:cond=cond_tcp_has_ts:cond_neg
+                    --lua-desync=luaexec:code=desync.rndts=desync.rndts+math.random(800,5000)
                 --lua-desync=send:ip_id=zero
                 --lua-desync=drop
