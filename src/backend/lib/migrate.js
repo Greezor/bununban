@@ -169,65 +169,44 @@ export default async (version, addNewResources) => {
 			await settings.set('dns.hosts', ['hosts']);
 
 			const listsDir = join(APPDATA_DIR, 'files', 'lists');
+			const listsFiles = [
+				'ipset-all',
+				'ipset-telegram',
+				'ipset-roblox',
+				
+				'rulist',
+				'apple',
+				'cloudflare',
+				'discord',
+				'instagram',
+				'meta',
+				'rezka',
+				'rutor',
+				'rutracker',
+				'soundcloud',
+				'speedtest',
+				'telegram',
+				'tor',
+				'twitter',
+				'viber',
+				'riotgames',
+				'roblox',
+				'vrchat',
+				'whatsapp',
+				'other',
+				'custom',
 
-			await lists.delete('ipset-all');
-			await lists.delete('ipset-telegram');
-			await lists.delete('ipset-roblox');
-			
-			await lists.delete('rulist');
-			await lists.delete('apple');
-			await lists.delete('cloudflare');
-			await lists.delete('discord');
-			await lists.delete('instagram');
-			await lists.delete('meta');
-			await lists.delete('rezka');
-			await lists.delete('rutor');
-			await lists.delete('rutracker');
-			await lists.delete('soundcloud');
-			await lists.delete('speedtest');
-			await lists.delete('telegram');
-			await lists.delete('tor');
-			await lists.delete('twitter');
-			await lists.delete('viber');
-			await lists.delete('riotgames');
-			await lists.delete('roblox');
-			await lists.delete('vrchat');
-			await lists.delete('whatsapp');
-			await lists.delete('other');
-			await lists.delete('custom');
+				'dns.malw.link.hosts',
+			];
 
-			await lists.delete('dns.malw.link.hosts');
+			for(const filename of listsFiles){
+				await lists.delete(filename);
 
-			try{
-				await Bun.file(join(listsDir, 'ipset-all')).delete();
-				await Bun.file(join(listsDir, 'ipset-telegram')).delete();
-				await Bun.file(join(listsDir, 'ipset-roblox')).delete();
-
-				await Bun.file(join(listsDir, 'rulist')).delete();
-				await Bun.file(join(listsDir, 'apple')).delete();
-				await Bun.file(join(listsDir, 'cloudflare')).delete();
-				await Bun.file(join(listsDir, 'discord')).delete();
-				await Bun.file(join(listsDir, 'instagram')).delete();
-				await Bun.file(join(listsDir, 'meta')).delete();
-				await Bun.file(join(listsDir, 'rezka')).delete();
-				await Bun.file(join(listsDir, 'rutor')).delete();
-				await Bun.file(join(listsDir, 'rutracker')).delete();
-				await Bun.file(join(listsDir, 'soundcloud')).delete();
-				await Bun.file(join(listsDir, 'speedtest')).delete();
-				await Bun.file(join(listsDir, 'telegram')).delete();
-				await Bun.file(join(listsDir, 'tor')).delete();
-				await Bun.file(join(listsDir, 'twitter')).delete();
-				await Bun.file(join(listsDir, 'viber')).delete();
-				await Bun.file(join(listsDir, 'riotgames')).delete();
-				await Bun.file(join(listsDir, 'roblox')).delete();
-				await Bun.file(join(listsDir, 'vrchat')).delete();
-				await Bun.file(join(listsDir, 'whatsapp')).delete();
-				await Bun.file(join(listsDir, 'other')).delete();
-				await Bun.file(join(listsDir, 'custom')).delete();
-
-				await Bun.file(join(listsDir, 'dns.malw.link.hosts')).delete();
+				try{
+					await Bun.file(join(listsDir, filename)).delete();
+				}
+				catch(e){}
 			}
-			catch(e){}
 		}
 	}
 
