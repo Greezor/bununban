@@ -154,7 +154,7 @@ const uninstallApp = clr => {
 	sh(`rmdir /s /q C:\\bununban`);
 	sh(`del /f /q "${ LNK_PATH }"`);
 
-	sh(`powershell -command "$interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Sort-Object RouteMetric | Select-Object -First 1 -ExpandProperty InterfaceAlias; Set-DnsClientServerAddress -InterfaceAlias $interface -ServerAddresses ('8.8.8.8', '8.8.4.4')"`);
+	sh(`powershell -command "$interface = Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Sort-Object RouteMetric | Select-Object -First 1 -ExpandProperty InterfaceAlias; Set-DnsClientServerAddress -InterfaceAlias $interface -ResetServerAddress"`);
 
 	if( clr )
 		sh(`rmdir /s /q ${ APPDATA_DIR }`);
