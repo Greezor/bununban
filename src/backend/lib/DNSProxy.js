@@ -26,7 +26,7 @@ export default class DNSProxy
 			})`
 		}"`.nothrow().quiet();
 
-		await Bun.$`ipconfig /flushdns; sc stop SharedAccess;`.nothrow().quiet();
+		await Bun.$`ipconfig /flushdns`.nothrow().quiet();
 	}
 
 	async start()
@@ -47,6 +47,9 @@ export default class DNSProxy
 		const hostsTTL = await settings.get('dns.hosts-ttl') || 0;
 
 		await this.winSetDNS(['127.0.0.1']);
+
+		if( process.platform === 'win32' )
+			await Bun.$`sc stop SharedAccess`.nothrow().quiet();
 
 		this.#socket = await createUDPSocket({
 			hostname: process.platform === 'win32' ? '127.0.0.1' : '0.0.0.0',
