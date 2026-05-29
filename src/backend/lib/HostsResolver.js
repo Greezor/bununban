@@ -36,13 +36,18 @@ export default class HostsResolver{
 
 			const stream = hosts.stream();
 			const decoder = new TextDecoderStream();
+			const reader = stream.pipeThrough(decoder).getReader();
 
 			let remaining = '';
 
-			for await (const chunk of stream.pipeThrough(decoder)){
+			while(true){
+				const { done, value } = await reader.read();
+
+				const chunk = value || '';
 				const lines = ( remaining + chunk ).split(/\r?\n/);
 
-				remaining = lines.pop();
+				if( !done )
+					remaining = lines.pop();
 
 				for(const line of lines){
 					const [ ip, host ] = line.split('#').at(0).trim().split(/\s+/);
@@ -53,6 +58,9 @@ export default class HostsResolver{
 						return ip;
 					}
 				}
+
+				if( done )
+					break;
 			}
 		}
 
