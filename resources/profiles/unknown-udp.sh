@@ -1,10 +1,7 @@
 --filter-udp=*
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
-        --out-range=-d3
-            --payload=unknown
-                --lua-desync=luaexec:code=desync.qty=math.random(8,12)
-                --lua-desync=repeater:instances=2:repeats=%qty
-                    --lua-desync=luaexec:code=desync.fak=create_fake_dns({domain4fakes})
-                    --lua-desync=fake:blob=fak:payload=~empty
-                --lua-desync=luaexec:code=debounced_switch_domain4fakes()
+        --payload=unknown
+            --lua-desync=ipmem:get=domain4fake:set=return(pick_random_domain())
+            --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns({desync.domain4fake},false,true)
+            --lua-desync=fake:blob=fake_udp_dns:payload=~empty
