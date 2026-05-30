@@ -203,7 +203,7 @@ _G.pick_random_domain = create_shuffled_bag({
     "xda-developers.com",
     "rozetked.me",
     "comss.ru",
-    "microsoft.com",
-    "chatgpt.com",
-    "twitch.tv",
+    --"microsoft.com",
+    --"chatgpt.com",
+    --"twitch.tv",
 })
