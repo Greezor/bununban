@@ -1,3 +1,3 @@
---filter-l7=mtproto
+--skip --filter-l7=mtproto
     --payload=mtproto_initial
         --lua-desync=pass

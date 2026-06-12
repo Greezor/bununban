@@ -3,8 +3,9 @@
     --ipset-exclude={ipset-exclude}
         --out-range=-d1
             --payload=unknown
-                --lua-desync=ipmem:get=domain4fake:set=return(pick_random_domain())
-                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns({desync.domain4fake},true,true)
-                --lua-desync=luaexec:code=desync.rndts=math.random(-1000,-600000)
-                --lua-desync=luaexec:code=desync.rndack=math.random(66000,132000)
-                --lua-desync=fake:blob=fake_tcp_dns:tcp_ts=%rndts:tcp_ack=%rndack:payload=~empty
+                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(pick_random_domain(),true,true)
+                --lua-desync=per_instance_condition:instances=4
+                    --lua-desync=luaexec:code=desync.rndts=math.random(-1000,-110000):cond=cond_tcp_has_ts
+                    --lua-desync=fake:blob=fake_tcp_dns:tcp_ts=%rndts:cond=cond_tcp_has_ts:payload=~empty
+                    --lua-desync=luaexec:code=desync.rndack=math.random(66000,132000):cond=cond_tcp_has_ts:cond_neg
+                    --lua-desync=fake:blob=fake_tcp_dns:tcp_ack=%rndack:cond=cond_tcp_has_ts:cond_neg:payload=~empty

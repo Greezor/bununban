@@ -198,12 +198,11 @@ _G.ipmem = (
 
 _G.pick_random_domain = create_shuffled_bag({
     "steampowered.com",
+    "epicgames.com",
+    "playstation.com",
+    "nintendo.com",
     "github.com",
-    "figma.com",
-    "xda-developers.com",
-    "rozetked.me",
-    "comss.ru",
-    --"microsoft.com",
-    --"chatgpt.com",
-    --"twitch.tv",
+    "gitlab.com",
+    "bitbucket.org",
+    "wikipedia.org",
 })

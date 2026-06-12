@@ -2,6 +2,5 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=unknown
-            --lua-desync=ipmem:get=domain4fake:set=return(pick_random_domain())
-            --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns({desync.domain4fake},false,true)
+            --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns(pick_random_domain(),false,true)
             --lua-desync=fake:blob=fake_udp_dns:payload=~empty
