@@ -36,31 +36,22 @@ export default class HostsResolver{
 
 			const stream = hosts.stream();
 			const decoder = new TextDecoderStream();
-			const reader = stream.pipeThrough(decoder).getReader();
 
-			let remaining = '';
+			let prev = '';
 
-			while(true){
-				const { done, value } = await reader.read();
+			for await (const chunk of stream.pipeThrough(decoder)){
+				const match = ( prev + chunk ).match(new RegExp(`^(\\d+.\\d+.\\d+.\\d+)\\s+(${ domain })(\\s+|)(#.*?|)$`, 'm'));
 
-				const chunk = value || '';
-				const lines = ( remaining + chunk ).split(/\r?\n/);
+				prev = chunk;
 
-				if( !done )
-					remaining = lines.pop();
+				if( !match )
+					continue;
 
-				for(const line of lines){
-					const [ ip, host ] = line.split('#').at(0).trim().split(/\s+/);
+				const [ line, ip ] = match;
 
-					if( host === domain ){
-						this.#memory.set(domain, ip);
-						this.#memApplyLimit();
-						return ip;
-					}
-				}
-
-				if( done )
-					break;
+				this.#memory.set(domain, ip);
+				this.#memApplyLimit();
+				return ip;
 			}
 		}
 
