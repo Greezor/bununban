@@ -210,4 +210,26 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.5') ){
+		if( addNewResources ){
+			await settings.set('profiles', (
+				( await settings.get('profiles') )
+					.filter(({ name }) => (
+						!['google', 'mtproto']
+							.includes(name)
+					))
+			));
+
+			await lists.delete('google');
+			await lists.delete('hosts');
+			
+			await lists.set('NoADS_RU_bypass2', { syncUrl: 'https://raw.githubusercontent.com/Zalexanninev15/NoADS_RU/refs/heads/main/hosts/bypass2.txt' });
+
+			await settings.set('dns.doh-url', 'https://dns.google/dns-query');
+			await settings.set('dns.hosts', ['NoADS_RU_bypass2']);
+			await settings.set('dns.hosts-mem', 10000);
+			await settings.set('dns.hosts-ttl', 300);
+		}
+	}
+
 }
