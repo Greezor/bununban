@@ -5,20 +5,18 @@
     --ipset-exclude={ipset-exclude}
         --out-range=-d3
             --payload=tls_client_hello
-                --lua-desync=condition:instances=15:iff=cond_lua:cond_code=return(replay_first(desync))
-                    --lua-desync=tls_client_hello_clone:blob=fake_client_hello:fallback=tls_clienthello_www_google_com:sni_del:sni_snt_new=0:sni_first=google.com
+                --lua-desync=condition:instances=13:iff=cond_lua:cond_code=return(replay_first(desync))
+                    --lua-desync=luaexec:code=desync.domain4fake=pick_random_domain()
+                    --lua-desync=tls_client_hello_clone:blob=fake_client_hello:fallback=tls_clienthello_www_google_com:sni_del:sni_snt_new=0:sni_first=%domain4fake
                     --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-                    --lua-desync=condition:instances=7:iff=cond_tcp_has_ts
+                    --lua-desync=condition:instances=6:iff=cond_tcp_has_ts
                         --lua-desync=luaexec:code=desync.maxts=-800*(desync.qty-1)-1000
                         --lua-desync=luaexec:code=desync.mints=desync.maxts-100000
                         --lua-desync=luaexec:code=desync.rndts=math.random(desync.mints,desync.maxts)
-                        --lua-desync=repeater:instances=3:repeats=%qty
-                            --lua-desync=luaexec:code=desync.domain4fake=pick_random_domain()
-                            --lua-desync=fake:blob=fake_client_hello:tls_mod=rnd,dupsid,sni=%domain4fake:tcp_ts=%rndts:ip_id=seq:ip_id_conn
-                            --lua-desync=luaexec:code=desync.rndts=desync.rndts+math.random(100,800)
-                    --lua-desync=condition:instances=4:iff=cond_tcp_has_ts:neg
-                        --lua-desync=luaexec:code=desync.rndack=math.random(66000,132000)
                         --lua-desync=repeater:instances=2:repeats=%qty
-                            --lua-desync=luaexec:code=desync.domain4fake=pick_random_domain()
-                            --lua-desync=fake:blob=fake_client_hello:tls_mod=rnd,dupsid,sni=%domain4fake:tcp_ack=%rndack:ip_id=seq:ip_id_conn
-                --lua-desync=multisplit:pos=midsld+1:ip_id=seq:ip_id_conn
+                            --lua-desync=fake:blob=fake_client_hello:tcp_ts=%rndts:ip_id=seq:ip_id_conn
+                            --lua-desync=luaexec:code=desync.rndts=desync.rndts+math.random(100,800)
+                    --lua-desync=condition:instances=2:iff=cond_tcp_has_ts:neg
+                        --lua-desync=luaexec:code=desync.rndack=math.random(66000,132000)
+                        --lua-desync=fake:blob=fake_client_hello:repeats=%qty:tcp_ack=%rndack:ip_id=seq:ip_id_conn
+                --lua-desync=multidisorder:pos=midsld+1:ip_id=seq:ip_id_conn
