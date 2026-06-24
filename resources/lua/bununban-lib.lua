@@ -8,10 +8,28 @@ end
 
 
 
+function arange(start, stop, step)
+    local a = {}
+
+    for i = start, stop, (step or 1) do
+        table.insert(a, i)
+    end
+
+    return a
+end
+
+
+
 function delay(fn, ms)
     local id = uuid()
     _G[id] = function() fn(); _G[id] = nil end
     timer_set(id, id, ms, true)
+end
+
+
+
+function async(fn)
+    delay(fn, 0)
 end
 
 
@@ -206,3 +224,28 @@ _G.pick_random_domain = create_shuffled_bag({
     "bitbucket.org",
     "wikipedia.org",
 })
+
+
+
+function host_is_google(desync)
+    if desync.track and desync.track.hostname then
+        local h = desync.track.hostname
+
+        if string.find(h, "google")
+        or string.find(h, "youtube")
+        or string.find(h, "gmail")
+        or string.find(h, "android")
+        or string.find(h, "ytimg")
+        or string.find(h, "ggpht")
+        or string.find(h, "gstatic")
+        or string.find(h, "goo%.gl")
+        or string.find(h, "youtu%.be")
+        or string.find(h, "yt%.be")
+        or string.find(h, "gvt%d")
+        then
+            return true
+        end
+    end
+
+    return false
+end

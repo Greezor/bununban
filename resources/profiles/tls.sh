@@ -6,7 +6,7 @@
         --out-range=-d3
             --payload=tls_client_hello
                 --lua-desync=condition:instances=13:iff=cond_lua:cond_code=return(replay_first(desync))
-                    --lua-desync=luaexec:code=desync.domain4fake=pick_random_domain()
+                    --lua-desync=luaexec:code=desync.domain4fake=uuid().."."..(host_is_google(desync)and("google.com")or(pick_random_domain()))
                     --lua-desync=tls_client_hello_clone:blob=fake_client_hello:fallback=tls_clienthello_www_google_com:sni_del:sni_snt_new=0:sni_first=%domain4fake
                     --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                     --lua-desync=condition:instances=6:iff=cond_tcp_has_ts
