@@ -17,5 +17,5 @@
                     --lua-desync=condition:instances=2:iff=cond_tcp_has_ts:neg
                         --lua-desync=luaexec:code=desync.rndack=math.random(66000,132000)
                         --lua-desync=fake:blob=fake_client_hello:repeats=%qty:tcp_ack=%rndack:ip_id=seq:ip_id_conn
-                --lua-desync=send:ip_id=seq:ip_id_conn
+                --lua-desync=send:repeats=11:ip_id=seq:ip_id_conn
                 --lua-desync=drop
