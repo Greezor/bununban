@@ -232,4 +232,14 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.6') ){
+		if( addNewResources ){
+			await lists.set('hosts', { syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/hosts/hosts' });
+			await lists.delete('NoADS_RU_bypass2');
+
+			await settings.set('dns.doh-url', 'https://dns.malw.link/dns-query');
+			await settings.set('dns.hosts', ['hosts']);
+		}
+	}
+
 }
