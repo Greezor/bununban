@@ -77,6 +77,7 @@ const style = {
 	`,
 
 	settingsRowActions: css`
+		margin-left: 5px;
 		display: flex;
 		gap: 5px;
 		justify-content: end;
@@ -357,8 +358,11 @@ export default {
 								
 								<div class="${ style.settingsRow }">
 									<span>Дебаг-логи</span>
-									<ToggleSwitch
-										v-model="params['antidpi.debug']" />
+
+									<div class="${ style.settingsRowActions }">
+										<ToggleSwitch
+											v-model="params['antidpi.debug']" />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
@@ -387,48 +391,58 @@ export default {
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
 									<span>Включить DNS-прокси</span>
-									<ToggleSwitch
-										v-model="params['dns.active']" />
+
+									<div class="${ style.settingsRowActions }">
+										<ToggleSwitch
+											v-model="params['dns.active']" />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
 									<span>IP-адрес целевого DNS-сервера</span>
-									<Select
-										v-model="params['dns.nameserver']"
-										option-label="ip"
-										option-value="ip"
-										:options="[
-											{ name: 'Google — 8.8.8.8', ip: '8.8.8.8' },
-											{ name: 'Cloudflare — 1.1.1.1', ip: '1.1.1.1' },
-											{ name: 'AdGuard — 94.140.14.14', ip: '94.140.14.14' },
-											{ name: 'AdGuard Unfiltered — 94.140.14.140', ip: '94.140.14.140' },
-											{ name: 'AdGuard Family — 94.140.14.15', ip: '94.140.14.15' },
-											{ name: 'Malw.link — 84.21.189.133', ip: '84.21.189.133' },
-											{ name: 'XBox DNS — 111.88.96.50', ip: '111.88.96.50' },
-											{ name: 'Control D Unfiltered — 76.76.2.0', ip: '76.76.2.0' },
-											{ name: 'Control D Malware — 76.76.2.1', ip: '76.76.2.1' },
-											{ name: 'Control D Ads — 76.76.2.2', ip: '76.76.2.2' },
-											{ name: 'Control D Social — 76.76.2.3', ip: '76.76.2.3' },
-											{ name: 'Control D Family — 76.76.2.4', ip: '76.76.2.4' },
-											{ name: 'Control D Advanced — 76.76.2.5', ip: '76.76.2.5' },
-										]"
-										placeholder="8.8.8.8"
-										editable
-										style="width:200px">
-										<template #option="{ option }">
-											{{ option.name }}
-										</template>
-									</Select>
+
+									<div class="${ style.settingsRowActions }">
+										<Select
+											v-model="params['dns.nameserver']"
+											option-label="ip"
+											option-value="ip"
+											:options="[
+												{ name: 'Google — 8.8.8.8', ip: '8.8.8.8' },
+												{ name: 'Cloudflare — 1.1.1.1', ip: '1.1.1.1' },
+												{ name: 'AdGuard — 94.140.14.14', ip: '94.140.14.14' },
+												{ name: 'AdGuard Unfiltered — 94.140.14.140', ip: '94.140.14.140' },
+												{ name: 'AdGuard Family — 94.140.14.15', ip: '94.140.14.15' },
+												{ name: 'Malw.link — 84.21.189.133', ip: '84.21.189.133' },
+												{ name: 'XBox DNS — 111.88.96.50', ip: '111.88.96.50' },
+												{ name: 'Control D Unfiltered — 76.76.2.0', ip: '76.76.2.0' },
+												{ name: 'Control D Malware — 76.76.2.1', ip: '76.76.2.1' },
+												{ name: 'Control D Ads — 76.76.2.2', ip: '76.76.2.2' },
+												{ name: 'Control D Social — 76.76.2.3', ip: '76.76.2.3' },
+												{ name: 'Control D Family — 76.76.2.4', ip: '76.76.2.4' },
+												{ name: 'Control D Advanced — 76.76.2.5', ip: '76.76.2.5' },
+											]"
+											placeholder="8.8.8.8"
+											editable
+											fluid
+											style="width:200px">
+											<template #option="{ option }">
+												{{ option.name }}
+											</template>
+										</Select>
+									</div>
 								</div>
 
 								<Fieldset
 									legend="DNS over HTTPS"
-									style="margin: 0 -19px">
+									style="margin: 0 -18px">
 									<div class="${ style.settingsList }">
 										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
 											<span>Использовать DoH</span>
-											<ToggleSwitch
-												v-model="params['dns.doh']" />
+
+											<div class="${ style.settingsRowActions }">
+												<ToggleSwitch
+													v-model="params['dns.doh']" />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] || !params['dns.doh'] }">
@@ -469,11 +483,20 @@ export default {
 
 								<Fieldset
 									legend="Хост-маппинг"
-									style="margin: 0 -19px">
+									style="margin: 0 -18px">
 									<div class="${ style.settingsList }">
 										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
-											<FloatLabel variant="in">
+											<FloatLabel
+												class="${ css`
+													width: 100%;
+												` }"
+												variant="in">
 												<MultiSelect
+													class="${ css`
+														.p-multiselect-label{
+															flex-wrap: wrap;
+														}
+													` }"
 													v-model="params['dns.hosts']"
 													option-label="filename"
 													option-value="filename"
@@ -494,16 +517,24 @@ export default {
 
 										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
 											<span>Хост-ip mem-кэш</span>
-											<InputNumber
-												v-model="params['dns.hosts-mem']"
-												placeholder="500" />
+
+											<div class="${ style.settingsRowActions }">
+												<InputNumber
+													v-model="params['dns.hosts-mem']"
+													placeholder="500"
+													fluid />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }" :class="{ 'disabled': !params['dns.active'] }">
 											<span>TTL</span>
-											<InputNumber
-												v-model="params['dns.hosts-ttl']"
-												placeholder="0" />
+
+											<div class="${ style.settingsRowActions }">
+												<InputNumber
+													v-model="params['dns.hosts-ttl']"
+													placeholder="0"
+													fluid />
+											</div>
 										</div>
 									</div>
 								</Fieldset>
@@ -524,58 +555,76 @@ export default {
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
 									<span>Хост</span>
-									<InputText
-										v-model="params['hostname']" />
+
+									<div class="${ style.settingsRowActions }">
+										<InputText
+											v-model="params['hostname']"
+											fluid />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
 									<span>Порт</span>
-									<InputNumber
-										v-model="params['port']"
-										:format="false"
-										:min="8000"
-										:max="65535" />
+
+									<div class="${ style.settingsRowActions }">
+										<InputNumber
+											v-model="params['port']"
+											:format="false"
+											:min="8000"
+											:max="65535"
+											fluid />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
 									<span>Пароль</span>
-									<InputText
-										v-model="params['password']"
-										placeholder="••••••" />
+
+									<div class="${ style.settingsRowActions }">
+										<InputText
+											v-model="params['password']"
+											placeholder="••••••"
+											fluid />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
 									<span>Сбросить пароль</span>
-									<Button
-										raised
-										@click="() => {
-											$confirm.require({
-												group: 'password-reset',
-												header: 'Вы уверены?',
-												message: '',
-												acceptLabel: 'Сброс',
-												rejectLabel: 'Отмена',
-												acceptProps: {
-													severity: 'danger',
-												},
-												rejectProps: {
-													severity: 'secondary',
-													variant: 'outlined',
-												},
-												accept: () => resetPassword(),
-											})
-										}">
-										<span>Сброс</span>
-									</Button>
+
+									<div class="${ style.settingsRowActions }">
+										<Button
+											raised
+											@click="() => {
+												$confirm.require({
+													group: 'password-reset',
+													header: 'Вы уверены?',
+													message: '',
+													acceptLabel: 'Сброс',
+													rejectLabel: 'Отмена',
+													acceptProps: {
+														severity: 'danger',
+													},
+													rejectProps: {
+														severity: 'secondary',
+														variant: 'outlined',
+													},
+													accept: () => resetPassword(),
+												})
+											}">
+											<span>Сброс</span>
+										</Button>
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
 									<span>Завершить текущую сессию</span>
-									<Button
-										raised
-										@click="logout()">
-										<span>Выход</span>
-									</Button>
+
+									<div class="${ style.settingsRowActions }">
+										<Button
+											raised
+											@click="logout()">
+											<span>Выход</span>
+										</Button>
+									</div>
 								</div>
 							</div>
 						</AccordionContent>
@@ -594,8 +643,11 @@ export default {
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
 									<span>Обновлять Bununban</span>
-									<ToggleSwitch
-										v-model="params['updater.self']" />
+
+									<div class="${ style.settingsRowActions }">
+										<ToggleSwitch
+											v-model="params['updater.self']" />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }" :class="{ 'disabled': !params['updater.self'] }">
@@ -603,79 +655,107 @@ export default {
 										<Icon icon="material-symbols:subdirectory-arrow-right-rounded" style="margin-right:10px" />
 										<span>Добавлять новые ресурсы</span>
 									</div>
-									<ToggleSwitch
-										v-model="params['updater.new-resources']" />
+
+									<div class="${ style.settingsRowActions }">
+										<ToggleSwitch
+											v-model="params['updater.new-resources']" />
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
 									<span>Обновлять Zapret2</span>
-									<ToggleSwitch
-										v-model="params['updater.zapret2']" />
+
+									<div class="${ style.settingsRowActions }">
+										<ToggleSwitch
+											v-model="params['updater.zapret2']" />
+									</div>
 								</div>
 
 								<Fieldset
 									legend="Синхронизация ресурсов по ссылке"
-									style="margin: 0 -19px">
+									style="margin: 0 -18px">
 									<div class="${ style.settingsList }">
 										<div class="${ style.settingsRow }">
 											<span>Синхронизировать профили</span>
-											<ToggleSwitch
-												v-model="params['updater.profiles']" />
+
+											<div class="${ style.settingsRowActions }">
+												<ToggleSwitch
+													v-model="params['updater.profiles']" />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }">
 											<span>Синхронизировать файлы и списки</span>
-											<ToggleSwitch
-												v-model="params['updater.lists']" />
+
+											<div class="${ style.settingsRowActions }">
+												<ToggleSwitch
+													v-model="params['updater.lists']" />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }">
 											<span>Синхронизировать lua-скрипты</span>
-											<ToggleSwitch
-												v-model="params['updater.lua']" />
+
+											<div class="${ style.settingsRowActions }">
+												<ToggleSwitch
+													v-model="params['updater.lua']" />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }">
 											<span>Синхронизировать blob'ы</span>
-											<ToggleSwitch
-												v-model="params['updater.blobs']" />
+
+											<div class="${ style.settingsRowActions }">
+												<ToggleSwitch
+													v-model="params['updater.blobs']" />
+											</div>
 										</div>
 									</div>
 								</Fieldset>
 
 								<Fieldset
 									legend="Поиск и установка обновлений"
-									style="margin: 0 -19px">
+									style="margin: 0 -18px">
 									<div class="${ style.settingsList }">
 										<div class="${ style.settingsRow }">
 											<span>При запуске</span>
-											<ToggleSwitch
-												v-model="params['updater.on-startup']" />
+
+											<div class="${ style.settingsRowActions }">
+												<ToggleSwitch
+													v-model="params['updater.on-startup']" />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }">
 											<span>Интервал</span>
-											<Select
-												v-model="params['updater.interval']"
-												option-label="label"
-												option-value="value"
-												:options="[
-													{ label: '1 час', value: 1000 * 60 * 60 * 1 },
-													{ label: '3 часа', value: 1000 * 60 * 60 * 3 },
-													{ label: '12 часов', value: 1000 * 60 * 60 * 12 },
-													{ label: '1 день', value: 1000 * 60 * 60 * 24 },
-													{ label: '3 дня', value: 1000 * 60 * 60 * 24 * 3 },
-													{ label: '7 дней', value: 1000 * 60 * 60 * 24 * 7 },
-												]" />
+
+											<div class="${ style.settingsRowActions }">
+												<Select
+													v-model="params['updater.interval']"
+													option-label="label"
+													option-value="value"
+													:options="[
+														{ label: '1 час', value: 1000 * 60 * 60 * 1 },
+														{ label: '3 часа', value: 1000 * 60 * 60 * 3 },
+														{ label: '12 часов', value: 1000 * 60 * 60 * 12 },
+														{ label: '1 день', value: 1000 * 60 * 60 * 24 },
+														{ label: '3 дня', value: 1000 * 60 * 60 * 24 * 3 },
+														{ label: '7 дней', value: 1000 * 60 * 60 * 24 * 7 },
+													]"
+													fluid />
+											</div>
 										</div>
 
 										<div class="${ style.settingsRow }">
 											<span></span>
-											<Button
-												raised
-												@click="updateNow()">
-												<span>Обновить сейчас</span>
-											</Button>
+
+											<div class="${ style.settingsRowActions }">
+												<Button
+													raised
+													@click="updateNow()">
+													<span>Обновить сейчас</span>
+												</Button>
+											</div>
 										</div>
 									</div>
 								</Fieldset>
@@ -696,28 +776,31 @@ export default {
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
 									<span>Сбросить настройки</span>
-									<Button
-										raised
-										severity="danger"
-										@click="() => {
-											$confirm.require({
-												group: 'settings-reset',
-												header: 'Вы уверены?',
-												message: '',
-												acceptLabel: 'Сброс',
-												rejectLabel: 'Отмена',
-												acceptProps: {
-													severity: 'danger',
-												},
-												rejectProps: {
-													severity: 'secondary',
-													variant: 'outlined',
-												},
-												accept: () => resetSettings(),
-											})
-										}">
-										<span>Сброс</span>
-									</Button>
+
+									<div class="${ style.settingsRowActions }">
+										<Button
+											raised
+											severity="danger"
+											@click="() => {
+												$confirm.require({
+													group: 'settings-reset',
+													header: 'Вы уверены?',
+													message: '',
+													acceptLabel: 'Сброс',
+													rejectLabel: 'Отмена',
+													acceptProps: {
+														severity: 'danger',
+													},
+													rejectProps: {
+														severity: 'secondary',
+														variant: 'outlined',
+													},
+													accept: () => resetSettings(),
+												})
+											}">
+											<span>Сброс</span>
+										</Button>
+									</div>
 								</div>
 							</div>
 						</AccordionContent>
@@ -736,24 +819,30 @@ export default {
 							<div class="${ style.settingsList }">
 								<div class="${ style.settingsRow }">
 									<span>Версия Bununban</span>
-									<Button
-										severity="secondary"
-										rounded>
-										{{ bununbanVersion }}
-									</Button>
+
+									<div class="${ style.settingsRowActions }">
+										<Button
+											severity="secondary"
+											rounded>
+											{{ bununbanVersion }}
+										</Button>
+									</div>
 								</div>
 
 								<div class="${ style.settingsRow }">
 									<span>Github</span>
-									<Button
-										severity="contrast"
-										variant="text"
-										size="small"
-										as="a"
-										href="https://github.com/Greezor/bununban"
-										target="_blank">
-										<Icon icon="fa7-brands:github" width="22" />
-									</Button>
+
+									<div class="${ style.settingsRowActions }">
+										<Button
+											severity="contrast"
+											variant="text"
+											size="small"
+											as="a"
+											href="https://github.com/Greezor/bununban"
+											target="_blank">
+											<Icon icon="fa7-brands:github" width="22" />
+										</Button>
+									</div>
 								</div>
 							</div>
 						</AccordionContent>
