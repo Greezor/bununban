@@ -29,7 +29,7 @@ end
 
 
 function async(fn)
-    delay(fn, 0)
+    delay(fn, 10)
 end
 
 
@@ -248,4 +248,34 @@ function host_is_google(desync)
     end
 
     return false
+end
+
+
+
+function delayed(ctx, desync)
+    if not desync.arg.f then
+        error("delayed: 'f' arg required")
+    end
+
+    if not desync.arg.ms then
+        error("delayed: 'ms' arg required")
+    end
+
+    local id = uuid()
+    _G[id] = _G[desync.arg.f]
+    
+    delay(function() _G[id](ctx, desync); _G[id] = nil end, tonumber(desync.arg.ms))
+end
+
+
+
+function asynced(ctx, desync)
+    if not desync.arg.f then
+        error("asynced: 'f' arg required")
+    end
+
+    local id = uuid()
+    _G[id] = _G[desync.arg.f]
+    
+    async(function() _G[id](ctx, desync); _G[id] = nil end)
 end
