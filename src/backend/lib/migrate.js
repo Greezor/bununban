@@ -242,4 +242,12 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.7') ){
+		if( addNewResources ){
+			await settings.set('dns.active', true);
+			await settings.set('dns.doh', true);
+			await settings.set('dns.doh-url', 'https://dns.google/dns-query');
+		}
+	}
+
 }
