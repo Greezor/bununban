@@ -214,44 +214,6 @@ _G.ipmem = (
 
 
 
-_G.pick_random_domain = create_shuffled_bag({
-    "steampowered.com",
-    "epicgames.com",
-    "playstation.com",
-    "nintendo.com",
-    "github.com",
-    "gitlab.com",
-    "bitbucket.org",
-    "wikipedia.org",
-})
-
-
-
-function host_is_google(desync)
-    if desync.track and desync.track.hostname then
-        local h = desync.track.hostname
-
-        if string.find(h, "google")
-        or string.find(h, "youtube")
-        or string.find(h, "gmail")
-        or string.find(h, "android")
-        or string.find(h, "ytimg")
-        or string.find(h, "ggpht")
-        or string.find(h, "gstatic")
-        or string.find(h, "goo%.gl")
-        or string.find(h, "youtu%.be")
-        or string.find(h, "yt%.be")
-        or string.find(h, "gvt%d")
-        then
-            return true
-        end
-    end
-
-    return false
-end
-
-
-
 function delayed(ctx, desync)
     if not desync.arg.f then
         error("delayed: 'f' arg required")
