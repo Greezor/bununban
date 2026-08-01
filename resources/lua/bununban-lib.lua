@@ -20,6 +20,64 @@ end
 
 
 
+function array_mixed_search(a, f, v)
+    if f == "" then
+        return array_search(a, v)
+    end
+
+    return array_field_search(a, f, v)
+end
+
+
+
+function get_by_path(target, path)
+    local value = target
+    local parent = nil
+    local key = nil
+
+    for k in string.gmatch(path, "[^.]+") do
+        if value == nil then
+            return nil, parent, key
+        end
+
+        parent = value
+        key = k
+
+        local search_key, search_val = string.match(key, "%[(.-)=(.-)%]")
+        if search_key and search_val then
+            if search_val == string.gsub(search_val, "%D", "") then
+                key = array_mixed_search(value, search_key, tonumber(search_val)) or array_mixed_search(value, search_key, search_val)
+            elseif search_val == "nil" then
+                key = array_mixed_search(value, search_key, nil) or array_mixed_search(value, search_key, search_val)
+            else
+                key = array_mixed_search(value, search_key, search_val)
+            end
+        else
+            local numkey = string.match(key, "%[(%-?%d+)%]")
+            if numkey or key == "[]" then
+                numkey = tonumber(numkey or 0)
+
+                if numkey < 1 then
+                    numkey = #value + numkey + 1
+                end
+
+                key = numkey
+            else
+                local varkey = string.match(key, "%[(%w+)%]")
+                if varkey then
+                    key = desync[varkey] or _G[varkey]
+                end
+            end
+        end
+
+        value = value[key]
+    end
+
+    return value, parent, key
+end
+
+
+
 function delay(fn, ms)
     local id = uuid()
     _G[id] = function() fn(); _G[id] = nil end
@@ -163,6 +221,167 @@ function create_fake_dns(domains, is_tcp, force_mdns)
     end
 
     return fake
+end
+
+
+
+function create_sni_ext(...)
+    local sni_list = {}
+    local sni_ext = { type = TLS_EXT_SERVER_NAME, dis = { list = sni_list } }
+
+    local n = select("#", ...)
+    for i = 1, n do
+        local arg = select(i, ...)
+
+        if type(arg) == "string" then
+            sni_list[#sni_list + 1] = { name = arg, type = 0 }
+        end
+
+        if type(arg) == "number" and #sni_list > 0 then
+            sni_list[#sni_list].type = arg
+        end
+    end
+
+    return sni_ext
+end
+
+
+
+function tls_client_hello_fakenize(ctx, desync)
+    if not desync.dis.tcp then
+		-- do not cutoff on related icmp
+		if not desync.dis.icmp then instance_cutoff_shim(ctx, desync) end
+		return
+	end
+
+	direction_cutoff_opposite(ctx, desync)
+
+	if direction_check(desync) then
+		if not desync.arg.blob then
+			error("tls_client_hello_fakenize: 'blob' arg required")
+		end
+
+        if not desync.arg.ops then
+			error("tls_client_hello_fakenize: 'ops' arg required")
+		end
+        
+		if desync.l7payload == "tls_client_hello" then
+            local tls_ch = desync[desync.arg.blob] or _G[desync.arg.blob] or desync.reasm_data or desync.dis.payload
+
+            if not desync.tls_client_hello_fakenize_dissects then desync.tls_client_hello_fakenize_dissects = {} end
+            local tdis = desync.tls_client_hello_fakenize_dissects[desync.arg.blob]
+
+            if not tdis then
+                tdis = tls_dissect(tls_ch)
+
+                local fallback_retry = false
+                while not tdis or not tdis.handshake or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT] do
+                    if desync.arg.fallback and not fallback_retry then
+                        tdis = tls_dissect(blob(desync, desync.arg.fallback))
+                        fallback_retry = true
+                    else
+                        error("tls_client_hello_fakenize: could not dissect tls")
+                    end
+                end
+
+                desync.tls_client_hello_fakenize_dissects[desync.arg.blob] = tdis
+            end
+
+            local reconstruction_needed = true
+
+            for op in string.gmatch(desync.arg.ops, "[%w_]+%(.-%)") do
+                local func, args_str = string.match(op, "([%w_]+)%((.-)%)")
+
+                local args = {}
+                for arg in string.gmatch(args_str, "[^,]+") do
+                    table.insert(args, arg)
+                end
+
+                local value, target, key = get_by_path(tdis, args[1])
+
+                if func == "get" then
+
+                    desync[args[2]] = value
+                    reconstruction_needed = false
+
+                elseif func == "set" then
+
+                    target[key] = desync[args[2]] or _G[args[2]]
+
+                elseif func == "set_str" then
+
+                    target[key] = args[2]
+
+                elseif func == "set_num" then
+
+                    target[key] = tonumber(args[2])
+
+                elseif func == "set_bool" then
+
+                    target[key] = args[2] == "true"
+
+                elseif func == "set_nil" then
+
+                    target[key] = nil
+
+                elseif func == "rnd" then
+
+                    if type(value) ~= "string" then
+                        error("tls_client_hello_fakenize: rnd: target must be a string")
+                    end
+
+                    target[key] = brandom(#value)
+
+                elseif func == "insert" then
+
+                    table.insert(target, key, desync[args[2]] or _G[args[2]])
+
+                elseif func == "insert_str" then
+
+                    table.insert(target, key, args[2])
+
+                elseif func == "insert_num" then
+
+                    table.insert(target, key, tonumber(args[2]))
+
+                elseif func == "insert_bool" then
+
+                    table.insert(target, key, args[2] == "true")
+
+                elseif func == "remove" then
+
+                    table.remove(target, key)
+
+                elseif func == "move" then
+
+                    local _, to, i = get_by_path(tdis, args[2])
+                    table.remove(target, key)
+                    table.insert(to, i, value)
+
+                elseif func == "shuffle" then
+
+                    shuffle(value)
+
+                end
+            end
+
+            if reconstruction_needed then
+                local fake = tls_reconstruct(tdis)
+
+                if not fake then
+                    error("tls_client_hello_fakenize: reconstruct error")
+                end
+
+                if desync.reasm_data and desync.arg.tls_mod then
+                    fake = tls_mod_shim(desync, fake, desync.arg.tls_mod, desync.reasm_data)
+                end
+
+                desync[desync.arg.blob] = fake
+            elseif not desync[desync.arg.blob] then
+                desync[desync.arg.blob] = tls_ch
+            end
+		end
+	end
 end
 
 
