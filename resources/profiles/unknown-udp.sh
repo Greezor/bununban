@@ -3,7 +3,7 @@
     --ipset-exclude={ipset-exclude}
         --payload=unknown
             --lua-desync=condition:instances=4:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                --lua-desync=luaexec:code=desync.qty=math.random(6,11)
+                --lua-desync=luaexec:code=desync.qty=math.random(11,16)
                 --lua-desync=repeater:instances=2:repeats=%qty
                     --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns(genhost(math.random(19,31),"google.com"),false,true)
                     --lua-desync=fake:blob=fake_udp_dns:payload=~empty

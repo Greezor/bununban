@@ -6,7 +6,7 @@
             --payload=tls_client_hello
                 --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(math.random(19,31),"google.com"))
                 --lua-desync=tls_client_hello_fakenize:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=server_name]),insert(handshake.[1].dis.ext.[1],sni4fake)
-                --lua-desync=luaexec:code=desync.qty=math.random(6,11)
+                --lua-desync=luaexec:code=desync.qty=math.random(11,16)
                 --lua-desync=condition:instances=4:iff=cond_tcp_has_ts
                     --lua-desync=luaexec:code=desync.rndts=math.random(-600000,-800*(desync.qty-1)-1000)
                     --lua-desync=repeater:instances=2:repeats=%qty
