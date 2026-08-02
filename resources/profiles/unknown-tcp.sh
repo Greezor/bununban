@@ -4,7 +4,7 @@
         --out-range=-d1
             --payload=unknown
                 --lua-desync=condition:instances=11:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                    --lua-desync=luaexec:code=desync.qty=math.random(11,16)
+                    --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                     --lua-desync=condition:instances=5:iff=cond_tcp_has_ts
                         --lua-desync=luaexec:code=desync.rndts=math.random(-600000,-800*(desync.qty-1)-1000)
                         --lua-desync=repeater:instances=3:repeats=%qty
