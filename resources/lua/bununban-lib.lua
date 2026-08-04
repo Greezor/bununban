@@ -372,10 +372,6 @@ function tls_client_hello_fakenize(ctx, desync)
                     error("tls_client_hello_fakenize: reconstruct error")
                 end
 
-                if desync.reasm_data and desync.arg.tls_mod then
-                    fake = tls_mod_shim(desync, fake, desync.arg.tls_mod, desync.reasm_data)
-                end
-
                 desync[desync.arg.blob] = fake
             elseif not desync[desync.arg.blob] then
                 desync[desync.arg.blob] = tls_ch
