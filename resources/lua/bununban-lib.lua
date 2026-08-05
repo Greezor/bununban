@@ -435,7 +435,6 @@ function delayed(ctx, desync)
     delay(
         function(desync)
             _G[desync.arg.f](nil, desync)
-            print(desync.arg.pos)
         end,
         tonumber(desync.arg.ms),
         deepcopy(desync)
