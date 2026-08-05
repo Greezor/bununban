@@ -78,16 +78,10 @@ end
 
 
 
-function delay(fn, ms)
+function delay(fn, ms, data)
     local id = uuid()
-    _G[id] = function() fn(); _G[id] = nil end
-    timer_set(id, id, ms, true)
-end
-
-
-
-function async(fn)
-    delay(fn, 10)
+    _G[id] = function(name, data) fn(data); _G[id] = nil end
+    timer_set(id, id, ms, true, data)
 end
 
 
@@ -437,22 +431,13 @@ function delayed(ctx, desync)
     if not desync.arg.ms then
         error("delayed: 'ms' arg required")
     end
-
-    local id = uuid()
-    _G[id] = _G[desync.arg.f]
     
-    delay(function() _G[id](ctx, desync); _G[id] = nil end, tonumber(desync.arg.ms))
-end
-
-
-
-function asynced(ctx, desync)
-    if not desync.arg.f then
-        error("asynced: 'f' arg required")
-    end
-
-    local id = uuid()
-    _G[id] = _G[desync.arg.f]
-    
-    async(function() _G[id](ctx, desync); _G[id] = nil end)
+    delay(
+        function(desync)
+            _G[desync.arg.f](nil, desync)
+            print(desync.arg.pos)
+        end,
+        tonumber(desync.arg.ms),
+        deepcopy(desync)
+    )
 end
