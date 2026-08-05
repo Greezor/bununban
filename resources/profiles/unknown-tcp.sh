@@ -3,15 +3,10 @@
     --ipset-exclude={ipset-exclude}
         --out-range=-d1
             --payload=unknown
-                --lua-desync=condition:instances=11:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
+                --lua-desync=condition:instances=6:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
+                    --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(genhost(50,"google.com"),true,true)
                     --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-                    --lua-desync=condition:instances=5:iff=cond_tcp_has_ts
-                        --lua-desync=luaexec:code=desync.rndts=math.random(-600000,-800*(desync.qty-1)-1000)
-                        --lua-desync=repeater:instances=3:repeats=%qty
-                            --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(genhost(math.random(19,31),"google.com"),true,true)
-                            --lua-desync=fake:blob=fake_tcp_dns:tcp_ts_up:tcp_ts=%rndts:payload=~empty
-                            --lua-desync=luaexec:code=desync.rndts=desync.rndts+math.random(100,800)
-                    --lua-desync=condition:instances=3:iff=cond_tcp_has_ts:neg
-                        --lua-desync=repeater:instances=2:repeats=%qty
-                            --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(genhost(math.random(19,31),"google.com"),true,true)
-                            --lua-desync=fake:blob=fake_tcp_dns:tcp_ts_up:tcp_ack=66000:payload=~empty
+                    --lua-desync=per_instance_condition:instances=3
+                        --lua-desync=luaexec:code=desync.rndts=-math.random(100,0x80000000):cond=cond_tcp_has_ts
+                        --lua-desync=fake:blob=fake_tcp_dns:repeats=%qty:tcp_ts_up:tcp_ts=%rndts:payload=~empty:cond=cond_tcp_has_ts
+                        --lua-desync=fake:blob=fake_tcp_dns:repeats=%qty:tcp_ts_up:tcp_ack=66000:payload=~empty:cond=cond_tcp_has_ts:cond_neg
