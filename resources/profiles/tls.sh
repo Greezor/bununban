@@ -7,16 +7,17 @@
                 --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(50,"google.com"))
                 --lua-desync=tls_client_hello_fakenize:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=server_name]),insert(handshake.[1].dis.ext.[1],sni4fake)
                 --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-                --lua-desync=luaexec:code=desync.delay1=math.random(10,20)
-                --lua-desync=luaexec:code=desync.delay2=math.random(10,20)
-                --lua-desync=luaexec:code=desync.delay3=math.random(10,20)
-                --lua-desync=luaexec:code=desync.delay4=math.random(10,20)
+                --lua-desync=luaexec:code=desync.poss=shuffle({"0,1","1,midsld-1","midsld,-100","-99,-1"})
+                --lua-desync=luaexec:code=desync.pos1=desync.poss[1]
+                --lua-desync=luaexec:code=desync.pos2=desync.poss[2]
+                --lua-desync=luaexec:code=desync.pos3=desync.poss[3]
+                --lua-desync=luaexec:code=desync.pos4=desync.poss[4]
                 --lua-desync=per_instance_condition:instances=3
                     --lua-desync=luaexec:code=desync.rndts=-math.random(100,0x80000000):cond=cond_tcp_has_ts
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts_up:tcp_ts=%rndts:ip_id=seq:ip_id_conn:cond=cond_tcp_has_ts
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts_up:tcp_ack=66000:ip_id=seq:ip_id_conn:cond=cond_tcp_has_ts:cond_neg
-                --lua-desync=delayed:ms=%delay1:f=tcpseg:pos=0,1:tcp_ts_up:ip_id=seq:ip_id_conn
-                --lua-desync=delayed:ms=%delay2:f=tcpseg:pos=1,midsld-1:tcp_ts_up:ip_id=seq:ip_id_conn
-                --lua-desync=delayed:ms=%delay3:f=tcpseg:pos=midsld,-100:tcp_ts_up:ip_id=seq:ip_id_conn
-                --lua-desync=delayed:ms=%delay4:f=tcpseg:pos=-99,-1:tcp_ts_up:ip_id=seq:ip_id_conn
+                --lua-desync=tcpseg:pos=%pos1:tcp_ts_up:ip_id=seq:ip_id_conn
+                --lua-desync=tcpseg:pos=%pos2:tcp_ts_up:ip_id=seq:ip_id_conn
+                --lua-desync=tcpseg:pos=%pos3:tcp_ts_up:ip_id=seq:ip_id_conn
+                --lua-desync=tcpseg:pos=%pos4:tcp_ts_up:ip_id=seq:ip_id_conn
                 --lua-desync=drop
