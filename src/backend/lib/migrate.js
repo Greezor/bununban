@@ -250,4 +250,11 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.8') ){
+		if( addNewResources ){
+			await lists.set('malw-hosts', { syncUrl: 'https://raw.githubusercontent.com/ImMALWARE/dns.malw.link/refs/heads/master/hosts' });
+			await settings.set('dns.hosts', ['hosts', 'malw-hosts']);
+		}
+	}
+
 }
