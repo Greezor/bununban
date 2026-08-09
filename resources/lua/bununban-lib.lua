@@ -37,7 +37,7 @@ function get_by_path(target, path)
 
     for k in string.gmatch(path, "[^.]+") do
         if value == nil then
-            return nil, parent, key
+            return nil, nil, nil
         end
 
         parent = value
@@ -292,33 +292,34 @@ function tls_client_hello_fakenize(ctx, desync)
                 end
 
                 local value, target, key = get_by_path(tdis, args[1])
+                local available = target and key
 
                 if func == "get" then
 
                     desync[args[2]] = value
                     reconstruction_needed = false
 
-                elseif func == "set" then
+                elseif func == "set" and available then
 
                     target[key] = desync[args[2]] or _G[args[2]]
 
-                elseif func == "set_str" then
+                elseif func == "set_str" and available then
 
                     target[key] = args[2]
 
-                elseif func == "set_num" then
+                elseif func == "set_num" and available then
 
                     target[key] = tonumber(args[2])
 
-                elseif func == "set_bool" then
+                elseif func == "set_bool" and available then
 
                     target[key] = args[2] == "true"
 
-                elseif func == "set_nil" then
+                elseif func == "set_nil" and available then
 
                     target[key] = nil
 
-                elseif func == "rnd" then
+                elseif func == "rnd" and available then
 
                     if type(value) ~= "string" then
                         error("tls_client_hello_fakenize: rnd: target must be a string")
@@ -326,33 +327,27 @@ function tls_client_hello_fakenize(ctx, desync)
 
                     target[key] = brandom(#value)
 
-                elseif func == "insert" then
+                elseif func == "insert" and available then
 
                     table.insert(target, key, desync[args[2]] or _G[args[2]])
 
-                elseif func == "insert_str" then
+                elseif func == "insert_str" and available then
 
                     table.insert(target, key, args[2])
 
-                elseif func == "insert_num" then
+                elseif func == "insert_num" and available then
 
                     table.insert(target, key, tonumber(args[2]))
 
-                elseif func == "insert_bool" then
+                elseif func == "insert_bool" and available then
 
                     table.insert(target, key, args[2] == "true")
 
-                elseif func == "remove" then
+                elseif func == "remove" and available then
 
                     table.remove(target, key)
 
-                elseif func == "move" then
-
-                    local _, to, i = get_by_path(tdis, args[2])
-                    table.remove(target, key)
-                    table.insert(to, i, value)
-
-                elseif func == "shuffle" then
+                elseif func == "shuffle" and available then
 
                     shuffle(value)
 
