@@ -78,10 +78,24 @@ end
 
 
 
-function delay(fn, ms, data)
+function delayed(fn, ms, data)
     local id = uuid()
-    _G[id] = function(name, data) fn(data); _G[id] = nil end
+
+    local function del()
+        _G[id] = nil
+    end
+
+    _G[id] = function(name, data)
+        fn(data)
+        del()
+    end
+
     timer_set(id, id, ms, true, data)
+
+    return function()
+        timer_del(id)
+        del()
+    end
 end
 
 
@@ -89,9 +103,12 @@ end
 function debounced(fn, ms)
     local id = uuid()
 
+    _G[id] = function(name, data)
+        fn(data)
+    end
+
     return function(arg)
-        _G[id] = function() fn(arg); _G[id] = nil end
-        timer_set(id, id, ms, true)
+        timer_set(id, id, ms, true, arg)
     end
 end
 
@@ -415,23 +432,3 @@ _G.ipmem = (
         end
     end
 )()
-
-
-
-function delayed(ctx, desync)
-    if not desync.arg.f then
-        error("delayed: 'f' arg required")
-    end
-
-    if not desync.arg.ms then
-        error("delayed: 'ms' arg required")
-    end
-    
-    delay(
-        function(desync)
-            _G[desync.arg.f](nil, desync)
-        end,
-        tonumber(desync.arg.ms),
-        deepcopy(desync)
-    )
-end
