@@ -257,4 +257,14 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.9') ){
+		if( addNewResources ){
+			await lua.set('quic-mod', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lua/quic-mod.lua' });
+
+			await lists.delete('malw-hosts');
+			await lists.set('astracat-hosts', { syncUrl: 'https://raw.githubusercontent.com/ASTRACAT2022/host-DNS/refs/heads/main/base_hosts.txt' });
+			await settings.set('dns.hosts', ['hosts', 'astracat-hosts']);
+		}
+	}
+
 }
