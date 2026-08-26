@@ -258,32 +258,28 @@ end
 
 
 
-function tls_client_hello_fakenize(ctx, desync)
+function tls_client_hello_mutate(ctx, desync)
     if not desync.dis.tcp then
-		-- do not cutoff on related icmp
-		if not desync.dis.icmp then instance_cutoff_shim(ctx, desync) end
-		return
-	end
+        -- do not cutoff on related icmp
+        if not desync.dis.icmp then instance_cutoff_shim(ctx, desync) end
+        return
+    end
 
-	direction_cutoff_opposite(ctx, desync)
+    direction_cutoff_opposite(ctx, desync)
 
-	if direction_check(desync) then
-		if not desync.arg.blob then
-			error("tls_client_hello_fakenize: 'blob' arg required")
-		end
-
+    if direction_check(desync) then
         if not desync.arg.ops then
-			error("tls_client_hello_fakenize: 'ops' arg required")
-		end
+            error("tls_client_hello_mutate: 'ops' arg required")
+        end
         
-		if desync.l7payload == "tls_client_hello" then
-            local tls_ch = desync[desync.arg.blob] or _G[desync.arg.blob] or desync.reasm_data or desync.dis.payload
+        if desync.l7payload == "tls_client_hello" then
+            local id = desync.arg.blob or "reasm_data"
 
-            if not desync.tls_client_hello_fakenize_dissects then desync.tls_client_hello_fakenize_dissects = {} end
-            local tdis = desync.tls_client_hello_fakenize_dissects[desync.arg.blob]
+            if not desync.tls_client_hello_mutate_dissects then desync.tls_client_hello_mutate_dissects = {} end
+            local tdis = desync.tls_client_hello_mutate_dissects[id]
 
             if not tdis then
-                tdis = tls_dissect(tls_ch)
+                tdis = tls_dissect(desync[id] or _G[id] or desync.dis.payload)
 
                 local fallback_retry = false
                 while not tdis or not tdis.handshake or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT] do
@@ -291,11 +287,11 @@ function tls_client_hello_fakenize(ctx, desync)
                         tdis = tls_dissect(blob(desync, desync.arg.fallback))
                         fallback_retry = true
                     else
-                        error("tls_client_hello_fakenize: could not dissect tls")
+                        error("tls_client_hello_mutate: could not dissect tls")
                     end
                 end
 
-                desync.tls_client_hello_fakenize_dissects[desync.arg.blob] = tdis
+                desync.tls_client_hello_mutate_dissects[id] = tdis
             end
 
             local reconstruction_needed = true
@@ -339,7 +335,7 @@ function tls_client_hello_fakenize(ctx, desync)
                 elseif func == "rnd" and available then
 
                     if type(value) ~= "string" then
-                        error("tls_client_hello_fakenize: rnd: target must be a string")
+                        error("tls_client_hello_mutate: rnd: target must be a string")
                     end
 
                     target[key] = brandom(#value)
@@ -371,19 +367,17 @@ function tls_client_hello_fakenize(ctx, desync)
                 end
             end
 
-            if reconstruction_needed then
+            if reconstruction_needed and desync.arg.blob then
                 local fake = tls_reconstruct(tdis)
 
                 if not fake then
-                    error("tls_client_hello_fakenize: reconstruct error")
+                    error("tls_client_hello_mutate: reconstruct error")
                 end
 
                 desync[desync.arg.blob] = fake
-            elseif not desync[desync.arg.blob] then
-                desync[desync.arg.blob] = tls_ch
             end
-		end
-	end
+        end
+    end
 end
 
 
