@@ -1,16 +1,29 @@
 --filter-l7=tls
+    --hostlist-exclude-domains=ru
     --hostlist-exclude={user-hostlist-exclude}
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
-        --out-range=-d10
-            --payload=tls_client_hello
-                --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(50,"google.com"))
-                --lua-desync=tls_client_hello_fakenize:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),shuffle(handshake.[1].dis.cipher_suites),remove(handshake.[1].dis.cipher_suites.[1]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),shuffle(handshake.[1].dis.ext.[name=supported_groups].dis.list),shuffle(handshake.[1].dis.ext.[name=signature_algorithms].dis.list),remove(handshake.[1].dis.ext.[name=signature_algorithms].dis.list.[1]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=server_name]),shuffle(handshake.[1].dis.ext),insert(handshake.[1].dis.ext.[1],sni4fake)
-                --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-                --lua-desync=condition:instances=3:iff=cond_tcp_has_ts
-                    --lua-desync=luaexec:code=desync.rndts=-math.random(100,0x80000000)
-                    --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts_up:tcp_ts=%rndts:ip_id=seq:ip_id_conn
-                    --lua-desync=fakedsplit:pos=midsld:nofake2:nofake4:pattern=fake_clienthello:tcp_ts_up:tcp_ts=%rndts:ip_id=seq:ip_id_conn
-                --lua-desync=condition:instances=2:iff=cond_tcp_has_ts:neg
-                    --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts_up:tcp_ack=66000:ip_id=seq:ip_id_conn
-                    --lua-desync=fakedsplit:pos=midsld:nofake2:nofake4:pattern=fake_clienthello:tcp_ts_up:tcp_ack=66000:ip_id=seq:ip_id_conn
+        --out-range=-s34228
+        --in-range=-s5556
+            --lua-desync=circular:fails=1:retrans=1:nld=2:reset
+                --in-range=x
+                --payload=tls_client_hello
+
+                    --lua-desync=condition:instances=14:iff=cond_lua:cond_code=return(replay_first(desync)):strategy=1
+                        --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(50,"google.com")):strategy=1
+                        --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),shuffle(handshake.[1].dis.cipher_suites),remove(handshake.[1].dis.cipher_suites.[1]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),shuffle(handshake.[1].dis.ext.[name=supported_groups].dis.list),shuffle(handshake.[1].dis.ext.[name=signature_algorithms].dis.list),remove(handshake.[1].dis.ext.[name=signature_algorithms].dis.list.[1]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=server_name]),shuffle(handshake.[1].dis.ext),insert(handshake.[1].dis.ext.[1],sni4fake):strategy=1
+                        --lua-desync=luaexec:code=desync.qty=math.random(3,4):strategy=1
+                        --lua-desync=per_instance_condition:instances=9:strategy=1
+                            --lua-desync=luaexec:code=desync.rndfooling=math.random(1,4):cond=cond_tcp_has_ts:strategy=1
+                            --lua-desync=luaexec:code=desync.rndfooling=math.random(2,4):cond=cond_tcp_has_ts:cond_neg:strategy=1
+                            --lua-desync=luaexec:code=desync.rndts=-math.random(100,1000):cond=cond_lua:cond_code=return(desync.rndfooling==1):strategy=1
+                            --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%rndts:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.rndfooling==1):strategy=1
+                            --lua-desync=luaexec:code=desync.rndack=-math.random(66000,99000):cond=cond_lua:cond_code=return(desync.rndfooling==2):strategy=1
+                            --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ack=%rndack:tcp_ts_up:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.rndfooling==2):strategy=1
+                            --lua-desync=luaexec:code=desync.rndseq=-math.random(3000,15000):cond=cond_lua:cond_code=return(desync.rndfooling==3):strategy=1
+                            --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_seq=%rndseq:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.rndfooling==3):strategy=1
+                            --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_md5:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.rndfooling==4):strategy=1
+                        --lua-desync=multidisorder:pos=midsld:nodrop:ip_id=seq:ip_id_conn:strategy=1
+                    --lua-desync=drop:strategy=1
+
+                    --lua-desync=multisplit:pos=midsld:ip_id=seq:ip_id_conn:strategy=2
