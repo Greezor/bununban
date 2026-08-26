@@ -2,5 +2,6 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=wireguard_initiation,wireguard_cookie
+            --lua-desync=luaexec:code=desync.domain4fake=genhost(50,"google.com")
             --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-            --lua-desync=fake:blob=quic_initial_www_google_com:repeats=%qty
+            --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%domain4fake:repeats=%qty
