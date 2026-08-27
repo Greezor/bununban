@@ -171,7 +171,7 @@ export default {
 			if( await checkAuth(req, server) )
 				return Response.json(true);
 
-			const password = await req.json();
+			const password = await req.text();
 			const hash = await settings.get('password');
 
 			if( await Bun.password.verify(password, hash) ){
