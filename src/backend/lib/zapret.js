@@ -6,7 +6,7 @@ import { Readable } from 'node:stream'
 import { parseTarGzip } from 'nanotar'
 import stringArgv from 'string-argv'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import { APPDATA_DIR } from './appdata'
 
@@ -49,7 +49,7 @@ class Zapret
 		const regex = new RegExp(`<h2.*?href="/bol-van/zapret2/releases/tag/(.*?)".*?href="/bol-van/zapret2/commit/(.*?)"`, 'gms');
 
 		do{
-			const html = await ketchup.text(`https://github.com/bol-van/zapret2/tags${ lastPage.length ? `?after=${ lastPage.at(-1).tag }` : '' }`);
+			const html = await ofetch(`https://github.com/bol-van/zapret2/tags${ lastPage.length ? `?after=${ lastPage.at(-1).tag }` : '' }`);
 
 			lastPage = [ ...html.matchAll(regex) ]
 				.map(([ substr, tag, commit ]) => ({ tag, commit }));
@@ -111,7 +111,7 @@ class Zapret
 		let data;
 
 		try{
-			const buffer = await ketchup.arrayBuffer(`https://github.com/bol-van/zapret2/releases/download/${ release.tag }/zapret2-${ release.tag }.tar.gz`);
+			const buffer = await ofetch(`https://github.com/bol-van/zapret2/releases/download/${ release.tag }/zapret2-${ release.tag }.tar.gz`, { responseType: 'arrayBuffer' });
 			data = new Uint8Array(buffer);
 		}
 		catch(e){

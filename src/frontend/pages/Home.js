@@ -2,7 +2,7 @@ import { ref, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import ToggleSwitch from 'primevue/toggleswitch'
 
@@ -45,7 +45,7 @@ export default {
 		const loadState = async () => {
 			loading.value = true;
 
-			isActive.value = await ketchup('/api/antidpi');
+			isActive.value = await ofetch('/api/antidpi');
 
 			loading.value = false;
 		}
@@ -53,9 +53,9 @@ export default {
 		const onToggle = async () => {
 			loading.value = true;
 
-			await ketchup('/api/antidpi', {
+			await ofetch('/api/antidpi', {
 				method: 'PUT',
-				json: isActive.value,
+				body: isActive.value.toString(),
 			});
 			
 			await loadState();

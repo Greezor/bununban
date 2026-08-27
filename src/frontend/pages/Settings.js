@@ -2,7 +2,7 @@ import { ref, computed, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import Accordion from 'primevue/accordion'
 import AccordionPanel from 'primevue/accordionpanel'
@@ -144,7 +144,7 @@ export default {
 		const loadParams = async () => {
 			loading.value = true;
 
-			Object.assign(params.value, await ketchup('/api/settings'));
+			Object.assign(params.value, await ofetch('/api/settings'));
 
 			loading.value = false;
 		}
@@ -169,12 +169,12 @@ export default {
 
 		const loadAntidpiVersions = async () => {
 			antidpiVersions.value = [];
-			antidpiVersions.value = await ketchup('/api/settings/antidpi/zapret2/versions');
+			antidpiVersions.value = await ofetch('/api/settings/antidpi/zapret2/versions');
 		}
 
 		const loadListFiles = async () => {
 			listFiles.value = [];
-			listFiles.value = await ketchup('/api/lists');
+			listFiles.value = await ofetch('/api/lists');
 		}
 
 		const installAntidpi = async () => {
@@ -183,7 +183,7 @@ export default {
 
 			loading.value = true;
 
-			await ketchup(`/api/settings/antidpi/zapret2/install/${ antidpiVersion.value }`, {
+			await ofetch(`/api/settings/antidpi/zapret2/install/${ antidpiVersion.value }`, {
 				method: 'POST',
 			});
 
@@ -203,7 +203,7 @@ export default {
 				params.value.port
 			}`;
 
-			await ketchup(`${ newOrigin }/api/ping`, { retry: Infinity });
+			await ofetch(`${ newOrigin }/api/ping`, { retry: Infinity });
 
 			location.href = `${ newOrigin }/settings`;
 
@@ -213,9 +213,9 @@ export default {
 		const save = async () => {
 			loading.value = true;
 			
-			await ketchup('/api/settings', {
+			await ofetch('/api/settings', {
 				method: 'PUT',
-				json: params.value,
+				body: params.value,
 			});
 
 			try{

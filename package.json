@@ -46,6 +46,7 @@
     "jose": "^6.2.1",
     "monaco-editor": "^0.55.1",
     "nanotar": "^0.2.0",
+    "ofetch": "^1.5.1",
     "primevue": "^4.5.4",
     "string-argv": "^0.3.2",
     "vue": "^3.5.26",

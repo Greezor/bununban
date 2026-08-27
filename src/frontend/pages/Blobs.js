@@ -2,7 +2,7 @@ import { ref, useTemplateRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import Default from '../layouts/Default'
 
@@ -186,13 +186,13 @@ export default {
 			loading.value = true;
 
 			files.value = [];
-			files.value = await ketchup('/api/blobs');
+			files.value = await ofetch('/api/blobs');
 
 			loading.value = false;
 		}
 
 		const restartAntidpi = async () => {
-			await ketchup('/api/antidpi/restart', {
+			await ofetch('/api/antidpi/restart', {
 				method: 'POST',
 			});
 		}
@@ -201,9 +201,9 @@ export default {
 			const file = files.value
 				.find(item => item.name === name);
 
-			await ketchup(`/api/blobs/${ name }`, {
+			await ofetch(`/api/blobs/${ name }`, {
 				method: 'PUT',
-				json: {
+				body: {
 					...form,
 					active: file?.active ?? form.active,
 				},
@@ -226,7 +226,7 @@ export default {
 				const formData = new FormData();
 				formData.append('file', fileInput.value.value);
 
-				await ketchup(`/api/blobs/${ name }`, {
+				await ofetch(`/api/blobs/${ name }`, {
 					method: 'POST',
 					body: formData,
 				});
@@ -242,7 +242,7 @@ export default {
 			saving.value = true;
 			selectedFileName.value = null;
 
-			await ketchup(`/api/blobs/${ name }`, {
+			await ofetch(`/api/blobs/${ name }`, {
 				method: 'DELETE',
 			});
 

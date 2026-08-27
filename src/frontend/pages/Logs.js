@@ -2,7 +2,7 @@ import { ref, shallowRef, computed, onActivated, onDeactivated, useTemplateRef }
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 const style = {
 	page: css`
@@ -192,7 +192,7 @@ export default {
 			logs.value = [];
 			logsController.value = new AbortController();
 
-			const response = await ketchup.raw('/api/logs', {
+			const response = await ofetch.native('/api/logs', {
 				signal: logsController.signal,
 			});
 

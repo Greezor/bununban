@@ -2,7 +2,7 @@ import { ref, shallowRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import Default from '../layouts/Default'
 
@@ -185,7 +185,7 @@ export default {
 			loading.value = true;
 
 			files.value = [];
-			files.value = await ketchup('/api/lists');
+			files.value = await ofetch('/api/lists');
 
 			loading.value = false;
 		}
@@ -198,7 +198,7 @@ export default {
 			contentController.value = new AbortController();
 			editorLoading.value = true;
 
-			const fileData = await ketchup(`/api/lists/${ selectedFileName.value }`, {
+			const fileData = await ofetch(`/api/lists/${ selectedFileName.value }`, {
 				signal: contentController.signal,
 			});
 			
@@ -217,11 +217,12 @@ export default {
 			editorLoading.value = true;
 
 			try{
-				form.value.content = await ketchup.text('/api/cors-hole', {
-					retry: false,
+				form.value.content = await ofetch('/api/cors-hole', {
+					retry: 0,
 					signal: contentController.signal,
 					method: 'POST',
-					json: {
+					responseType: 'text',
+					body: {
 						url: form.value.syncUrl,
 					},
 				});
@@ -234,7 +235,7 @@ export default {
 		}
 
 		const restartAntidpi = async () => {
-			await ketchup('/api/antidpi/restart', {
+			await ofetch('/api/antidpi/restart', {
 				method: 'POST',
 			});
 		}
@@ -245,9 +246,9 @@ export default {
 
 			saving.value = true;
 
-			await ketchup(`/api/lists/${ selectedFileName.value ?? form.value.name }`, {
+			await ofetch(`/api/lists/${ selectedFileName.value ?? form.value.name }`, {
 				method: 'PUT',
-				json: form.value,
+				body: form.value,
 			});
 
 			await restartAntidpi();
@@ -263,7 +264,7 @@ export default {
 			saving.value = true;
 			selectedFileName.value = null;
 
-			await ketchup(`/api/lists/${ name }`, {
+			await ofetch(`/api/lists/${ name }`, {
 				method: 'DELETE',
 			});
 

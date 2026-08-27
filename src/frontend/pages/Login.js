@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import InputGroup from 'primevue/inputgroup'
 import Password from 'primevue/password'
@@ -42,9 +42,9 @@ export default {
 
 			loading.value = true;
 
-			const success = await ketchup('/api/auth/login', {
+			const success = await ofetch('/api/auth/login', {
 				method: 'POST',
-				json: password.value,
+				body: password.value,
 			});
 
 			if( success )

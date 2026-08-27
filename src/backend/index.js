@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
-import ketchup from '../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import api from './routes/api'
 import frontend from './routes/frontend'
@@ -158,7 +158,7 @@ class BackendApp
 		for(const profile of [ ...profiles ]){
 			if( profile.syncUrl && ( !Array.isArray(force) || force.includes(profile.name) ) ){
 				try{
-					const response = await ketchup.raw(profile.syncUrl);
+					const response = await ofetch.native(profile.syncUrl);
 					const content = await response.text();
 					
 					if( [404, 410, 451].includes(response.status) || profile.content === content )
@@ -193,7 +193,7 @@ class BackendApp
 		for(const [ filename, { syncUrl } ] of Object.entries(files)){
 			if( syncUrl && ( !Array.isArray(whitelist) || whitelist.includes(filename) ) ){
 				try{
-					const response = await ketchup.raw(syncUrl);
+					const response = await ofetch.native(syncUrl);
 					const content = await response.arrayBuffer();
 
 					const dirPath = join(APPDATA_DIR, 'files', groupName);
@@ -272,7 +272,7 @@ class BackendApp
 		if( !doUpdate )
 			return;
 
-		const html = await ketchup.text('https://github.com/Greezor/bununban/releases/latest');
+		const html = await ofetch('https://github.com/Greezor/bununban/releases/latest');
 		const [ _, latest ] = html.match(/href="\/Greezor\/bununban\/releases\/tag\/(.*?)"/ms);
 
 		if( Bun.semver.satisfies(packageJSON.version, `>=${ latest ?? '0.0.0' }`) )
@@ -282,7 +282,7 @@ class BackendApp
 
 		await Bun.write(updatePath, (
 			Bun.gunzipSync(
-				await ketchup.arrayBuffer(`https://github.com/Greezor/bununban/releases/download/${ latest }/${ bin }.gz`)
+				await ofetch(`https://github.com/Greezor/bununban/releases/download/${ latest }/${ bin }.gz`, { responseType: 'arrayBuffer' })
 			)
 		));
 

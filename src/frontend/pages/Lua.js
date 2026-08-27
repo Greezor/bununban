@@ -2,7 +2,7 @@ import { ref, shallowRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import Default from '../layouts/Default'
 
@@ -191,7 +191,7 @@ export default {
 			loading.value = true;
 
 			files.value = [];
-			files.value = await ketchup('/api/lua');
+			files.value = await ofetch('/api/lua');
 
 			loading.value = false;
 		}
@@ -204,7 +204,7 @@ export default {
 			contentController.value = new AbortController();
 			editorLoading.value = true;
 
-			const fileData = await ketchup(`/api/lua/${ selectedFileName.value }`, {
+			const fileData = await ofetch(`/api/lua/${ selectedFileName.value }`, {
 				signal: contentController.signal,
 			});
 
@@ -223,11 +223,12 @@ export default {
 			editorLoading.value = true;
 
 			try{
-				form.value.content = await ketchup.text('/api/cors-hole', {
-					retry: false,
+				form.value.content = await ofetch('/api/cors-hole', {
+					retry: 0,
 					signal: contentController.signal,
 					method: 'POST',
-					json: {
+					responseType: 'text',
+					body: {
 						url: form.value.syncUrl,
 					},
 				});
@@ -240,7 +241,7 @@ export default {
 		}
 
 		const restartAntidpi = async () => {
-			await ketchup('/api/antidpi/restart', {
+			await ofetch('/api/antidpi/restart', {
 				method: 'POST',
 			});
 		}
@@ -249,9 +250,9 @@ export default {
 			const file = files.value
 				.find(item => item.name === name);
 
-			await ketchup(`/api/lua/${ name }`, {
+			await ofetch(`/api/lua/${ name }`, {
 				method: 'PUT',
-				json: {
+				body: {
 					...form,
 					active: file?.active ?? form.active,
 				},
@@ -279,7 +280,7 @@ export default {
 			saving.value = true;
 			selectedFileName.value = null;
 
-			await ketchup(`/api/lua/${ name }`, {
+			await ofetch(`/api/lua/${ name }`, {
 				method: 'DELETE',
 			});
 

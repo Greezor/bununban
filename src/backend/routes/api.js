@@ -2,7 +2,7 @@ import { $ } from 'bun'
 import { join } from 'node:path'
 import { mkdirSync } from 'node:fs'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import { APPDATA_DIR } from '../lib/appdata'
 
@@ -118,7 +118,7 @@ const putToStoreEndpoint = storeName => async (req, server) => {
 
 	if( syncUrl ){
 		try{
-			content = await ketchup.text(syncUrl);
+			content = await ofetch(syncUrl);
 		}
 		catch(e){
 			console.error(e)
@@ -276,7 +276,7 @@ export default {
 
 			if( form.syncUrl ){
 				try{
-					form.content = await ketchup.text(form.syncUrl);
+					form.content = await ofetch(form.syncUrl);
 				}
 				catch(e){
 					console.error(e)
@@ -468,7 +468,7 @@ export default {
 			const { url } = await req.json();
 			
 			return new Response(
-				await ketchup.text(url)
+				await ofetch(url)
 			);
 		},
 	},

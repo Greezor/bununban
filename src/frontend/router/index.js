@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { ofetch } from 'ofetch'
 
 import routes from './routes'
-import ketchup from '../../common/utils/ketchup'
 
 const router = createRouter({
 	history: createWebHistory(),
@@ -9,7 +9,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from) => {
-	const isAuthenticated = await ketchup('/api/auth/check');
+	const isAuthenticated = await ofetch('/api/auth/check');
 	const isLoginPath = to.path === '/login';
 
 	if( !isAuthenticated && !isLoginPath )

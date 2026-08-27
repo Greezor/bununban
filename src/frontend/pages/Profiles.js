@@ -2,7 +2,7 @@ import { ref, shallowRef, computed, watch, onActivated } from 'vue'
 import { css } from '@emotion/css'
 import Icon from '../components/Icon'
 
-import ketchup from '../../common/utils/ketchup'
+import { ofetch } from 'ofetch'
 
 import Default from '../layouts/Default'
 
@@ -200,7 +200,7 @@ export default {
 			loading.value = true;
 
 			profiles.value = [];
-			profiles.value = await ketchup('/api/profiles');
+			profiles.value = await ofetch('/api/profiles');
 
 			loading.value = false;
 		}
@@ -217,11 +217,12 @@ export default {
 			editorLoading.value = true;
 
 			try{
-				form.value.content = await ketchup.text('/api/cors-hole', {
-					retry: false,
+				form.value.content = await ofetch('/api/cors-hole', {
+					retry: 0,
 					signal: contentController.signal,
 					method: 'POST',
-					json: {
+					responseType: 'text',
+					body: {
 						url: form.value.syncUrl,
 					},
 				});
@@ -235,7 +236,7 @@ export default {
 
 
 		const restartAntidpi = async () => {
-			await ketchup('/api/antidpi/restart', {
+			await ofetch('/api/antidpi/restart', {
 				method: 'POST',
 			});
 		}
@@ -244,9 +245,9 @@ export default {
 			const profile = profiles.value
 				.find(item => item.name === name);
 
-			await ketchup(`/api/profiles/${ name }`, {
+			await ofetch(`/api/profiles/${ name }`, {
 				method: 'PUT',
-				json: {
+				body: {
 					...form,
 					active: profile?.active ?? form.active,
 				},
@@ -273,7 +274,7 @@ export default {
 			saving.value = true;
 			selectedProfileName.value = null;
 
-			await ketchup(`/api/profiles/${ name }`, {
+			await ofetch(`/api/profiles/${ name }`, {
 				method: 'DELETE',
 			});
 
