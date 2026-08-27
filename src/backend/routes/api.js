@@ -26,9 +26,6 @@ const stores = {
 	settings,
 }
 
-const OK = new Response('OK')
-const FORBIDDEN = new Response('Forbidden', { status: 403 })
-
 const authUser = async (req, server) => {
 	const { address } = server.requestIP(req);
 
@@ -105,7 +102,7 @@ const getFromStoreEndpoint = storeName => async (req, server) => {
 
 const putToStoreEndpoint = storeName => async (req, server) => {
 	if( !( await checkAuth(req, server) ) )
-		return FORBIDDEN;
+		return new Response('Forbidden', { status: 403 });
 
 	const store = stores[storeName];
 
@@ -145,12 +142,12 @@ const putToStoreEndpoint = storeName => async (req, server) => {
 		await oldFile.delete();
 	}
 
-	return OK;
+	return new Response('OK');
 }
 
 const deleteFromStoreEndpoint = storeName => async (req, server) => {
 	if( !( await checkAuth(req, server) ) )
-		return FORBIDDEN;
+		return new Response('Forbidden', { status: 403 });
 
 	const key = req.params.name;
 	const store = stores[storeName];
@@ -162,7 +159,7 @@ const deleteFromStoreEndpoint = storeName => async (req, server) => {
 	if( await file.exists() )
 		await file.delete();
 
-	return OK;
+	return new Response('OK');
 }
 
 export default {
@@ -188,7 +185,7 @@ export default {
 	'/api/auth/logout': {
 		GET: async (req, server) => {
 			req?.cookies?.delete?.(SESSION_KEY);
-			return OK;
+			return new Response('OK');
 		},
 	},
 	'/api/auth/check': {
@@ -209,7 +206,7 @@ export default {
 		},
 		PUT: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 			
 			const activate = await req.json();
 
@@ -220,18 +217,18 @@ export default {
 
 			await settings.set('antidpi.active', zapret.isStarted);
 
-			return OK;
+			return new Response('OK');
 		},
 	},
 	'/api/antidpi/restart': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			if( zapret.isStarted )
 				await zapret.restart();
 
-			return OK;
+			return new Response('OK');
 		},
 	},
 
@@ -239,10 +236,10 @@ export default {
 	'/api/server/restart': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			app.restart();
-			return OK;
+			return new Response('OK');
 		},
 	},
 
@@ -270,7 +267,7 @@ export default {
 		},
 		PUT: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			const form = await req.json();
 
@@ -294,11 +291,11 @@ export default {
 					))
 			));
 
-			return OK;
+			return new Response('OK');
 		},
 		DELETE: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			const profiles = await settings.get('profiles') ?? [];
 
@@ -306,7 +303,7 @@ export default {
 				profiles.filter(profile => profile.name !== req.params.name)
 			));
 
-			return OK;
+			return new Response('OK');
 		},
 	},
 
@@ -340,7 +337,7 @@ export default {
 		DELETE: deleteFromStoreEndpoint('blobs'),
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			const formData = await req.formData();
 			const src = formData.get('file');
@@ -350,7 +347,7 @@ export default {
 
 			await Bun.write(join(APPDATA_DIR, 'files', 'blobs', req.params.name), src);
 
-			return OK;
+			return new Response('OK');
 		},
 	},
 
@@ -382,7 +379,7 @@ export default {
 		},
 		PUT: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			const data = await req.json();
 
@@ -399,7 +396,7 @@ export default {
 				await settings.set(prop, value);
 			}
 
-			return OK;
+			return new Response('OK');
 		},
 	},
 	'/api/settings/antidpi/zapret2/versions': {
@@ -415,25 +412,25 @@ export default {
 	'/api/settings/antidpi/zapret2/install/:version': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			await zapret.install(req.params.version);
-			return OK;
+			return new Response('OK');
 		},
 	},
 	'/api/settings/reset-password': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			await settings.set('password', '');
-			return OK;
+			return new Response('OK');
 		},
 	},
 	'/api/settings/reset': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			await settings.set('version', '0.0.0');
 			
@@ -444,7 +441,7 @@ export default {
 			await $`rm -rf ${ APPDATA_DIR }`;
 			await app.start();
 			
-			return OK;
+			return new Response('OK');
 		},
 	},
 
@@ -452,10 +449,10 @@ export default {
 	'/api/updater/update-now': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			await app.autoUpdate();
-			return OK;
+			return new Response('OK');
 		},
 	},
 
@@ -463,7 +460,7 @@ export default {
 	'/api/cors-hole': {
 		POST: async (req, server) => {
 			if( !( await checkAuth(req, server) ) )
-				return FORBIDDEN;
+				return new Response('Forbidden', { status: 403 });
 
 			const { url } = await req.json();
 			
