@@ -224,7 +224,7 @@ export default {
 
 			if( fileInput.value.files.length ){
 				const formData = new FormData();
-				formData.append('file', fileInput.value.value);
+				formData.append('file', fileInput.value.files[0]);
 
 				await ofetch(`/api/blobs/${ name }`, {
 					method: 'POST',
