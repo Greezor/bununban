@@ -135,6 +135,8 @@ export default class DNSProxy
 
 		if( process.platform === 'win32' && await settings.get('antidpi.active') )
 			await zapret.restart();
+
+		await Bun.sleep(2000);
 	}
 
 	async stop()
