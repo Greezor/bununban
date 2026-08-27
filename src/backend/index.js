@@ -158,8 +158,8 @@ class BackendApp
 		for(const profile of [ ...profiles ]){
 			if( profile.syncUrl && ( !Array.isArray(force) || force.includes(profile.name) ) ){
 				try{
-					const response = await ofetch.native(profile.syncUrl);
-					const content = await response.text();
+					const response = await ofetch.raw(profile.syncUrl, { responseType: 'text' });
+					const content = response._data;
 					
 					if( [404, 410, 451].includes(response.status) || profile.content === content )
 						continue;
@@ -193,8 +193,8 @@ class BackendApp
 		for(const [ filename, { syncUrl } ] of Object.entries(files)){
 			if( syncUrl && ( !Array.isArray(whitelist) || whitelist.includes(filename) ) ){
 				try{
-					const response = await ofetch.native(syncUrl);
-					const content = await response.arrayBuffer();
+					const response = await ofetch.raw(syncUrl, { responseType: 'arrayBuffer' });
+					const content = response._data;
 
 					const dirPath = join(APPDATA_DIR, 'files', groupName);
 					const filePath = join(dirPath, filename);
