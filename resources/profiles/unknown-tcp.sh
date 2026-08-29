@@ -6,7 +6,7 @@
                 --lua-desync=condition:instances=13:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
                     --lua-desync=luaexec:code=desync.qty=math.random(3,4)
                     --lua-desync=repeater:instances=11:repeats=%qty
-                        --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(genhost(50,"google.com"),true,true)
+                        --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(genhost(19,"google.com"),true,true)
                         --lua-desync=per_instance_condition:instances=9
                             --lua-desync=luaexec:code=desync.rndfooling=math.random(1,4):cond=cond_tcp_has_ts
                             --lua-desync=luaexec:code=desync.rndfooling=math.random(2,4):cond=cond_tcp_has_ts:cond_neg

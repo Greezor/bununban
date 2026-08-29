@@ -10,7 +10,7 @@
                 --payload=tls_client_hello
 
                     --lua-desync=condition:instances=14:iff=cond_lua:cond_code=return(replay_first(desync)):strategy=1
-                        --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(50,"google.com")):strategy=1
+                        --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(19,"google.com")):strategy=1
                         --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),shuffle(handshake.[1].dis.cipher_suites),remove(handshake.[1].dis.cipher_suites.[1]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),shuffle(handshake.[1].dis.ext.[name=supported_groups].dis.list),shuffle(handshake.[1].dis.ext.[name=signature_algorithms].dis.list),remove(handshake.[1].dis.ext.[name=signature_algorithms].dis.list.[1]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=server_name]),shuffle(handshake.[1].dis.ext),insert(handshake.[1].dis.ext.[1],sni4fake):strategy=1
                         --lua-desync=luaexec:code=desync.qty=math.random(3,4):strategy=1
                         --lua-desync=per_instance_condition:instances=9:strategy=1

@@ -2,6 +2,6 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=discord_ip_discovery
-            --lua-desync=luaexec:code=desync.domain4fake=genhost(50,"google.com")
+            --lua-desync=luaexec:code=desync.domain4fake=genhost(19,"google.com")
             --lua-desync=luaexec:code=desync.qty=math.random(6,11)
             --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%domain4fake:repeats=%qty
