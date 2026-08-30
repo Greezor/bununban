@@ -18,7 +18,7 @@
                             --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%rndts:ip_id=seq:ip_id_conn:cond=cond_tcp_has_ts:strategy=1
                             --lua-desync=luaexec:code=desync.rndack=-math.random(66000,99000):cond=cond_tcp_has_ts:cond_neg:strategy=1
                             --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ack=%rndack:tcp_ts_up:ip_id=seq:ip_id_conn:cond=cond_tcp_has_ts:cond_neg:strategy=1
-                        --lua-desync=multidisorder:pos=midsld:nodrop:ip_id=seq:ip_id_conn:strategy=1
+                        --lua-desync=multisplit:pos=midsld:nodrop:ip_id=seq:ip_id_conn:strategy=1
                     --lua-desync=drop:strategy=1
 
                     --lua-desync=multisplit:pos=midsld:ip_id=seq:ip_id_conn:strategy=2
