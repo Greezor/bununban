@@ -4,7 +4,7 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --out-range=-d6
-        --in-range=-d3
+        --in-range=-d1
             --lua-desync=drop:dir=out
             --lua-desync=luaexec:code=desync.hrec=automate_host_record(desync):nld=2
             --lua-desync=condition:instances=2:iff=cond_lua:cond_code=return(not(desync.hrec.autofakes))
