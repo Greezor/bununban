@@ -125,28 +125,48 @@ end
 
 
 
-function create_shuffled_bag(bag, reset_index)
+function create_shuffled_bag(arr, reset_index)
     local i = 1
-
-    reset_index = reset_index or #bag
+    reset_index = reset_index or #arr
 
     return function()
-        if #bag == 0 then
+        if #arr == 0 then
             return nil
         end
 
         if i == 1 then
-            shuffle(bag)
+            shuffle(arr)
         end
 
-        local item = bag[i]
+        local value = arr[i]
         i = i + 1
 
-        if i > reset_index or i > #bag then
+        if i > reset_index then
             i = 1
         end
 
-        return item
+        return value
+    end
+end
+
+
+
+function create_circular_iterator(arr)
+    local i = 1
+
+    return function()
+        if #arr == 0 then
+            return nil
+        end
+
+        local value = arr[i]
+        i = i + 1
+
+        if i > #arr then
+            i = 1
+        end
+
+        return value
     end
 end
 
@@ -200,18 +220,13 @@ end
 
 
 
-function create_fake_dns(domains, is_tcp, force_mdns)
+function create_fake_dns(domains, is_tcp, id, flags)
     if type(domains) == "string" then
         domains = { domains }
     end
     
-    local id = "\x00\x00"
-    local flags = "\x00\x00"
-
-    if #domains == 1 and not force_mdns then
-        id = bcryptorandom(2)
-        flags = "\x01\x00"
-    end
+    id = id or "\x00\x00"
+    flags = flags or "\x01\x00"
 
     local header = id .. flags .. bu16(#domains) .. "\x00\x00\x00\x00\x00\x00"
 
@@ -382,47 +397,119 @@ end
 
 
 
-_G.ipmem = (
-    function()
-        local mem = memoize(function(memkey)
+function ipmem(ctx, desync)
+    if not desync.arg.get then
+        error("ipmem: 'get' arg required")
+    end
+
+    if not desync.arg.set then
+        error("ipmem: 'set' arg required")
+    end
+
+    if not ipmem_state then
+        _G.ipmem_state = {}
+    end
+
+    if not _G.ipmem_state[desync.func_instance] then
+        _G.ipmem_state[desync.func_instance] = memoize(function(memkey)
             return {}
-        end, 300000)
+        end, tonumber(desync.arg.ttl) or 300000)
+    end
 
-        return function(ctx, desync)
-            if not desync.arg.get then
-                error("ipmem: 'get' arg required")
-            end
+    local mem = _G.ipmem_state[desync.func_instance]
+    local memkey = (desync.target.ip or desync.target.ip6) .. desync.arg.get
+    local memval = mem(memkey)
 
-            if not desync.arg.set then
-                error("ipmem: 'set' arg required")
-            end
-
-            local memkey = (desync.target.ip or desync.target.ip6) .. desync.arg.get
-            local memval = mem(memkey)
-
-            local fname = desync.func_instance .. "_ipmem_set"
-            if not _G[fname] then
-                local err
-                _G[fname], err = load(desync.arg.set, fname)
-                if not _G[fname] then
-                    error(err)
-                    return
-                end
-            end
-
-            if not memval.value then
-                _G.desync = desync
-                local res, v = pcall(_G[fname])
-                _G.desync = nil
-                
-                if not res then
-                    error(v)
-                end
-
-                memval.value = v
-            end
-
-            desync[desync.arg.get] = memval.value
+    local fname = desync.func_instance .. "_ipmem_set"
+    if not _G[fname] then
+        local err
+        _G[fname], err = load(desync.arg.set, fname)
+        if not _G[fname] then
+            error(err)
+            return
         end
     end
-)()
+
+    if not memval.value then
+        _G.desync = desync
+        local res, v = pcall(_G[fname])
+        _G.desync = nil
+        
+        if not res then
+            error(v)
+        end
+
+        memval.value = v
+    end
+
+    desync[desync.arg.get] = memval.value
+end
+
+
+
+function timeout(ctx, desync)
+    if not desync.track then return end
+
+    local state = desync.track.lua_state
+
+    if state.cancel_timeout then
+        state.cancel_timeout()
+    end
+
+    if desync.outgoing and bitand(desync.dis.tcp.th_flags, TH_RST) == 0 and not state.success then
+        local data = {}
+
+        if desync.arg.callback then
+            local fname = desync.func_instance .. "_callback"
+
+            if not _G[fname] then
+                local err
+                _G[fname], err = load(desync.arg.callback, fname)
+
+                if not _G[fname] then
+                    error(err)
+                end
+            end
+
+            data.callback = { fname = fname, desync = desync }
+        end
+
+        if desync.arg.reset then
+            local dis = deepcopy(desync.dis)
+            dis_reverse(dis)
+
+            dis.payload = nil
+            dis.tcp.th_flags = TH_RST
+            dis.tcp.th_win = desync.track and desync.track.pos.reverse.tcp.winsize or 64
+            dis.tcp.options = nil
+
+            if dis.ip6 then
+                dis.ip6.ip6_flow = (desync.track and desync.track.pos.reverse.ip6_flow) and desync.track.pos.reverse.ip6_flow or 0x60000000;
+            end
+
+            data.reset = { dis = dis, opts = { ifout = desync.ifin } }
+        end
+
+        state.cancel_timeout = delayed(
+            function(data)
+                if data.callback then
+                    _G.desync = data.callback.desync
+                    local ok, ret = pcall(_G[data.callback.fname])
+                    _G.desync = nil
+
+                    if not ok then
+                        error(ret)
+                    end
+                end
+
+                if data.reset then
+                    rawsend_dissect(data.reset.dis, data.reset.opts)
+                end
+            end,
+            tonumber(desync.arg.ms) or 3000,
+            data
+        )
+    else
+        state.success = true
+    end
+end
