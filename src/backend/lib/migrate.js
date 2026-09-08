@@ -267,4 +267,10 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.12') ){
+		if( process.platform === 'win32' ){
+			await settings.set('antidpi.args', '--wf-tcp-out=80,443,1024-65535 --wf-udp-out=443,1024-65535 --wf-tcp-in=80,443');
+		}
+	}
+
 }
