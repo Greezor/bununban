@@ -20,6 +20,20 @@ end
 
 
 
+function array(...)
+    local arr = {}
+
+    local n = select("#", ...)
+    for i = 1, n do
+        local item = select(i, ...)
+        table.insert(arr, item)
+    end
+
+    return arr
+end
+
+
+
 function array_mixed_search(a, f, v)
     if f == "" then
         return array_search(a, v)

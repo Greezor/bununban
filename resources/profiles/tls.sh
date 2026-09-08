@@ -7,8 +7,9 @@
         --in-range=-d1
             --lua-desync=drop:dir=out
             --lua-desync=luaexec:code=desync.hrec=automate_host_record(desync):nld=2
-            --lua-desync=condition:instances=2:iff=cond_lua:cond_code=return(not(desync.hrec.autofakes))
-                --lua-desync=luaexec:code=desync.hrec.autofakes={next=create_circular_iterator({math.random(6,11),0,2})}
+            --lua-desync=condition:instances=3:iff=cond_lua:cond_code=return(not(desync.hrec.autofakes))
+                --lua-desync=luaexec:code=desync.hrec.autofakes=array()
+                --lua-desync=luaexec:code=desync.hrec.autofakes.next=create_circular_iterator(array(math.random(6,11),0,2))
                 --lua-desync=luaexec:code=desync.hrec.autofakes.qty=desync.hrec.autofakes.next()
             --lua-desync=timeout:ms=3000:callback=desync.hrec.autofakes.qty=desync.hrec.autofakes.next():reset
         --in-range=x
