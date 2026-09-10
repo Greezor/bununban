@@ -9,7 +9,7 @@
             --lua-desync=luaexec:code=desync.hrec=automate_host_record(desync):nld=2
             --lua-desync=condition:instances=3:iff=cond_lua:cond_code=return(not(desync.hrec.autofakes))
                 --lua-desync=luaexec:code=desync.hrec.autofakes=array()
-                --lua-desync=luaexec:code=desync.hrec.autofakes.next=create_circular_iterator(array(math.random(6,11),0,2))
+                --lua-desync=luaexec:code=desync.hrec.autofakes.next=create_circular_iterator(array(array(6,11),array(0,0),array(2,2)))
                 --lua-desync=luaexec:code=desync.hrec.autofakes.qty=desync.hrec.autofakes.next()
             --lua-desync=timeout:ms=3000:callback=desync.hrec.autofakes.qty=desync.hrec.autofakes.next():reset
         --in-range=x
@@ -17,7 +17,7 @@
             --lua-desync=condition:instances=10:iff=replay_first
                 --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(19,"google.com"))
                 --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=server_name]),shuffle(handshake.[1].dis.ext),insert(handshake.[1].dis.ext.[1],sni4fake)
-                --lua-desync=luaexec:code=desync.qty=desync.hrec.autofakes.qty
+                --lua-desync=luaexec:code=desync.qty=math.random(unpack(desync.hrec.autofakes.qty))
                 --lua-desync=condition:instances=5:iff=cond_lua:cond_code=return(desync.qty>0)
                     --lua-desync=per_instance_condition:instances=4
                         --lua-desync=luaexec:code=desync.rndts=-math.random(100,0x80000000):cond=cond_tcp_has_ts
