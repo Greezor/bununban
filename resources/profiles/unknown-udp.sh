@@ -2,7 +2,8 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=unknown
-            --lua-desync=condition:instances=3:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                --lua-desync=luaexec:code=desync.domain4fake=genhost(19,"google.com")
+            --lua-desync=condition:instances=4:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
                 --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-                --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%domain4fake:repeats=%qty:payload=~empty
+                --lua-desync=repeater:instances=2:repeats=%qty
+                    --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns(genhost(19,"google.com"))
+                    --lua-desync=fake:blob=fake_udp_dns:payload=~empty
