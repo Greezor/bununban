@@ -8,6 +8,20 @@ end
 
 
 
+function execf(fname, desync)
+    _G.desync = desync
+    local ok, ret = pcall(_G[fname])
+    _G.desync = nil
+
+    if not ok then
+        error(ret)
+    end
+
+    return ret
+end
+
+
+
 function arange(start, stop, step)
     local a = {}
 
@@ -186,36 +200,43 @@ end
 
 
 
+local CACHE_STATE_KEY = {}
+local NIL_KEY = {}
+local NAN_KEY = {}
+
+local function pack(...)
+    return { n = select("#", ...), ... }
+end
+
+local function get_nested_cache(cache, ...)
+    local nested = cache
+
+    local n = select("#", ...)
+    for i = 1, n do
+        local arg = select(i, ...)
+
+        if arg == nil then arg = NIL_KEY end
+        if arg ~= arg then arg = NAN_KEY end
+
+        if not nested[arg] then nested[arg] = {} end
+        nested = nested[arg]
+    end
+
+    return nested
+end
+
 function memoize(fn, ttl)
     local cache = {}
 
-    local CACHE_STATE_KEY = {}
-    local NIL_KEY = {}
-    local NAN_KEY = {}
-
-    function get_nested_cache(...)
-        local nested = cache
-
-        local n = select("#", ...)
-        for i = 1, n do
-            local arg = select(i, ...)
-
-            if arg == nil then arg = NIL_KEY end
-            if arg ~= arg then arg = NAN_KEY end
-
-            if not nested[arg] then nested[arg] = {} end
-            nested = nested[arg]
-        end
-
-        return nested
-    end
-
     return function(...)
-        local nested_cache = get_nested_cache(...)
+        local nested_cache = get_nested_cache(cache, ...)
+        local state = nested_cache[CACHE_STATE_KEY]
 
-        if nested_cache[CACHE_STATE_KEY] == nil then
+        if state == nil then
+            local values = pack(fn(...))
+
             nested_cache[CACHE_STATE_KEY] = {
-                value = fn(...),
+                values = values,
                 unmemoize = debounced(function()
                     if nested_cache then
                         nested_cache[CACHE_STATE_KEY] = nil
@@ -225,10 +246,10 @@ function memoize(fn, ttl)
         end
 
         if ttl then
-            nested_cache[CACHE_STATE_KEY].unmemoize()
+            state.unmemoize()
         end
 
-        return nested_cache[CACHE_STATE_KEY].value
+        return unpack(state.values, 1, state.values.n)
     end
 end
 
@@ -411,84 +432,37 @@ end
 
 
 
-function ipmem(ctx, desync)
-    if not desync.arg.get then
-        error("ipmem: 'get' arg required")
-    end
-
-    if not desync.arg.set then
-        error("ipmem: 'set' arg required")
-    end
-
-    if not ipmem_state then
-        _G.ipmem_state = {}
-    end
-
-    if not _G.ipmem_state[desync.func_instance] then
-        _G.ipmem_state[desync.func_instance] = memoize(function(memkey)
-            return {}
-        end, tonumber(desync.arg.ttl) or 300000)
-    end
-
-    local mem = _G.ipmem_state[desync.func_instance]
-    local memkey = (desync.target.ip or desync.target.ip6) .. desync.arg.get
-    local memval = mem(memkey)
-
-    local fname = desync.func_instance .. "_ipmem_set"
-    if not _G[fname] then
-        local err
-        _G[fname], err = load(desync.arg.set, fname)
-        if not _G[fname] then
-            error(err)
-            return
-        end
-    end
-
-    if not memval.value then
-        _G.desync = desync
-        local res, v = pcall(_G[fname])
-        _G.desync = nil
-        
-        if not res then
-            error(v)
-        end
-
-        memval.value = v
-    end
-
-    desync[desync.arg.get] = memval.value
-end
-
-
-
 function timeout(ctx, desync)
     if not desync.track then return end
 
     local state = desync.track.lua_state
 
-    if state.cancel_timeout then
-        state.cancel_timeout()
+    if not state.timeout then
+        state.timeout = {}
     end
 
-    if desync.outgoing and bitand(desync.dis.tcp.th_flags, TH_RST) == 0 and not state.success then
-        local data = {}
+    if state.timeout.cancel then
+        state.timeout.cancel()
+    end
 
-        if desync.arg.callback then
-            local fname = desync.func_instance .. "_callback"
+    if not state.timeout.skip then
+        if desync.arg.callback and not state.timeout.callback then
+            local fname = desync.func_instance .. "__timeout_callback"
 
             if not _G[fname] then
-                local err
-                _G[fname], err = load(desync.arg.callback, fname)
+                local fn, err = load(desync.arg.callback, fname)
 
-                if not _G[fname] then
+                if not fn then
                     error(err)
                 end
+
+                _G[fname] = fn
             end
 
-            data.callback = { fname = fname, desync = desync }
+            state.timeout.callback = fname
         end
 
-        if desync.arg.reset then
+        if desync.arg.reset and not state.timeout.reset then
             local dis = deepcopy(desync.dis)
             dis_reverse(dis)
 
@@ -498,32 +472,36 @@ function timeout(ctx, desync)
             dis.tcp.options = nil
 
             if dis.ip6 then
-                dis.ip6.ip6_flow = (desync.track and desync.track.pos.reverse.ip6_flow) and desync.track.pos.reverse.ip6_flow or 0x60000000;
+                dis.ip6.ip6_flow = (desync.track and desync.track.pos.reverse.ip6_flow) and desync.track.pos.reverse.ip6_flow or 0x60000000
             end
 
-            data.reset = { dis = dis, opts = { ifout = desync.ifin } }
+            state.timeout.reset = { dis = dis, opts = { ifout = desync.ifin } }
         end
 
-        state.cancel_timeout = delayed(
-            function(data)
-                if data.callback then
-                    _G.desync = data.callback.desync
-                    local ok, ret = pcall(_G[data.callback.fname])
-                    _G.desync = nil
+        local is_reset = bitand(desync.dis.tcp.th_flags, TH_RST) ~= 0
 
-                    if not ok then
-                        error(ret)
+        if desync.outgoing then
+            if is_reset then return end
+
+            state.timeout.cancel = delayed(
+                function(data)
+                    if data.timeout.callback then
+                        execf(data.timeout.callback, data.desync)
                     end
-                end
 
-                if data.reset then
-                    rawsend_dissect(data.reset.dis, data.reset.opts)
-                end
-            end,
-            tonumber(desync.arg.ms) or 3000,
-            data
-        )
-    else
-        state.success = true
+                    if data.timeout.reset then
+                        rawsend_dissect(data.timeout.reset.dis, data.timeout.reset.opts)
+                    end
+                end,
+                tonumber(desync.arg.ms) or 3000,
+                { desync = desync, timeout = state.timeout }
+            )
+        else
+            state.timeout.skip = true
+
+            if desync.arg.rst_trigger and is_reset then
+                execf(state.timeout.callback, desync)
+            end
+        end
     end
 end
