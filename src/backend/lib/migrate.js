@@ -273,4 +273,20 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.13') ){
+		if( addNewResources ){
+			await settings.set('profiles', [
+				...( await settings.get('profiles') ),
+				{ name: 'dtls', active: true, priority: 2, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/profiles/dtls.sh', content: '' },
+			]);
+
+			await lists.delete('astracat-hosts');
+			await lists.set('geohide-hosts', { syncUrl: 'https://dns.geohide.ru:8443/hosts' });
+			await settings.set('dns.hosts', (
+				( await settings.get('dns.hosts') )
+					.map(hosts => hosts === 'astracat-hosts' ? 'geohide-hosts' : hosts)
+			));
+		}
+	}
+
 }
