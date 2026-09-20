@@ -21,4 +21,4 @@
                     --lua-desync=luaexec:code=desync.ts=cond_tcp_has_ts(desync)and(-math.random(100,0x80000000))or(0)
                     --lua-desync=luaexec:code=desync.seq=(string.match(host_or_ip(desync),"%.ru$")or(desync.ts==0))and(10000000)or(0)
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%ts:tcp_seq=%seq:ip_id=seq:ip_id_conn
-                --lua-desync=multisplit:pos=1,midsld:ip_id=seq:ip_id_conn
+                --lua-desync=multisplit:pos=midsld:ip_id=seq:ip_id_conn
