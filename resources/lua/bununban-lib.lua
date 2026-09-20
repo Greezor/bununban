@@ -180,21 +180,25 @@ end
 
 
 function create_circular_iterator(arr)
-    local i = 1
+    local i = 0
 
-    return function()
+    return function(current)
         if #arr == 0 then
             return nil
         end
 
-        local value = arr[i]
+        if current then
+            local key = array_search(arr, current)
+            if key then i = key end
+        end
+
         i = i + 1
 
         if i > #arr then
             i = 1
         end
 
-        return value
+        return arr[i]
     end
 end
 
