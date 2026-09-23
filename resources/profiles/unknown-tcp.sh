@@ -5,5 +5,5 @@
         --payload=unknown
             --lua-desync=condition:instances=3:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
                 --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns("time.windows.com",true,brandom(2))
-                --lua-desync=luaexec:code=desync.qty=math.random(6,11)
+                --lua-desync=luaexec:code=desync.qty=math.random(8,12)
                 --lua-desync=fake:blob=fake_tcp_dns:repeats=%qty:tcp_seq=10000000:payload=~empty
