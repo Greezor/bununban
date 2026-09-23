@@ -289,4 +289,15 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.14') ){
+		if( addNewResources ){
+			await lists.set('github-hosts', { syncUrl: 'https://hosts.gitcdn.top/hosts.txt' });
+			await settings.set('dns.hosts', (
+				( await settings.get('dns.hosts') )
+					.map(hosts => hosts === 'hosts' ? ['hosts', 'github-hosts'] : [hosts])
+					.flat()
+			));
+		}
+	}
+
 }
