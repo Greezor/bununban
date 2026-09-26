@@ -3,5 +3,5 @@
     --ipset-exclude={ipset-exclude}
         --payload=unknown
             --lua-desync=condition:instances=2:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns("time.windows.com",false,brandom(2))
+                --lua-desync=luaexec:code=desync.fake_udp_dns=create_fake_dns("time.windows.com",false)
                 --lua-desync=fake:blob=fake_udp_dns:repeats=2:payload=~empty
