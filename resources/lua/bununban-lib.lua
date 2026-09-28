@@ -204,6 +204,84 @@ end
 
 
 
+rndword = create_shuffled_bag({
+    "amber", "aqua", "azure", "beige", "black", "blue", "bronze", "brown", "cobalt", 
+    "copper", "coral", "crimson", "cyan", "emerald", "gold", "gray", "green", "indigo", 
+    "ivory", "jade", "magenta", "maroon", "mustard", "neon", "olive", "orange", "peach", 
+    "pink", "platinum", "purple", "red", "ruby", "rust", "sapphire", "silver", "teal", 
+    "violet", "white", "yellow",
+    
+    "alpaca", "ant", "ape", "badger", "bat", "bear", "bee", "bird", "bison", "bug", 
+    "camel", "cat", "cobra", "crab", "crane", "crow", "deer", "dingo", "dog", "dolphin", 
+    "dove", "dragon", "duck", "eagle", "elk", "falcon", "fish", "fly", "fox", "frog", 
+    "gecko", "goat", "goose", "gorilla", "gull", "hawk", "horse", "hound", "husky", 
+    "iguana", "impala", "jaguar", "koala", "kraken", "lemur", "leopard", "lion", "lizard", 
+    "llama", "lynx", "mantis", "monkey", "moose", "mouse", "mule", "newt", "orca", 
+    "ostrich", "otter", "owl", "panda", "panther", "parrot", "pelican", "penguin", "pig", 
+    "pigeon", "pony", "pug", "puma", "rabbit", "rat", "raven", "rhino", "robin", "salmon", 
+    "seal", "shark", "sheep", "skunk", "snail", "snake", "spider", "squid", "swan", 
+    "tiger", "toad", "turtle", "viper", "wasp", "whale", "wolf", "wombat", "worm", "yak", 
+    "zebra",
+    
+    "abyss", "air", "ash", "asteroid", "aura", "aurora", "autumn", "canyon", "cave", 
+    "cliff", "comet", "cosmic", "cosmos", "crater", "creek", "dawn", "day", "desert", 
+    "dew", "dust", "earth", "eclipse", "ember", "fire", "flame", "flora", "forest", 
+    "frost", "galaxy", "glacier", "globe", "horizon", "ice", "island", "jungle", "lake", 
+    "lava", "leaf", "lunar", "magma", "marsh", "meteor", "mist", "moon", "moss", 
+    "mountain", "nebula", "night", "nova", "ocean", "orbit", "peak", "pebble", "planet", 
+    "plasma", "pond", "pulsar", "rain", "reef", "river", "rock", "root", "sand", "sea", 
+    "shadow", "sky", "snow", "solar", "spark", "spring", "star", "stone", "storm", 
+    "stream", "summer", "sun", "surf", "swamp", "terra", "thunder", "tide", "timber", 
+    "tree", "tundra", "twilight", "valley", "vapor", "vortex", "water", "wave", "wind", 
+    "winter", "wood",
+    
+    "alert", "alive", "atomic", "awake", "basic", "better", "big", "bitter", "blind", 
+    "bold", "brave", "brief", "bright", "broad", "broken", "calm", "careful", "cheap", 
+    "chill", "clean", "clear", "clever", "cold", "cool", "crazy", "crisp", "cruel", 
+    "dark", "dead", "deep", "direct", "dirty", "dry", "dull", "dusty", "early", "easy", 
+    "empty", "epic", "exact", "extra", "fair", "false", "fast", "fine", "firm", "flat", 
+    "free", "fresh", "full", "fun", "funny", "gentle", "glad", "good", "grand", "great", 
+    "hard", "happy", "heavy", "hidden", "high", "holy", "hot", "huge", "hyper", "icy", 
+    "ideal", "inner", "just", "keen", "kind", "large", "late", "lazy", "left", "light", 
+    "little", "live", "local", "long", "loose", "loud", "lucky", "mad", "magic", "main", 
+    "major", "mega", "minor", "neat", "new", "nice", "noble", "odd", "old", "open", 
+    "outer", "pale", "past", "perfect", "plain", "poor", "prime", "proud", "pure", 
+    "quick", "quiet", "rare", "raw", "real", "rich", "right", "rough", "round", "royal", 
+    "sad", "safe", "salty", "same", "secret", "sharp", "short", "shy", "sick", "silent", 
+    "silly", "slick", "slow", "small", "smart", "smooth", "soft", "solid", "sour", 
+    "spare", "spicy", "stark", "stern", "stiff", "still", "strict", "strong", "sweet", 
+    "swift", "tall", "tame", "tart", "thick", "thin", "tidy", "tiny", "tough", "true", 
+    "twin", "ultra", "unique", "urban", "valid", "vast", "warm", "weak", "wet", "wild", 
+    "wise", "wrong", "young", "zero",
+
+    "algorithm", "apex", "armor", "avatar", "axis", "beacon", "beta", "block", "bot", 
+    "byte", "cache", "cipher", "circuit", "clone", "cloud", "code", "core", "crypto", 
+    "cyber", "data", "delta", "echo", "edge", "enigma", "epoch", "ether", "flux", 
+    "force", "fractal", "gear", "grid", "hash", "helix", "host", "hub", "icon", "index", 
+    "kilo", "laser", "logic", "macro", "matrix", "mesh", "micro", "nano", "nexus", 
+    "node", "omega", "optic", "path", "ping", "pixel", "port", "proxy", "pulse", 
+    "quantum", "query", "radar", "relay", "retro", "route", "script", "server", "signal", 
+    "sonic", "source", "spark", "sphere", "sync", "syntax", "system", "tech", "token", 
+    "trace", "track", "vector", "vertex", "virus", "void", "web", "wire", "zone"
+})
+
+function genphrase(count, separator)
+    count = count or 2
+    separator = separator or "-"
+
+    if count <= 0 then return "" end
+
+    local words = {}
+
+    for i = 1, count do
+        words[i] = rndword()
+    end
+
+    return table.concat(words, separator)
+end
+
+
+
 local CACHE_STATE_KEY = {}
 local NIL_KEY = {}
 local NAN_KEY = {}
@@ -229,33 +307,45 @@ local function get_nested_cache(cache, ...)
     return nested
 end
 
-function memoize(fn, ttl)
+function memoize(fn, ttl, touch)
     local cache = {}
 
-    return function(...)
+    local memfn = function(...)
         local nested_cache = get_nested_cache(cache, ...)
         local state = nested_cache[CACHE_STATE_KEY]
 
         if state == nil then
             local values = pack(fn(...))
 
-            nested_cache[CACHE_STATE_KEY] = {
+            state = {
                 values = values,
                 unmemoize = debounced(function()
-                    if nested_cache then
-                        nested_cache[CACHE_STATE_KEY] = nil
-                    end
+                    nested_cache[CACHE_STATE_KEY] = nil
                 end, ttl or 0)
             }
-        end
 
-        if ttl then
+            nested_cache[CACHE_STATE_KEY] = state
+
+            if ttl then
+                state.unmemoize()
+            end
+        elseif touch then
             state.unmemoize()
         end
 
         return unpack(state.values, 1, state.values.n)
     end
-end
+
+    local set_ttl = function(newttl)
+        ttl = newttl
+    end
+
+    local set_touch = function(newtouch)
+        touch = newtouch
+    end
+
+    return memfn, set_ttl, set_touch
+end 
 
 
 
@@ -509,3 +599,69 @@ function timeout(ctx, desync)
         end
     end
 end
+
+
+
+function call(ctx, desync)
+    if not desync.arg.fn then
+        error("call: 'fn' arg required")
+    end
+
+    return _G[desync.arg.fn](ctx, desync)
+end
+
+
+
+mem = (
+    function()
+        local DEF_TTL = 300000
+
+        local mem_cache, mem_set_ttl, mem_set_touch = memoize(function(memkey)
+            return {}
+        end, DEF_TTL)
+
+        return function(ctx, desync)
+            if not desync.arg.get then
+                error("mem: 'get' arg required")
+            end
+
+            if not desync.arg.set then
+                error("mem: 'set' arg required")
+            end
+
+            if desync.arg.ttl then
+                mem_set_ttl(tonumber(desync.arg.ttl))
+            else
+                mem_set_ttl(DEF_TTL)
+            end
+
+            if desync.arg.touch then
+                mem_set_touch(true)
+            else
+                mem_set_touch(false)
+            end
+
+            local key = desync.arg.key or host_ip(desync)
+            local memkey = key .. "__" .. desync.arg.get
+            local memval = mem_cache(memkey)
+
+            local fname = desync.func_instance .. "__mem_set"
+
+            if not _G[fname] then
+                local fn, err = load(desync.arg.set, fname)
+
+                if not fn then
+                    error(err)
+                end
+
+                _G[fname] = fn
+            end
+
+            if memval.value == nil then
+                memval.value = execf(fname, desync)
+            end
+
+            desync[desync.arg.get] = memval.value
+        end
+    end
+)()

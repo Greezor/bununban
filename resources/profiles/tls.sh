@@ -11,14 +11,19 @@
         --in-range=x
         --payload=tls_client_hello
             --lua-desync=drop
-            --lua-desync=condition:instances=10:iff=replay_first
+            --lua-desync=condition:instances=15:iff=replay_first
+                --lua-desync=luaexec:code=desync.is_ru=string.match(host_or_ip(desync),"%.ru$")
                 --lua-desync=condition:instances=8:iff=cond_lua:cond_code=return(desync.hrec.autofakes~="0")
-                    --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genhost(math.random(19,40),"vercel.app"))
+                    --lua-desync=luaexec:code=desync.sni4fake=create_sni_ext(genphrase(math.random(3,5),"-")..".vercel.app")
                     --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:fallback=tls_clienthello_www_google_com:ops=set_num(rec.[1].ver,771),set_num(handshake.[1].dis.ver,771),rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=25497]),remove(handshake.[1].dis.ext.[name=supported_groups].dis.list.[=4588]),remove(handshake.[1].dis.ext.[name=supported_versions]),remove(handshake.[1].dis.ext.[name=key_share]),remove(handshake.[1].dis.ext.[name=encrypted_client_hello]),remove(handshake.[1].dis.ext.[name=pre_shared_key]),remove(handshake.[1].dis.ext.[name=psk_key_exchange_modes]),remove(handshake.[1].dis.ext.[name=compress_certificate]),remove(handshake.[1].dis.ext.[name=application_settings]),remove(handshake.[1].dis.ext.[name=server_name]),insert(handshake.[1].dis.ext.[1],sni4fake)
                     --lua-desync=per_instance_condition:instances=2
                         --lua-desync=luaexec:code=desync.qty=math.random(8,12):cond=cond_lua:cond_code=return(desync.hrec.autofakes=="8-12")
                         --lua-desync=luaexec:code=desync.qty=2:cond=cond_lua:cond_code=return(desync.hrec.autofakes=="2")
                     --lua-desync=luaexec:code=desync.ts=cond_tcp_has_ts(desync)and(-math.random(100,0x80000000))or(0)
-                    --lua-desync=luaexec:code=desync.seq=(string.match(host_or_ip(desync),"%.ru$")or(desync.ts==0))and(10000000)or(0)
+                    --lua-desync=luaexec:code=desync.seq=((desync.is_ru)or(desync.ts==0))and(10000000)or(0)
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%ts:tcp_seq=%seq:ip_id=seq:ip_id_conn
-                --lua-desync=tcpseg:pos=0,-1:ip_id=seq:ip_id_conn
+                --lua-desync=per_instance_condition:instances=4
+                    --lua-desync=luaexec:code=get_random_splitpos=create_shuffled_bag(array("sld+1","midsld-1","midsld","midsld+1","endsld-1")):cond=cond_lua:cond_code=return(not(get_random_splitpos))
+                    --lua-desync=luaexec:code=desync.splitpos=get_random_splitpos():cond=cond_lua:cond_code=return(not(desync.is_ru))
+                    --lua-desync=multisplit:pos=%splitpos:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(not(desync.is_ru))
+                    --lua-desync=tcpseg:pos=0,-1:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.is_ru)
