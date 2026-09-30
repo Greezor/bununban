@@ -35,15 +35,7 @@ end
 
 
 function array(...)
-    local arr = {}
-
-    local n = select("#", ...)
-    for i = 1, n do
-        local item = select(i, ...)
-        table.insert(arr, item)
-    end
-
-    return arr
+    return {...}
 end
 
 
@@ -154,7 +146,7 @@ end
 
 
 function create_shuffled_bag(arr, reset_index)
-    local i = 1
+    local i = 0
     reset_index = reset_index or #arr
 
     return function()
@@ -162,18 +154,17 @@ function create_shuffled_bag(arr, reset_index)
             return nil
         end
 
-        if i == 1 then
-            shuffle(arr)
-        end
-
-        local value = arr[i]
         i = i + 1
 
         if i > reset_index then
             i = 1
         end
 
-        return value
+        if i == 1 then
+            shuffle(arr)
+        end
+
+        return arr[i]
     end
 end
 
@@ -279,6 +270,28 @@ function genphrase(count, separator)
 
     return table.concat(words, separator)
 end
+
+
+
+rndhost = create_shuffled_bag({
+    "google.com",
+    "googleapis.com",
+    "gstatic.com",
+    "microsoft.com",
+    "windows.com",
+    "xbox.com",
+    "playstation.com",
+    "steampowered.com",
+    "epicgames.com",
+    "nintendo.com",
+    "twitch.tv",
+    "ttvnw.net",
+    "github.com",
+    "gitlab.com",
+    "npmjs.com",
+    "docker.com",
+    "vercel.app"
+})
 
 
 

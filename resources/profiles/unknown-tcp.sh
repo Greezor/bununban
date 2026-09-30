@@ -3,7 +3,8 @@
     --ipset-exclude={ipset-exclude}
         --out-range=-d1
         --payload=unknown
-            --lua-desync=condition:instances=3:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(genphrase(math.random(3,5),"-")..".vercel.app",true)
-                --lua-desync=luaexec:code=desync.qty=math.random(8,12)
+            --lua-desync=condition:instances=4:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
+                --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")):ttl=10000
+                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(desync.host4fake,true)
+                --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                 --lua-desync=fake:blob=fake_tcp_dns:repeats=%qty:tcp_seq=10000000:payload=~empty
