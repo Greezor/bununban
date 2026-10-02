@@ -3,6 +3,6 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=quic_initial
-            --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")):ttl=10000:touch
+            --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")):ttl=60000
             --lua-desync=luaexec:code=desync.qty=math.random(6,11)
             --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%host4fake:repeats=%qty

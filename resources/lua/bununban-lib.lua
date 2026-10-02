@@ -620,6 +620,16 @@ function call(ctx, desync)
         error("call: 'fn' arg required")
     end
 
+    if desync.arg.args then
+        if type(desync.arg.args) ~= "table" then
+            error("call: 'args' arg must be a table")
+        end
+
+        for arg, value in pairs(desync.arg.args) do
+            desync.arg[arg] = value
+        end
+    end
+
     return _G[desync.arg.fn](ctx, desync)
 end
 
