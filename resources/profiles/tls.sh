@@ -21,11 +21,11 @@
                     --lua-desync=per_instance_condition:instances=2
                         --lua-desync=luaexec:code=desync.qty=math.random(6,11):cond=cond_lua:cond_code=return(desync.hrec.autofakes=="6-11")
                         --lua-desync=luaexec:code=desync.qty=2:cond=cond_lua:cond_code=return(desync.hrec.autofakes=="2")
-                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(not(desync.is_ru)))and(-math.random(500,1500))or(0)
+                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(not(desync.is_ru)))and(-math.random(10000,60000))or(0)
                     --lua-desync=luaexec:code=desync.seq=(desync.ts==0)and(10000000)or(0)
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%ts:tcp_seq=%seq:ip_id=seq:ip_id_conn
                 --lua-desync=per_instance_condition:instances=4
                     --lua-desync=luaexec:code=get_random_splitpos=create_shuffled_bag(array("sld+1","midsld-1","midsld","midsld+1","endsld-1")):cond=cond_lua:cond_code=return(not(get_random_splitpos))
-                    --lua-desync=luaexec:code=desync.splitpos=get_random_splitpos():cond=cond_lua:cond_code=return(not(desync.is_ru))
-                    --lua-desync=multisplit:pos=%splitpos:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(not(desync.is_ru))
-                    --lua-desync=tcpseg:pos=0,-1:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.is_ru)
+                    --lua-desync=luaexec:code=desync.splitpos=resolve_pos(desync.reasm_data,desync.l7payload,get_random_splitpos()):cond=cond_lua:cond_code=return(not(desync.is_ru))
+                    --lua-desync=multisplit:pos=%splitpos:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.splitpos)
+                    --lua-desync=tcpseg:pos=0,-1:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(not(desync.splitpos))
