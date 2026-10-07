@@ -5,14 +5,14 @@
         --out-range=-d10
         --in-range=-d1
             --lua-desync=luaexec:code=desync.hostkey=standard_hostkey(desync):nld=2
-            --lua-desync=mem:get=hrec:set=return(array()):key=%hostkey:ttl=900000:touch
+            --lua-desync=mem:get=hrec:set=return(array()):key=%hostkey:ttl=3600000:touch
             --lua-desync=condition:instances=1:iff=cond_lua:cond_code=return(not(desync.hrec.autofakes))
                 --lua-desync=luaexec:code=desync.hrec.autofakes="6-11"
             --lua-desync=timeout:ms=3000:callback=desync.hrec.autofakes=create_circular_iterator(array("6-11","0","2"))(desync.hrec.autofakes):reset:rst_trigger
         --in-range=x
         --payload=tls_client_hello
             --lua-desync=drop
-            --lua-desync=condition:instances=16:iff=replay_first
+            --lua-desync=condition:instances=15:iff=replay_first
                 --lua-desync=luaexec:code=desync.is_ru=string.match(host_or_ip(desync),"%.ru$")
                 --lua-desync=condition:instances=9:iff=cond_lua:cond_code=return(desync.hrec.autofakes~="0")
                     --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")):ttl=60000
@@ -21,11 +21,10 @@
                     --lua-desync=per_instance_condition:instances=2
                         --lua-desync=luaexec:code=desync.qty=math.random(6,11):cond=cond_lua:cond_code=return(desync.hrec.autofakes=="6-11")
                         --lua-desync=luaexec:code=desync.qty=2:cond=cond_lua:cond_code=return(desync.hrec.autofakes=="2")
-                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(not(desync.is_ru)))and(-math.random(10000,60000))or(0)
+                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(not(desync.is_ru)))and(-math.random(900,1200))or(0)
                     --lua-desync=luaexec:code=desync.seq=(desync.ts==0)and(10000000)or(0)
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%ts:tcp_seq=%seq:ip_id=seq:ip_id_conn
-                --lua-desync=per_instance_condition:instances=4
-                    --lua-desync=luaexec:code=get_random_splitpos=create_shuffled_bag(array("sld+1","midsld-1","midsld","midsld+1","endsld-1")):cond=cond_lua:cond_code=return(not(get_random_splitpos))
-                    --lua-desync=luaexec:code=desync.splitpos=resolve_pos(desync.reasm_data,desync.l7payload,get_random_splitpos()):cond=cond_lua:cond_code=return(not(desync.is_ru))
+                --lua-desync=per_instance_condition:instances=3
+                    --lua-desync=luaexec:code=desync.splitpos=resolve_pos(desync.reasm_data,desync.l7payload,"midsld"):cond=cond_lua:cond_code=return(not(desync.is_ru))
                     --lua-desync=multisplit:pos=%splitpos:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.splitpos)
                     --lua-desync=tcpseg:pos=0,-1:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(not(desync.splitpos))
