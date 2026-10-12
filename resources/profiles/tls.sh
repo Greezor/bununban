@@ -8,7 +8,8 @@
             --lua-desync=mem:get=hrec:set=return(array()):key=%hostkey:ttl=3600000:touch
             --lua-desync=condition:instances=1:iff=cond_lua:cond_code=return(not(desync.hrec.autofakes))
                 --lua-desync=luaexec:code=desync.hrec.autofakes="6-11"
-            --lua-desync=timeout:ms=3000:callback=desync.hrec.autofakes=create_circular_iterator(array("6-11","0","2"))(desync.hrec.autofakes):reset:rst_trigger
+            --lua-desync=timeout:ms=3000:callback=desync.hrec.autofakes=create_circular_iterator(array("6-11","0","2"))(desync.hrec.autofakes):reset
+            --lua-desync=drop_rst:dir=in
         --in-range=x
         --payload=tls_client_hello
             --lua-desync=drop
@@ -21,7 +22,7 @@
                     --lua-desync=per_instance_condition:instances=2
                         --lua-desync=luaexec:code=desync.qty=math.random(6,11):cond=cond_lua:cond_code=return(desync.hrec.autofakes=="6-11")
                         --lua-desync=luaexec:code=desync.qty=2:cond=cond_lua:cond_code=return(desync.hrec.autofakes=="2")
-                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(not(desync.is_ru)))and(-math.random(900,1200))or(0)
+                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(not(desync.is_ru)))and(-math.random(900,998))or(0)
                     --lua-desync=luaexec:code=desync.seq=(desync.ts==0)and(10000000)or(0)
                     --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%ts:tcp_seq=%seq:ip_id=seq:ip_id_conn
                 --lua-desync=per_instance_condition:instances=3

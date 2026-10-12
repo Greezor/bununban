@@ -604,11 +604,7 @@ function timeout(ctx, desync)
                 { desync = desync, timeout = state.timeout }
             )
         else
-            state.timeout.skip = true
-
-            if desync.arg.rst_trigger and is_reset then
-                execf(state.timeout.callback, desync)
-            end
+            state.timeout.skip = not is_reset
         end
     end
 end
@@ -688,3 +684,13 @@ mem = (
         end
     end
 )()
+
+
+
+function drop_rst(ctx, desync)
+    if bitand(desync.dis.tcp.th_flags, TH_RST) ~= 0 then
+        return VERDICT_DROP
+    end
+
+    return VERDICT_PASS
+end
