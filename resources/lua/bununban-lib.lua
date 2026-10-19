@@ -110,6 +110,10 @@ function delayed(fn, ms, data)
         del()
     end
 
+    if ms < 10 then
+        ms = 10
+    end
+
     timer_set(id, id, ms, true, data)
 
     return function()
@@ -125,6 +129,10 @@ function debounced(fn, ms)
 
     _G[id] = function(name, data)
         fn(data)
+    end
+
+    if ms < 10 then
+        ms = 10
     end
 
     return function(arg)
@@ -287,10 +295,36 @@ rndhost = create_shuffled_bag({
     "twitch.tv",
     "ttvnw.net",
     "github.com",
+    "github.io",
     "gitlab.com",
     "npmjs.com",
     "docker.com",
     "vercel.app"
+})
+
+
+
+rndruhost = create_shuffled_bag({
+    "ya.ru",
+    "yandex.net",
+    "yastatic.net",
+    "narod.ru",
+    "yandex.ru",
+    "dzen.ru",
+    "mail.ru",
+    "vk.com",
+    "vk.ru",
+    "userapi.com",
+    "vkvideo.ru",
+    "sberbank.ru",
+    "sber.ru",
+    "cloud.ru",
+    "sbercloud.ru",
+    "avito.ru",
+    "4pda.to",
+    "ozon.ru",
+    "wildberries.ru",
+    "rutube.ru"
 })
 
 
@@ -342,7 +376,7 @@ function memoize(fn, ttl, touch)
             if ttl then
                 state.unmemoize()
             end
-        elseif touch then
+        elseif ttl and touch then
             state.unmemoize()
         end
 
@@ -552,60 +586,67 @@ function timeout(ctx, desync)
         state.timeout.cancel()
     end
 
-    if not state.timeout.skip then
-        if desync.arg.callback and not state.timeout.callback then
-            local fname = desync.func_instance .. "__timeout_callback"
+    if desync.arg.callback and not state.timeout.callback then
+        local fname = desync.func_instance .. "__timeout_callback"
 
-            if not _G[fname] then
-                local fn, err = load(desync.arg.callback, fname)
+        if not _G[fname] then
+            local fn, err = load(desync.arg.callback, fname)
 
-                if not fn then
-                    error(err)
-                end
-
-                _G[fname] = fn
+            if not fn then
+                error(err)
             end
 
-            state.timeout.callback = fname
+            _G[fname] = fn
         end
 
-        if desync.arg.reset and not state.timeout.reset then
+        state.timeout.callback = fname
+    end
+
+    local is_rst = bitand(desync.dis.tcp.th_flags, TH_RST) ~= 0
+    local is_fin = bitand(desync.dis.tcp.th_flags, TH_FIN) ~= 0
+
+    local mode, pos = string.match(desync.arg.cutoff_after or "", "^([ndbsp])(%d+)$")
+    local is_cutoff = mode and pos_get_pos(desync.track.pos.server, mode) > tonumber(pos)
+
+    if is_rst or is_fin or is_cutoff then
+        instance_cutoff_shim(ctx, desync)
+        return
+    end
+
+    if desync.outgoing then
+        if desync.arg.reset then
             local dis = deepcopy(desync.dis)
             dis_reverse(dis)
 
             dis.payload = nil
             dis.tcp.th_flags = TH_RST
-            dis.tcp.th_win = desync.track and desync.track.pos.reverse.tcp.winsize or 64
+            dis.tcp.th_win = desync.track and desync.track.pos.server.tcp.winsize or 64
             dis.tcp.options = nil
 
             if dis.ip6 then
-                dis.ip6.ip6_flow = (desync.track and desync.track.pos.reverse.ip6_flow) and desync.track.pos.reverse.ip6_flow or 0x60000000
+                dis.ip6.ip6_flow = desync.track and desync.track.pos.server.ip6_flow or 0x60000000
             end
 
-            state.timeout.reset = { dis = dis, opts = { ifout = desync.ifin } }
+            if not state.timeout.reset then
+                state.timeout.reset = { opts = { ifout = desync.ifin } }
+            end
+
+            state.timeout.reset.dis = dis
         end
 
-        local is_reset = bitand(desync.dis.tcp.th_flags, TH_RST) ~= 0
+        state.timeout.cancel = delayed(
+            function(data)
+                if data.timeout.callback then
+                    execf(data.timeout.callback, data.desync)
+                end
 
-        if desync.outgoing then
-            if is_reset then return end
-
-            state.timeout.cancel = delayed(
-                function(data)
-                    if data.timeout.callback then
-                        execf(data.timeout.callback, data.desync)
-                    end
-
-                    if data.timeout.reset then
-                        rawsend_dissect(data.timeout.reset.dis, data.timeout.reset.opts)
-                    end
-                end,
-                tonumber(desync.arg.ms) or 3000,
-                { desync = desync, timeout = state.timeout }
-            )
-        else
-            state.timeout.skip = not is_reset
-        end
+                if data.timeout.reset then
+                    rawsend_dissect(data.timeout.reset.dis, data.timeout.reset.opts)
+                end
+            end,
+            tonumber(desync.arg.ms) or 3000,
+            { desync = desync, timeout = state.timeout }
+        )
     end
 end
 
