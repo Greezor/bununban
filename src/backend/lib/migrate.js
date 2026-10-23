@@ -300,4 +300,15 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.15') ){
+		if( addNewResources ){
+			await lists.set('geohide-hosts', { syncUrl: 'https://raw.githubusercontent.com/Internet-Helper/GeoHideDNS/refs/heads/main/hosts/eu/hosts' });
+
+			await settings.set('dns.nameserver', '1.1.1.1');
+			await settings.set('dns.doh-url', 'https://one.one.one.one/dns-query');
+
+			await settings.set('updater.interval', 1000 * 60 * 60 * 3);
+		}
+	}
+
 }
