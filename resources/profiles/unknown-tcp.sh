@@ -3,10 +3,9 @@
     --ipset-exclude={ipset-exclude}
         --out-range=-d1
         --payload=unknown
-            --lua-desync=condition:instances=6:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=5000
-                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(desync.host4fake,true)
+            --lua-desync=condition:instances=5:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
+                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),"."),true)
                 --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                 --lua-desync=luaexec:code=desync.win=(desync.track)and(desync.track.pos.server.tcp.winsize_calc)or(65535)
-                --lua-desync=luaexec:code=desync.badseq=desync.win+65536
+                --lua-desync=luaexec:code=desync.badseq=desync.win*2
                 --lua-desync=fake:blob=fake_tcp_dns:repeats=%qty:tcp_seq=%badseq:payload=~empty
