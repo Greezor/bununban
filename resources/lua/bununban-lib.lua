@@ -565,6 +565,14 @@ function tls_client_hello_mutate(ctx, desync)
                         shuffle(value)
                     end
 
+                elseif func == "clear" and available then
+
+                    if type(value) == "table" then
+                        while #value > 0 do
+                            value[1] = nil
+                        end
+                    end
+
                 end
             end
 
@@ -674,11 +682,7 @@ end
 
 mem = (
     function()
-        local DEF_TTL = 300000
-
-        local mem_cache, mem_set_ttl, mem_set_touch = memoize(function(memkey)
-            return {}
-        end, DEF_TTL)
+        local mem_cache, mem_set_ttl, mem_set_touch = memoize(function(memkey) return {} end)
 
         return function(ctx, desync)
             if not desync.arg.get then
@@ -692,7 +696,7 @@ mem = (
             if desync.arg.ttl then
                 mem_set_ttl(tonumber(desync.arg.ttl))
             else
-                mem_set_ttl(DEF_TTL)
+                mem_set_ttl(nil)
             end
 
             if desync.arg.touch then

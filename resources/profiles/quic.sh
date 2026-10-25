@@ -5,4 +5,5 @@
         --payload=quic_initial
             --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=60000
             --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-            --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%host4fake:repeats=%qty
+            --lua-desync=repeater:instances=1:repeats=%qty
+                --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%host4fake
