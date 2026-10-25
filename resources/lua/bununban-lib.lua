@@ -472,28 +472,17 @@ function tls_client_hello_mutate(ctx, desync)
         end
         
         if desync.l7payload == "tls_client_hello" then
-            local id = desync.arg.blob or "reasm_data"
+            local tdis = tls_dissect(desync.reasm_data or desync.dis.payload)
 
-            if not desync.tls_client_hello_mutate_dissects then desync.tls_client_hello_mutate_dissects = {} end
-            local tdis = desync.tls_client_hello_mutate_dissects[id]
-
-            if not tdis then
-                tdis = tls_dissect(desync[id] or _G[id] or desync.dis.payload)
-
-                local fallback_retry = false
-                while not tdis or not tdis.handshake or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT] do
-                    if desync.arg.fallback and not fallback_retry then
-                        tdis = tls_dissect(blob(desync, desync.arg.fallback))
-                        fallback_retry = true
-                    else
-                        error("tls_client_hello_mutate: could not dissect tls")
-                    end
-                end
-
-                desync.tls_client_hello_mutate_dissects[id] = tdis
+            if desync.arg.fallback and (not tdis or not tdis.handshake or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT] or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis) then
+                tdis = tls_dissect(blob(desync, desync.arg.fallback))
             end
 
-            local reconstruction_needed = true
+            if not tdis then
+                error("tls_client_hello_mutate: could not dissect tls")
+            end
+
+            local reconstruction_needed = false
 
             for op in string.gmatch(desync.arg.ops, "[%w_]+%(.-%)") do
                 local func, args_str = string.match(op, "([%w_]+)%((.-)%)")
@@ -509,27 +498,31 @@ function tls_client_hello_mutate(ctx, desync)
                 if func == "get" then
 
                     desync[args[2]] = value
-                    reconstruction_needed = false
 
                 elseif func == "set" and available then
 
                     target[key] = desync[args[2]] or _G[args[2]]
+                    reconstruction_needed = true
 
                 elseif func == "set_str" and available then
 
                     target[key] = args[2]
+                    reconstruction_needed = true
 
                 elseif func == "set_num" and available then
 
                     target[key] = tonumber(args[2])
+                    reconstruction_needed = true
 
                 elseif func == "set_bool" and available then
 
                     target[key] = args[2] == "true"
+                    reconstruction_needed = true
 
                 elseif func == "set_nil" and available then
 
                     target[key] = nil
+                    reconstruction_needed = true
 
                 elseif func == "rnd" and available then
 
@@ -538,31 +531,38 @@ function tls_client_hello_mutate(ctx, desync)
                     end
 
                     target[key] = brandom(#value)
+                    reconstruction_needed = true
 
                 elseif func == "insert" and available then
 
                     table.insert(target, key, desync[args[2]] or _G[args[2]])
+                    reconstruction_needed = true
 
                 elseif func == "insert_str" and available then
 
                     table.insert(target, key, args[2])
+                    reconstruction_needed = true
 
                 elseif func == "insert_num" and available then
 
                     table.insert(target, key, tonumber(args[2]))
+                    reconstruction_needed = true
 
                 elseif func == "insert_bool" and available then
 
                     table.insert(target, key, args[2] == "true")
+                    reconstruction_needed = true
 
                 elseif func == "remove" and available then
 
                     table.remove(target, key)
+                    reconstruction_needed = true
 
                 elseif func == "shuffle" and available then
 
                     if type(value) == "table" then
                         shuffle(value)
+                        reconstruction_needed = true
                     end
 
                 elseif func == "clear" and available then
@@ -571,6 +571,8 @@ function tls_client_hello_mutate(ctx, desync)
                         while #value > 0 do
                             value[1] = nil
                         end
+
+                        reconstruction_needed = true
                     end
 
                 end

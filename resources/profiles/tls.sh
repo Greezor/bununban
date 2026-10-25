@@ -29,7 +29,7 @@
                         --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(desync.server_has_ts)and(not(desync.is_ru)))and(-math.random(890,950))or(0)
                         --lua-desync=luaexec:code=desync.badseq=(desync.ts==0)and(desync.win*2)or(0)
                         --lua-desync=fake:blob=fake_clienthello:tcp_ts=%ts:tcp_seq=%badseq:ip_id=seq:ip_id_conn
-                    --lua-desync=luaexec:code=last_fake_clienthello=fake_clienthello
+                    --lua-desync=luaexec:code=last_fake_clienthello=desync.fake_clienthello
                 --lua-desync=per_instance_condition:instances=3
                     --lua-desync=luaexec:code=desync.splitpos=resolve_pos(desync.reasm_data,desync.l7payload,"midsld"):cond=cond_lua:cond_code=return(not(desync.is_ru))
                     --lua-desync=multisplit:pos=%splitpos:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.splitpos)
