@@ -1,10 +1,11 @@
 --filter-tcp=*
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
-        --out-range=-d1
+        --out-range=-d10
         --payload=unknown
-            --lua-desync=condition:instances=5:iff=cond_lua:cond_code=return(payload_match_filter(desync.l7payload,"~empty"))
-                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),"."),true)
+            --lua-desync=condition:instances=6:iff=cond_lua:cond_code=return(len(desync.dis.payload)>0)
+                --lua-desync=luaexec:code=desync.domain=table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")
+                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(desync.domain,true)
                 --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                 --lua-desync=luaexec:code=desync.win=(desync.track)and(desync.track.pos.server.tcp.winsize_calc)or(65535)
                 --lua-desync=luaexec:code=desync.badseq=desync.win*2

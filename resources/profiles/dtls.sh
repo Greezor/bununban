@@ -2,7 +2,8 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=dtls_client_hello
-            --lua-desync=mem:get=host4fake:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=60000
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")):ttl=60000:touch
             --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-            --lua-desync=repeater:instances=1:repeats=%qty
-                --lua-desync=quic_fake:blob=quic_initial_www_google_com:quic_mod=rndcid,rnd,sni=%host4fake
+            --lua-desync=repeater:instances=2:repeats=%qty
+                --lua-desync=luaexec:code=desync.fake_quic_initial=(last_fake_quic_initial)or(blob(desync,"quic_initial_www_google_com"))
+                --lua-desync=quic_fake:blob=fake_quic_initial:quic_mod=rndcid,rnd,sni=%fakehost:max_udp=1200

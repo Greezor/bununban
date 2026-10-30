@@ -37,10 +37,12 @@ end
 
 
 function arange(start, stop, step)
-    local a = {}
+    local a = {start}
+    step = step or 1
 
-    for i = start, stop, (step or 1) do
-        table.insert(a, i)
+    while start < stop do
+        start = start + step
+        table.insert(a, start)
     end
 
     return a
@@ -50,6 +52,12 @@ end
 
 function array(...)
     return {...}
+end
+
+
+
+function len(v)
+    return #v
 end
 
 
@@ -458,136 +466,127 @@ end
 
 
 function tls_client_hello_mutate(ctx, desync)
-    if not desync.dis.tcp then
-        -- do not cutoff on related icmp
-        if not desync.dis.icmp then instance_cutoff_shim(ctx, desync) end
-        return
+    if not direction_check(desync) then return end
+
+    if not desync.arg.ops then
+        error("tls_client_hello_mutate: 'ops' arg required")
+    end
+    
+    local tdis = tls_dissect(desync[desync.arg.copy] or _G[desync.arg.copy] or desync.reasm_data or desync.dis.payload)
+
+    if desync.arg.fallback and (not tdis or not tdis.handshake or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT] or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis) then
+        tdis = tls_dissect(blob(desync, desync.arg.fallback))
     end
 
-    direction_cutoff_opposite(ctx, desync)
+    if not tdis then
+        if desync.arg.optional then return end
+        error("tls_client_hello_mutate: could not dissect tls")
+    end
 
-    if direction_check(desync) then
-        if not desync.arg.ops then
-            error("tls_client_hello_mutate: 'ops' arg required")
+    local reconstruction_needed = false
+
+    for op in string.gmatch(desync.arg.ops, "[%w_]+%(.-%)") do
+        local func, args_str = string.match(op, "([%w_]+)%((.-)%)")
+
+        local args = {}
+        for arg in string.gmatch(args_str, "[^,]+") do
+            table.insert(args, arg)
         end
-        
-        if desync.l7payload == "tls_client_hello" then
-            local tdis = tls_dissect(desync.reasm_data or desync.dis.payload)
 
-            if desync.arg.fallback and (not tdis or not tdis.handshake or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT] or not tdis.handshake[TLS_HANDSHAKE_TYPE_CLIENT].dis) then
-                tdis = tls_dissect(blob(desync, desync.arg.fallback))
+        local value, target, key = get_by_path(tdis, args[1])
+        local available = target and key
+
+        if func == "get" then
+
+            desync[args[2]] = value
+
+        elseif func == "set" and available then
+
+            target[key] = desync[args[2]] or _G[args[2]]
+            reconstruction_needed = true
+
+        elseif func == "set_str" and available then
+
+            target[key] = args[2]
+            reconstruction_needed = true
+
+        elseif func == "set_num" and available then
+
+            target[key] = tonumber(args[2])
+            reconstruction_needed = true
+
+        elseif func == "set_bool" and available then
+
+            target[key] = args[2] == "true"
+            reconstruction_needed = true
+
+        elseif func == "set_nil" and available then
+
+            target[key] = nil
+            reconstruction_needed = true
+
+        elseif func == "rnd" and available then
+
+            if type(value) ~= "string" then
+                error("tls_client_hello_mutate: rnd: target must be a string")
             end
 
-            if not tdis then
-                error("tls_client_hello_mutate: could not dissect tls")
+            target[key] = brandom(#value)
+            reconstruction_needed = true
+
+        elseif func == "insert" and available then
+
+            table.insert(target, key, desync[args[2]] or _G[args[2]])
+            reconstruction_needed = true
+
+        elseif func == "insert_str" and available then
+
+            table.insert(target, key, args[2])
+            reconstruction_needed = true
+
+        elseif func == "insert_num" and available then
+
+            table.insert(target, key, tonumber(args[2]))
+            reconstruction_needed = true
+
+        elseif func == "insert_bool" and available then
+
+            table.insert(target, key, args[2] == "true")
+            reconstruction_needed = true
+
+        elseif func == "remove" and available then
+
+            table.remove(target, key)
+            reconstruction_needed = true
+
+        elseif func == "shuffle" and available then
+
+            if type(value) == "table" then
+                shuffle(value)
+                reconstruction_needed = true
             end
 
-            local reconstruction_needed = false
+        elseif func == "clear" and available then
 
-            for op in string.gmatch(desync.arg.ops, "[%w_]+%(.-%)") do
-                local func, args_str = string.match(op, "([%w_]+)%((.-)%)")
-
-                local args = {}
-                for arg in string.gmatch(args_str, "[^,]+") do
-                    table.insert(args, arg)
+            if type(value) == "table" then
+                while #value > 0 do
+                    value[1] = nil
                 end
 
-                local value, target, key = get_by_path(tdis, args[1])
-                local available = target and key
-
-                if func == "get" then
-
-                    desync[args[2]] = value
-
-                elseif func == "set" and available then
-
-                    target[key] = desync[args[2]] or _G[args[2]]
-                    reconstruction_needed = true
-
-                elseif func == "set_str" and available then
-
-                    target[key] = args[2]
-                    reconstruction_needed = true
-
-                elseif func == "set_num" and available then
-
-                    target[key] = tonumber(args[2])
-                    reconstruction_needed = true
-
-                elseif func == "set_bool" and available then
-
-                    target[key] = args[2] == "true"
-                    reconstruction_needed = true
-
-                elseif func == "set_nil" and available then
-
-                    target[key] = nil
-                    reconstruction_needed = true
-
-                elseif func == "rnd" and available then
-
-                    if type(value) ~= "string" then
-                        error("tls_client_hello_mutate: rnd: target must be a string")
-                    end
-
-                    target[key] = brandom(#value)
-                    reconstruction_needed = true
-
-                elseif func == "insert" and available then
-
-                    table.insert(target, key, desync[args[2]] or _G[args[2]])
-                    reconstruction_needed = true
-
-                elseif func == "insert_str" and available then
-
-                    table.insert(target, key, args[2])
-                    reconstruction_needed = true
-
-                elseif func == "insert_num" and available then
-
-                    table.insert(target, key, tonumber(args[2]))
-                    reconstruction_needed = true
-
-                elseif func == "insert_bool" and available then
-
-                    table.insert(target, key, args[2] == "true")
-                    reconstruction_needed = true
-
-                elseif func == "remove" and available then
-
-                    table.remove(target, key)
-                    reconstruction_needed = true
-
-                elseif func == "shuffle" and available then
-
-                    if type(value) == "table" then
-                        shuffle(value)
-                        reconstruction_needed = true
-                    end
-
-                elseif func == "clear" and available then
-
-                    if type(value) == "table" then
-                        while #value > 0 do
-                            value[1] = nil
-                        end
-
-                        reconstruction_needed = true
-                    end
-
-                end
+                reconstruction_needed = true
             end
 
-            if reconstruction_needed and desync.arg.blob then
-                local fake = tls_reconstruct(tdis)
-
-                if not fake then
-                    error("tls_client_hello_mutate: reconstruct error")
-                end
-
-                desync[desync.arg.blob] = fake
-            end
         end
+    end
+
+    if reconstruction_needed and desync.arg.blob then
+        local fake = tls_reconstruct(tdis)
+
+        if not fake then
+            error("tls_client_hello_mutate: reconstruct error")
+        end
+
+        desync[desync.arg.blob] = fake
     end
 end
 

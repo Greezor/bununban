@@ -13,6 +13,22 @@
 --     dupsid          - скопировать session_id из payload
 --
 -- длина датаграммы сохраняется
+--
+-- quic_pack_initials(hello, template, max_udp)
+--   hello    - TLS ClientHello (handshake без record layer), как desync.decrypt_data
+--   template - QUIC Initial, шаблон ver/DCID/SCID/token/PN
+--   max_udp  - размер каждой датаграммы, по умолчанию и минимум 1200
+--   возвращает массив UDP payload
+--
+-- quic_unpack / quic_repack — desync-функции, аргументы blob и data
+--   blob — QUIC Initial (имя блоба, глобал или 0xHEX)
+--   data — TLS ClientHello, формат desync.decrypt_data
+--          unpack: имя глобала, куда записать hello
+--          repack: имя блоба/глобала или 0xHEX с hello (в т.ч. decrypt_data)
+--
+-- --lua-desync=quic_unpack:blob=quic_google:data=hello
+-- --lua-desync=quic_repack:blob=quic_google:data=hello
+-- --lua-desync=quic_repack:blob=quic_google:data=decrypt_data
 
 local function hmac_sha256(key, data)
 	if #key > 64 then key = hash("sha256", key) end
@@ -197,6 +213,132 @@ local function encrypt_initial(hdr, up, keys, dcid, scid, plain)
 	return b1 .. string.sub(packet, 2, pn_off - 1) .. table.concat(pnprot) .. string.sub(packet, pn_off + up.pn_len)
 end
 
+local function varint_len_of(v)
+	return #bquic_tvb(v)
+end
+
+local function pn_bytes(pn, pn_len)
+	local t, n = {}, pn
+	for i = pn_len, 1, -1 do
+		t[i] = n % 256
+		n = math.floor(n / 256)
+	end
+	return string.char(unpack(t))
+end
+
+local function header_prefix_len(hdr)
+	return 1 + 4 + 1 + #hdr.dcid + 1 + #hdr.scid
+		+ varint_len_of(#hdr.token) + #hdr.token
+end
+
+-- сколько байт plaintext влезает в UDP payload ровно target байт
+local function plain_for_udp(hdr, pn_len, target)
+	local prefix = header_prefix_len(hdr)
+	for _, vlen in ipairs({2, 1, 4}) do
+		local plain = target - prefix - vlen - pn_len - 16
+		if plain > 0 then
+			local length = pn_len + plain + 16
+			if varint_len_of(length) == vlen then
+				return plain
+			end
+		end
+	end
+end
+
+local function datagram_size(hdr, pn_len, plain_len)
+	local length = pn_len + plain_len + 16
+	return header_prefix_len(hdr) + varint_len_of(length) + length
+end
+
+local function crypto_room(plain_len, off, remain)
+	local data = remain
+	if data > plain_len - 4 then data = plain_len - 4 end
+	while data > 0 do
+		local fr = 1 + varint_len_of(off) + varint_len_of(data) + data
+		if fr <= plain_len then return data end
+		data = data - 1
+	end
+	return 0
+end
+
+-- hello: TLS ClientHello (handshake без record layer), как desync.decrypt_data
+-- template: QUIC Initial (шаблон DCID/SCID/token/PN)
+-- max_udp: размер UDP payload, по умолчанию 1200 (и минимум по RFC тоже 1200)
+-- возвращает массив UDP payload
+function quic_pack_initials(hello, template, max_udp)
+	max_udp = max_udp or 1200
+	if max_udp < 1200 then max_udp = 1200 end
+	if not hello or #hello == 0 then return nil, "empty hello" end
+
+	local hdr, err = parse_initial(template)
+	if not hdr then return nil, err end
+	local keys = initial_keys(hdr.dcid, hdr.ver)
+	local up, err2 = decrypt_initial(template, hdr, keys)
+	if not up then return nil, err2 end
+
+	local pn = up.pn
+	local pn_len = up.pn_len
+	local off = 0
+	local pkts = {}
+
+	while off < #hello do
+		while pn >= 256 ^ pn_len and pn_len < 4 do pn_len = pn_len + 1 end
+		local plain_len = plain_for_udp(hdr, pn_len, max_udp)
+		if not plain_len then return nil, "header does not fit into "..max_udp end
+		local remain = #hello - off
+		local n = crypto_room(plain_len, off, remain)
+		if n < 1 then return nil, "no room for CRYPTO" end
+		local frame = "\6" .. bquic_tvb(off) .. bquic_tvb(n) .. string.sub(hello, off + 1, off + n)
+		local plain = frame .. string.rep("\0", plain_len - #frame)
+		local piece = {
+			first = up.first,
+			pn = pn,
+			pn_len = pn_len,
+			pn_raw = pn_bytes(pn, pn_len),
+		}
+		local pkt, e2 = encrypt_initial(hdr, piece, keys, hdr.dcid, hdr.scid, plain)
+		if not pkt then return nil, e2 end
+		pkts[#pkts + 1] = pkt
+		off = off + n
+		pn = pn + 1
+	end
+	return pkts
+end
+
+-- blob: TLS ClientHello (handshake без record layer), как desync.decrypt_data
+-- template: QUIC Initial, откуда берутся ver/DCID/SCID/token/PN и initial-ключи
+-- один UDP payload со всем hello, без дробления. датаграмма не короче 1200
+local function quic_pack_single(blob, template)
+	if not blob or #blob == 0 then return nil, "empty hello" end
+	if not template or #template == 0 then return nil, "template required" end
+	local hdr, err = parse_initial(template)
+	if not hdr then return nil, err end
+	local keys = initial_keys(hdr.dcid, hdr.ver)
+	local up, err2 = decrypt_initial(template, hdr, keys)
+	if not up then return nil, err2 end
+
+	local pn_len = up.pn_len
+	local pn = up.pn
+	while pn >= 256 ^ pn_len and pn_len < 4 do pn_len = pn_len + 1 end
+
+	local frame = "\6" .. bquic_tvb(0) .. bquic_tvb(#blob) .. blob
+	local plain_len = #frame
+	while datagram_size(hdr, pn_len, plain_len) < 1200 do
+		plain_len = plain_len + 1
+	end
+	local plain = frame
+	if plain_len > #frame then
+		plain = frame .. string.rep("\0", plain_len - #frame)
+	end
+	local piece = {
+		first = up.first,
+		pn = pn,
+		pn_len = pn_len,
+		pn_raw = pn_bytes(pn, pn_len),
+	}
+	return encrypt_initial(hdr, piece, keys, hdr.dcid, hdr.scid, plain)
+end
+
 local function crypto_stream(plain)
 	local i, pieces, min_off, rest = 1, {}, nil, {}
 	while i <= #plain do
@@ -235,6 +377,17 @@ local function crypto_stream(plain)
 		end
 	end
 	return table.concat(buf), min_off or 0, table.concat(rest)
+end
+
+local function quic_initial_crypto(pkt)
+	local hdr, err = parse_initial(pkt)
+	if not hdr then return nil, err end
+	local keys = initial_keys(hdr.dcid, hdr.ver)
+	local up, err2 = decrypt_initial(pkt, hdr, keys)
+	if not up then return nil, err2 end
+	local stream, err3 = crypto_stream(up.plain)
+	if not stream then return nil, err3 end
+	return stream
 end
 
 local function wrap_tls_record(hs)
@@ -335,8 +488,52 @@ function quic_mod_shim(desync, blob, modlist, payload)
 	return quic_mod(blob, modlist, payload)
 end
 
+-- вытащить TLS ClientHello (как desync.decrypt_data) из QUIC Initial-блоба в глобал data
+-- --lua-desync=quic_unpack:blob=quic_google:data=hello
+function quic_unpack(ctx, desync)
+	if not (direction_check(desync) and payload_check(desync)) then return end
+	if not desync.arg.blob then error("quic_unpack: blob arg required") end
+	if not desync.arg.data then error("quic_unpack: data arg required") end
+	local name = desync.arg.data
+	if not string.match(name, "^[%a_][%w_]*$") then
+		error("quic_unpack: data must be a variable name, got " .. name)
+	end
+	local pkt = blob(desync, desync.arg.blob)
+	local hello, err = quic_initial_crypto(pkt)
+	if not hello then
+		DLOG("quic_unpack: " .. tostring(err))
+		return
+	end
+	desync[name] = hello
+	DLOG("quic_unpack: " .. name .. " " .. #hello)
+end
+
+-- один цельный QUIC Initial из TLS ClientHello (data) и шаблона (blob), оригинал не дропается
+-- --lua-desync=quic_repack:blob=quic_google:data=hello
+-- --lua-desync=quic_repack:blob=quic_google:data=decrypt_data
+function quic_repack(ctx, desync)
+	if not (direction_check(desync) and payload_check(desync)) then return end
+	if not desync.arg.blob then error("quic_repack: blob arg required") end
+	if not desync.arg.data then
+        if desync.arg.optional then return end
+        error("quic_repack: data arg required")
+    end
+	local template = blob_or_def(desync, desync.arg.template, desync.dis.payload)
+	local hello = desync[desync.arg.data] or _G[desync.arg.data]
+	local pkt, err = quic_pack_single(hello, template)
+	if not pkt then
+		DLOG("quic_repack: " .. tostring(err))
+		return
+	end
+	DLOG("quic_repack: " .. #pkt .. " bytes, hello " .. #hello)
+	if b_debug then DLOG("quic_repack: " .. hexdump_dlog(pkt)) end
+	desync[desync.arg.blob] = pkt
+end
+
 -- fake для QUIC: как fake(), но с quic_mod
 -- --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,rndsni:repeats=11
+-- дробить блоб на несколько QUIC Initial (quic_pack_initials), max_udp — размер датаграммы:
+-- --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,rndsni:max_udp=1200:repeats=11
 function quic_fake(ctx, desync)
 	direction_cutoff_opposite(ctx, desync)
 	if desync.dis.udp and direction_check(desync) and payload_check(desync) then
@@ -353,6 +550,24 @@ function quic_fake(ctx, desync)
 					fake_payload = pl
 				else
 					DLOG("quic_fake: quic_mod failed, sending raw blob")
+				end
+			end
+			if desync.arg.max_udp then
+				local max_udp = tonumber(desync.arg.max_udp) or 1200
+				local hello, herr = quic_initial_crypto(fake_payload)
+				local pkts, perr
+				if hello then
+					pkts, perr = quic_pack_initials(hello, fake_payload, max_udp)
+				end
+				if not pkts then
+					DLOG("quic_fake: split failed: " .. tostring(herr or perr) .. ", sending raw blob")
+				else
+					DLOG("quic_fake: " .. #pkts .. " datagrams, hello " .. #hello)
+					for _, p in ipairs(pkts) do
+						if b_debug then DLOG("quic_fake: " .. hexdump_dlog(p)) end
+						rawsend_payload_segmented(desync, p)
+					end
+					return
 				end
 			end
 			if b_debug then DLOG("quic_fake: " .. hexdump_dlog(fake_payload)) end
