@@ -30,6 +30,8 @@ export default class HostsResolver{
 			return ip;
 		}
 
+		const wildcard = '*.' + domain.split('.').slice(-2).join('.');
+
 		for(const hosts of this.#hosts){
 			if( !( await hosts.exists() ) )
 				continue;
@@ -40,7 +42,7 @@ export default class HostsResolver{
 			let prev = '';
 
 			for await (const chunk of stream.pipeThrough(decoder)){
-				const match = ( prev + chunk ).match(new RegExp(`^(\\d+.\\d+.\\d+.\\d+)\\s+(${ domain })(\\s+|)(#.*?|)$`, 'm'));
+				const match = ( prev + chunk ).match(new RegExp(`^(\\d+.\\d+.\\d+.\\d+)\\s+(${ RegExp.escape(domain) }|${ RegExp.escape(wildcard) })(\\s+|)(#.*?|)$`, 'm'));
 
 				prev = chunk;
 
