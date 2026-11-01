@@ -3,10 +3,11 @@
     --ipset-exclude={ipset-exclude}
         --out-range=-d10
         --payload=unknown
-            --lua-desync=condition:instances=6:iff=cond_lua:cond_code=return(len(desync.dis.payload)>0)
-                --lua-desync=luaexec:code=desync.domain=table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")
-                --lua-desync=luaexec:code=desync.fake_tcp_dns=create_fake_dns(desync.domain,true)
+            --lua-desync=condition:instances=7:iff=cond_lua:cond_code=return(len(desync.dis.payload)>0)
                 --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                 --lua-desync=luaexec:code=desync.win=(desync.track)and(desync.track.pos.server.tcp.winsize_calc)or(65535)
                 --lua-desync=luaexec:code=desync.badseq=desync.win*2
-                --lua-desync=fake:blob=fake_tcp_dns:repeats=%qty:tcp_seq=%badseq:payload=~empty
+                --lua-desync=repeater:instances=3:repeats=%qty
+                    --lua-desync=luaexec:code=desync.domain=table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")
+                    --lua-desync=luaexec:code=desync.fakedns=create_fake_dns(desync.domain,true)
+                    --lua-desync=fake:blob=fakedns:tcp_seq=%badseq:payload=~empty
