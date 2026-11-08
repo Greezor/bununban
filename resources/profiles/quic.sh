@@ -4,7 +4,7 @@
     --ipset-exclude={ipset-exclude}
         --payload=quic_initial
             --lua-desync=condition:instances=9:iff=replay_first
-                --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")):ttl=60000:touch
+                --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=60000:touch
                 --lua-desync=luaexec:code=desync.qty=math.random(6,11)
                 --lua-desync=luaexec:code=desync.fakesni=create_sni_ext(desync.fakehost)
                 --lua-desync=repeater:instances=4:repeats=%qty

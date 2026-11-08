@@ -4,6 +4,6 @@
         --payload=discord_ip_discovery
             --lua-desync=luaexec:code=desync.qty=math.random(6,11)
             --lua-desync=repeater:instances=3:repeats=%qty
-                --lua-desync=luaexec:code=desync.domain=table.concat(array(genphrase(math.random(3,5),"-"),rndhost()),".")
+                --lua-desync=luaexec:code=desync.domain=table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")
                 --lua-desync=luaexec:code=desync.fakedns=create_fake_dns(desync.domain)
                 --lua-desync=fake:blob=fakedns

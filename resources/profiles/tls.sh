@@ -7,14 +7,13 @@
             --lua-desync=luaexec:code=desync.host=standard_hostkey(desync):nld=2
             --lua-desync=mem:get=hrec:set=return(array()):key=%host:ttl=86400000:touch
             --lua-desync=luaexec:code=desync.is_ru=string.match(desync.host,"%.[rs]u$")or(string.match(desync.host,"%.рф$"))
-            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(3,5),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=60000:touch
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=60000:touch
             --lua-desync=luaexec:code=desync.win=(desync.track)and(desync.track.pos.server.tcp.winsize_calc)or(65535)
             --lua-desync=luaexec:code=desync.server_has_ts=cond_tcp_has_ts(desync):dir=in
-            --lua-desync=per_instance_condition:instances=3
+            --lua-desync=per_instance_condition:instances=2
                 --lua-desync=luaexec:code=desync.hrec.faking=not(desync.is_ru):cond=cond_lua:cond_code=return(desync.hrec.faking==nil)
                 --lua-desync=luaexec:code=last_fake_clienthello=blob(desync,"tls_clienthello_www_google_com"):cond=cond_lua:cond_code=return(not(last_fake_clienthello))
-                --lua-desync=luaexec:code=desync.track.lua_state.qty=math.random(6,11):cond=cond_lua:cond_code=return((desync.track)and(not(desync.track.lua_state.qty)))
-            --lua-desync=luaexec:code=desync.qty=desync.track.lua_state.qty
+            --lua-desync=luaexec:code=desync.qty=math.random(6,11)
             --lua-desync=syndata:blob=last_fake_clienthello:tls_mod=rnd,sni=%fakehost:repeats=%qty:dir=out
             --lua-desync=timeout:ms=3000:callback=desync.hrec.faking=not(desync.hrec.faking):reset:cutoff_after=d3
             --lua-desync=drop_rst:dir=in
