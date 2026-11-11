@@ -318,4 +318,20 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.17') ){
+		if( addNewResources ){
+			await lists.delete('geohide-hosts');
+			await lists.set('bypass-hosts', { syncUrl: 'https://raw.githubusercontent.com/ImMALWARE/dns.malw.link/refs/heads/master/hosts' });
+			await settings.set('dns.hosts', (
+				( await settings.get('dns.hosts') )
+					.map(hosts => hosts === 'geohide-hosts' ? 'bypass-hosts' : hosts)
+			));
+
+			await blobs.delete('tls_clienthello_www_google_com');
+			await blobs.delete('quic_initial_www_google_com');
+			await blobs.set('tls_google', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/fakes/tls_google.bin' });
+			await blobs.set('quic_google', { active: true, syncUrl: 'https://raw.githubusercontent.com/bol-van/zapret2/refs/heads/master/files/fake/quic_initial_www_google_com.bin' });
+		}
+	}
+
 }
