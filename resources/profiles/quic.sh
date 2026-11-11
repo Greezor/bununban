@@ -3,13 +3,9 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=quic_initial
-            --lua-desync=condition:instances=9:iff=replay_first
-                --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=60000:touch
-                --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-                --lua-desync=luaexec:code=desync.fakesni=create_sni_ext(desync.fakehost)
-                --lua-desync=repeater:instances=4:repeats=%qty
-                    --lua-desync=luaexec:code=desync.fake_quic_initial=(last_fake_quic_initial)or(blob(desync,"quic_initial_www_google_com"))
-                    --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:copy=decrypt_data:optional:ops=rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.ext.[name=encrypted_client_hello]),remove(handshake.[1].dis.ext.[name=server_name]),insert(handshake.[1].dis.ext.[1],fakesni),shuffle(handshake.[1].dis.ext)
-                    --lua-desync=quic_repack:blob=fake_quic_initial:data=fake_clienthello:optional
-                    --lua-desync=quic_fake:blob=fake_quic_initial:quic_mod=rndcid:max_udp=1200
-                --lua-desync=luaexec:code=last_fake_quic_initial=desync.fake_quic_initial
+            --lua-desync=luaexec:code=desync.host=standard_hostkey(desync):nld=2
+            --lua-desync=luaexec:code=desync.is_ru=string.match(desync.host,"%.[rs]u$")or(string.match(desync.host,"%.рф$"))
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=3000
+            --lua-desync=mem:get=quic:set=return(map("qty",create_shuffled_bag(arange(6,18)))):ttl=60000:touch
+            --lua-desync=luaexec:code=desync.qty=desync.quic.qty()
+            --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,sni=%fakehost:repeats=%qty

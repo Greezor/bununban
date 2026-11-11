@@ -3,32 +3,38 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --out-range=-d10
-        --in-range=-d3
+        --in-range=-d10
             --lua-desync=luaexec:code=desync.host=standard_hostkey(desync):nld=2
-            --lua-desync=mem:get=hrec:set=return(array()):key=%host:ttl=86400000:touch
             --lua-desync=luaexec:code=desync.is_ru=string.match(desync.host,"%.[rs]u$")or(string.match(desync.host,"%.рф$"))
-            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=60000:touch
-            --lua-desync=luaexec:code=desync.win=(desync.track)and(desync.track.pos.server.tcp.winsize_calc)or(65535)
+            --lua-desync=luaexec:code=desync.tcpwin=(desync.track)and(desync.track.pos.server.tcp.winsize_calc)or(65535)
             --lua-desync=luaexec:code=desync.server_has_ts=cond_tcp_has_ts(desync):dir=in
-            --lua-desync=per_instance_condition:instances=2
-                --lua-desync=luaexec:code=desync.hrec.faking=not(desync.is_ru):cond=cond_lua:cond_code=return(desync.hrec.faking==nil)
-                --lua-desync=luaexec:code=last_fake_clienthello=blob(desync,"tls_clienthello_www_google_com"):cond=cond_lua:cond_code=return(not(last_fake_clienthello))
-            --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-            --lua-desync=syndata:blob=last_fake_clienthello:tls_mod=rnd,sni=%fakehost:repeats=%qty:dir=out
-            --lua-desync=timeout:ms=3000:callback=desync.hrec.faking=not(desync.hrec.faking):reset:cutoff_after=d3
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=3000
+            --lua-desync=mem:get=tls:set=return(map("faking",not(desync.is_ru),"qty",create_shuffled_bag(arange(6,11)),"ts",math.random(-890,-1200))):key=%host:ttl=60000:touch
+            --lua-desync=luaexec:code=desync.qty=desync.tls.qty()
+            --lua-desync=condition:instances=1:iff=cond_lua:cond_code=return(not(fake_clienthello))
+                --lua-desync=luaexec:code=fake_clienthello=blob(desync,"tls_google")
+            --lua-desync=syndata:blob=fake_clienthello:tls_mod=rnd,sni=%fakehost:repeats=%qty:dir=out
+            --lua-desync=timeout:ms=3000:callback=desync.tls.faking=not(desync.tls.faking):reset:cutoff_after=d10
             --lua-desync=drop_rst:dir=in
         --in-range=x
         --payload=tls_client_hello
             --lua-desync=drop
-            --lua-desync=condition:instances=12:iff=replay_first
-                --lua-desync=condition:instances=7:iff=cond_lua:cond_code=return(desync.hrec.faking)
+            --lua-desync=condition:instances=19:iff=replay_first
+                --lua-desync=condition:instances=14:iff=cond_lua:cond_code=return(desync.tls.faking)
                     --lua-desync=luaexec:code=desync.fakesni=create_sni_ext(desync.fakehost)
-                    --lua-desync=repeater:instances=4:repeats=%qty
-                        --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:fallback=last_fake_clienthello:ops=rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.ext.[name=encrypted_client_hello]),remove(handshake.[1].dis.ext.[name=server_name]),insert(handshake.[1].dis.ext.[1],fakesni),shuffle(handshake.[1].dis.ext)
-                        --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(desync.server_has_ts)and(not(desync.is_ru)))and(-math.random(890,950))or(0)
-                        --lua-desync=luaexec:code=desync.badseq=(desync.ts==0)and(desync.win*2)or(0)
-                        --lua-desync=fake:blob=fake_clienthello:tcp_ts=%ts:tcp_seq=%badseq:ip_id=seq:ip_id_conn
-                    --lua-desync=luaexec:code=last_fake_clienthello=desync.fake_clienthello
+                    --lua-desync=luaexec:code=desync.grease1=rnd_grease()
+                    --lua-desync=luaexec:code=desync.grease2=rnd_grease()
+                    --lua-desync=luaexec:code=desync.grease3=rnd_grease()
+                    --lua-desync=luaexec:code=desync.grease4=rnd_grease()
+                    --lua-desync=luaexec:code=desync.grease_key1=map("group",rnd_grease(),"kex","\x00")
+                    --lua-desync=luaexec:code=desync.grease_ext1=map("type",rnd_grease(),"data","")
+                    --lua-desync=luaexec:code=desync.grease_ext2=map("type",rnd_grease(),"data","\x00")
+                    --lua-desync=tls_client_hello_mutate:blob=fake_clienthello:copy=fake_clienthello:ops=rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),remove(handshake.[1].dis.cipher_suites.[=is_grease]),insert(handshake.[1].dis.cipher_suites.[1],grease1),remove(handshake.[1].dis.ext.[name="supported_groups"].dis.list.[=is_grease]),insert(handshake.[1].dis.ext.[name="supported_groups"].dis.list.[1],grease2),remove(handshake.[1].dis.ext.[name="supported_versions"].dis.list.[=is_grease]),insert(handshake.[1].dis.ext.[name="supported_versions"].dis.list.[1],grease3),remove(handshake.[1].dis.ext.[name="signature_algorithms"].dis.list.[=is_grease]),insert(handshake.[1].dis.ext.[name="signature_algorithms"].dis.list.[1],grease4),remove(handshake.[1].dis.ext.[name="key_share"].dis.list.[group=is_grease]),insert(handshake.[1].dis.ext.[name="key_share"].dis.list.[1],grease_key1),remove(handshake.[1].dis.ext.[type=is_grease]),insert(handshake.[1].dis.ext.[1],grease_ext1),insert(handshake.[1].dis.ext.[],grease_ext2),remove(handshake.[1].dis.ext.[name="encrypted_client_hello"]),remove(handshake.[1].dis.ext.[name="encrypted_server_name"]),remove(handshake.[1].dis.ext.[name="server_name"]),insert(handshake.[1].dis.ext.[1],fakesni),shuffle(handshake.[1].dis.ext)
+                    --lua-desync=luaexec:code=fake_clienthello=desync.fake_clienthello
+                    --lua-desync=luaexec:code=desync.tls.ts=clamp(desync.tls.ts+math.random(-10,10),-890,-1200)
+                    --lua-desync=luaexec:code=desync.ts=(cond_tcp_has_ts(desync)and(desync.server_has_ts)and(not(desync.is_ru)))and(desync.tls.ts)or(0)
+                    --lua-desync=luaexec:code=desync.badseq=(desync.ts==0)and(desync.tcpwin*2)or(0)
+                    --lua-desync=fake:blob=fake_clienthello:repeats=%qty:tcp_ts=%ts:tcp_seq=%badseq:ip_id=seq:ip_id_conn
                 --lua-desync=per_instance_condition:instances=3
                     --lua-desync=luaexec:code=desync.splitpos=resolve_pos(desync.reasm_data,desync.l7payload,"midsld"):cond=cond_lua:cond_code=return(not(desync.is_ru))
                     --lua-desync=multisplit:pos=%splitpos:ip_id=seq:ip_id_conn:cond=cond_lua:cond_code=return(desync.splitpos)

@@ -2,8 +2,7 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=discord_ip_discovery
-            --lua-desync=luaexec:code=desync.qty=math.random(6,11)
-            --lua-desync=repeater:instances=3:repeats=%qty
-                --lua-desync=luaexec:code=desync.domain=table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")
-                --lua-desync=luaexec:code=desync.fakedns=create_fake_dns(desync.domain)
-                --lua-desync=fake:blob=fakedns
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=3000
+            --lua-desync=mem:get=discord:set=return(map("qty",create_shuffled_bag(arange(6,18)))):ttl=60000:touch
+            --lua-desync=luaexec:code=desync.qty=desync.discord.qty()
+            --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,sni=%fakehost:repeats=%qty

@@ -56,14 +56,70 @@ end
 
 
 
+function map(...)
+    local m = {}
+
+    local n = select("#", ...)
+    for i = 1, n, 2 do
+        local key = select(i, ...)
+        local val = select(i + 1, ...)
+
+        m[key] = val
+    end
+
+    return m
+end
+
+
+
 function len(v)
     return #v
 end
 
 
 
+function clamp(val, min, max)
+    return math.max(min, math.min(max, val))
+end
+
+
+
+local greases = (
+    function()
+        local g = { 2570, 6666, 10762, 14858, 18954, 23050, 27146, 31242, 35338, 39434, 43530, 47626, 51722, 55818, 59914, 64010 }
+
+        for i = 1, #g do
+            g[g[i]] = true
+        end
+
+        return g
+    end
+)()
+
+function is_grease(num)
+    return greases[num] == true
+end
+
+function rnd_grease()
+    return greases[ math.random(1, #greases) ]
+end
+
+
+
 function array_mixed_search(a, f, v)
-    if f == "" then
+    local field_valid = f and f ~= ""
+
+    if type(v) == "function" then
+        for i, item in ipairs(a) do
+            if ( field_valid and v(item[f]) ) or ( not field_valid and v(item) ) then
+                return i
+            end
+        end
+
+        return nil
+    end
+
+    if not field_valid then
         return array_search(a, v)
     end
 
@@ -72,7 +128,7 @@ end
 
 
 
-function get_by_path(target, path)
+function get_by_path(desync, target, path)
     local value = target
     local parent = nil
     local key = nil
@@ -85,17 +141,27 @@ function get_by_path(target, path)
         parent = value
         key = k
 
-        local search_key, search_val = string.match(key, "%[(.-)=(.-)%]")
+        local search_key, search_val = string.match(key, "^%[(.-)=(.+)%]$")
         if search_key and search_val then
-            if search_val == string.gsub(search_val, "%D", "") then
-                key = array_mixed_search(value, search_key, tonumber(search_val)) or array_mixed_search(value, search_key, search_val)
+            local numval = string.match(search_val, "^(%-?%d+)$")
+            local strval = string.match(search_val, "^\"(.+)\"$")
+
+            if numval then
+                search_val = tonumber(numval)
+            elseif strval then
+                search_val = strval
             elseif search_val == "nil" then
-                key = array_mixed_search(value, search_key, nil) or array_mixed_search(value, search_key, search_val)
+                search_val = nil
             else
-                key = array_mixed_search(value, search_key, search_val)
+                search_val = desync[search_val] or _G[search_val]
             end
+
+            key = array_mixed_search(value, search_key, search_val)
         else
-            local numkey = string.match(key, "%[(%-?%d+)%]")
+            local numkey = string.match(key, "^%[(%-?%d+)%]$")
+            local strkey = string.match(key, "^%[\"(.+)\"%]$")
+            local varkey = string.match(key, "^%[(.+)%]$")
+
             if numkey or key == "[]" then
                 numkey = tonumber(numkey or 0)
 
@@ -104,10 +170,13 @@ function get_by_path(target, path)
                 end
 
                 key = numkey
-            else
-                local varkey = string.match(key, "%[(%w+)%]")
-                if varkey then
-                    key = desync[varkey] or _G[varkey]
+            elseif strkey then
+                key = strkey
+            elseif varkey then
+                key = desync[varkey] or _G[varkey]
+
+                if type(key) == "function" then
+                    key = array_mixed_search(value, "", key) or key
                 end
             end
         end
@@ -483,18 +552,16 @@ function tls_client_hello_mutate(ctx, desync)
         error("tls_client_hello_mutate: could not dissect tls")
     end
 
-    local reconstruction_needed = false
-
     for op in string.gmatch(desync.arg.ops, "[%w_]+%(.-%)") do
-        local func, args_str = string.match(op, "([%w_]+)%((.-)%)")
+        local func, args_str = string.match(op, "^([%w_]+)%((.-)%)$")
 
         local args = {}
         for arg in string.gmatch(args_str, "[^,]+") do
             table.insert(args, arg)
         end
 
-        local value, target, key = get_by_path(tdis, args[1])
-        local available = target and key
+        local value, parent, key = get_by_path(desync, tdis, args[1])
+        local available = parent and key
 
         if func == "get" then
 
@@ -502,28 +569,23 @@ function tls_client_hello_mutate(ctx, desync)
 
         elseif func == "set" and available then
 
-            target[key] = desync[args[2]] or _G[args[2]]
-            reconstruction_needed = true
+            parent[key] = desync[args[2]] or _G[args[2]]
 
         elseif func == "set_str" and available then
 
-            target[key] = args[2]
-            reconstruction_needed = true
+            parent[key] = args[2]
 
         elseif func == "set_num" and available then
 
-            target[key] = tonumber(args[2])
-            reconstruction_needed = true
+            parent[key] = tonumber(args[2])
 
         elseif func == "set_bool" and available then
 
-            target[key] = args[2] == "true"
-            reconstruction_needed = true
+            parent[key] = args[2] == "true"
 
         elseif func == "set_nil" and available then
 
-            target[key] = nil
-            reconstruction_needed = true
+            parent[key] = nil
 
         elseif func == "rnd" and available then
 
@@ -531,39 +593,36 @@ function tls_client_hello_mutate(ctx, desync)
                 error("tls_client_hello_mutate: rnd: target must be a string")
             end
 
-            target[key] = brandom(#value)
-            reconstruction_needed = true
+            parent[key] = brandom(#value)
 
         elseif func == "insert" and available then
 
-            table.insert(target, key, desync[args[2]] or _G[args[2]])
-            reconstruction_needed = true
+            table.insert(parent, key, desync[args[2]] or _G[args[2]])
 
         elseif func == "insert_str" and available then
 
-            table.insert(target, key, args[2])
-            reconstruction_needed = true
+            table.insert(parent, key, args[2])
 
         elseif func == "insert_num" and available then
 
-            table.insert(target, key, tonumber(args[2]))
-            reconstruction_needed = true
+            table.insert(parent, key, tonumber(args[2]))
 
         elseif func == "insert_bool" and available then
 
-            table.insert(target, key, args[2] == "true")
-            reconstruction_needed = true
+            table.insert(parent, key, args[2] == "true")
 
         elseif func == "remove" and available then
 
-            table.remove(target, key)
-            reconstruction_needed = true
+            while available do
+                table.remove(parent, key)
+                value, parent, key = get_by_path(desync, tdis, args[1])                
+                available = parent and key
+            end
 
         elseif func == "shuffle" and available then
 
             if type(value) == "table" then
                 shuffle(value)
-                reconstruction_needed = true
             end
 
         elseif func == "clear" and available then
@@ -572,14 +631,12 @@ function tls_client_hello_mutate(ctx, desync)
                 while #value > 0 do
                     value[1] = nil
                 end
-
-                reconstruction_needed = true
             end
 
         end
     end
 
-    if reconstruction_needed and desync.arg.blob then
+    if desync.arg.blob then
         local fake = tls_reconstruct(tdis)
 
         if not fake then
