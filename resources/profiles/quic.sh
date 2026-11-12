@@ -5,7 +5,7 @@
         --payload=quic_initial
             --lua-desync=luaexec:code=desync.host=standard_hostkey(desync):nld=2
             --lua-desync=luaexec:code=desync.is_ru=string.match(desync.host,"%.[rs]u$")or(string.match(desync.host,"%.рф$"))
-            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=3000
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),(desync.is_ru)and(rndruhost())or(rndhost())),".")):ttl=1000
             --lua-desync=mem:get=quic:set=return(map("qty",create_shuffled_bag(arange(6,18)))):ttl=60000:touch
             --lua-desync=luaexec:code=desync.qty=desync.quic.qty()
             --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,sni=%fakehost:repeats=%qty

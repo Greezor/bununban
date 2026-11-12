@@ -2,7 +2,7 @@
     --ipset-exclude={user-ipset-exclude}
     --ipset-exclude={ipset-exclude}
         --payload=stun
-            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=3000
+            --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=1000
             --lua-desync=mem:get=stun:set=return(map("qty",create_shuffled_bag(arange(6,18)))):ttl=60000:touch
             --lua-desync=luaexec:code=desync.qty=desync.stun.qty()
             --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,sni=%fakehost:repeats=%qty
