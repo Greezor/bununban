@@ -806,3 +806,83 @@ function var_print(v)
 	end
 	dbg(v,0)
 end
+
+
+
+function foreach(ctx, desync)
+    if not desync.arg.list then
+        error("foreach: missing arg 'list'")
+    end
+
+    if not desync.arg.var then
+        error("foreach: missing arg 'var'")
+    end
+
+    local items = desync[desync.arg.list]
+	if not items or type(items) ~= "table" then
+		error("repeater: invalid arg 'list'")
+	end
+
+	local iff = desync.arg.iff or "cond_true"
+	if type(_G[iff]) ~= "function" then
+		error("repeater: invalid 'iff' function '"..iff.."'")
+	end
+
+    orchestrate(ctx, desync)
+
+	if #desync.plan==0 then
+		DLOG("foreach: execution plan is empty")
+		return
+	end
+
+    local neg = desync.arg.neg
+	local stop = desync.arg.stop
+	local clear = desync.arg.clear
+	local verdict = VERDICT_PASS
+	local instances = tonumber(desync.arg.instances) or 1
+	local repinst = desync.func_instance
+
+	if instances > #desync.plan then
+		instances = #desync.plan
+	end
+
+    local plancopy = deepcopy(desync.plan)
+
+    local varname = desync.arg.var
+    local keyname = desync.arg.key
+    for i, item in ipairs(items) do
+        desync[varname] = item
+
+        if keyname then
+            desync[keyname] = i
+        end
+
+        if not logical_xor(_G[iff](desync), neg) then
+			DLOG("foreach: break by iff")
+			break
+		end
+
+        DLOG("foreach: "..repinst.." "..i.."/"..#items)
+
+        local ct_end = #desync.plan - instances
+        repeat
+			local instance = plan_instance_pop(desync)
+			verdict = plan_instance_execute(desync, verdict, instance)
+		until #desync.plan <= ct_end
+
+        desync.plan = deepcopy(plancopy)
+    end
+
+    for i = 1, instances do
+		table.remove(desync.plan, 1)
+	end
+
+    if clear then
+		plan_clear(desync)
+		return verdict
+	elseif stop then
+		return verdict
+	end
+
+	return verdict_aggregate(verdict, replay_execution_plan(desync))
+end
