@@ -144,7 +144,7 @@ function get_by_path(desync, target, path)
         local search_key, search_val = string.match(key, "^%[(.-)=(.+)%]$")
         if search_key and search_val then
             local numval = string.match(search_val, "^(%-?%d+)$")
-            local strval = string.match(search_val, "^\"(.+)\"$")
+            local strval = string.match(search_val, "^['\"](.+)['\"]$")
 
             if numval then
                 search_val = tonumber(numval)
@@ -159,7 +159,7 @@ function get_by_path(desync, target, path)
             key = array_mixed_search(value, search_key, search_val)
         else
             local numkey = string.match(key, "^%[(%-?%d+)%]$")
-            local strkey = string.match(key, "^%[\"(.+)\"%]$")
+            local strkey = string.match(key, "^%[['\"](.+)['\"]%]$")
             local varkey = string.match(key, "^%[(.+)%]$")
 
             if numkey or key == "[]" then
