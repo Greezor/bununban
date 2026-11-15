@@ -13,7 +13,7 @@
             --lua-desync=timeout:ms=3000:callback=desync.tls.faking=not(desync.tls.faking):reset:cutoff_after=d1
             --lua-desync=drop_rst:dir=in
             --lua-desync=condition:instances=27:iff=cond_lua:cond_code=return(not(tls_initialized))
-                --lua-desync=luaexec:code=fake_clienthello=blob(desync,"tls_google")
+                --lua-desync=luaexec:code=fake_clienthello=blob(desync,"tls_google_kyber")
                 --lua-desync=luaexec:code=pre_mutate=array()
                 --lua-desync=luaexec:code=table.insert(pre_mutate,'desync.fakesni=create_sni_ext(desync.fakehost)')
                 --lua-desync=luaexec:code=table.insert(pre_mutate,'desync.grease1=rnd_grease()')
