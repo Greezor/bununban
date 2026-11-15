@@ -3,6 +3,15 @@
     --ipset-exclude={ipset-exclude}
         --payload=stun
             --lua-desync=mem:get=fakehost:set=return(table.concat(array(genphrase(math.random(2,3),"-"),rndhost()),".")):ttl=1000
-            --lua-desync=mem:get=stun:set=return(map("qty",create_shuffled_bag(arange(6,18)))):ttl=60000:touch
+            --lua-desync=mem:get=stun:set=return(map("qty",create_shuffled_bag(arange(11,18)))):ttl=60000:touch
             --lua-desync=luaexec:code=desync.qty=desync.stun.qty()
-            --lua-desync=quic_fake:blob=quic_google:quic_mod=rndcid,rnd,sni=%fakehost:repeats=%qty
+            --lua-desync=luaexec:code=desync.parts=array(blob(desync,"quic_google"))
+            --lua-desync=quic_unpack:blobs=parts:data=clienthello
+            --lua-desync=luaexec:code=desync.fakesni=create_sni_ext(desync.fakehost)
+            --lua-desync=tls_client_hello_mutate:copy=clienthello:ops=get(handshake.[1].dis.ext.[name="pre_shared_key"],pre_shared_key)
+            --lua-desync=tls_client_hello_mutate:blob=clienthello:copy=clienthello:ops=rnd(handshake.[1].dis.random),rnd(handshake.[1].dis.session_id),rnd(handshake.[1].dis.ext.[name="key_share"].dis.list.[group=4588].kex),rnd(handshake.[1].dis.ext.[name="key_share"].dis.list.[group=29].kex),remove(handshake.[1].dis.ext.[name="encrypted_client_hello"]),remove(handshake.[1].dis.ext.[name="encrypted_server_name"]),remove(handshake.[1].dis.ext.[name="server_name"]),insert(handshake.[1].dis.ext.[1],fakesni),shuffle(handshake.[1].dis.ext)
+            --lua-desync=condition:instances=1:iff=cond_lua:cond_code=return(desync.pre_shared_key)
+                --lua-desync=tls_client_hello_mutate:blob=clienthello:copy=clienthello:ops=remove(handshake.[1].dis.ext.[name="pre_shared_key"]),insert(handshake.[1].dis.ext.[],pre_shared_key),rnd(handshake.[1].dis.ext.[name="pre_shared_key"].data)
+            --lua-desync=quic_pack:blobs=fakeparts:data=clienthello
+            --lua-desync=foreach:list=fakeparts:var=fakequic:instances=1
+                --lua-desync=fake:blob=fakequic:repeats=%qty
