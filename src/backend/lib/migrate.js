@@ -334,4 +334,14 @@ export default async (version, addNewResources) => {
 		}
 	}
 
+	if( Bun.semver.satisfies(version, '<0.4.18') ){
+		if( addNewResources ){
+			await blobs.delete('tls_google');
+			await blobs.set('tls_google_kyber', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/fakes/tls_google_kyber.bin' });
+
+			await lua.delete('quic-mod');
+			await lua.set('quic-tools', { active: true, syncUrl: 'https://raw.githubusercontent.com/Greezor/bununban/refs/heads/master/resources/lua/quic-tools.lua' });
+		}
+	}
+
 }
